@@ -1,0 +1,10 @@
+# Runtime (Python 3.11+). These versions are exercised together in the D backend tests.
+fastapi==0.163.2
+starlette==1.10.0
+pydantic==2.14.3
+python-multipart==0.0.34
+python-dotenv==1.2.4
+uvicorn==0.54.0
+pypdf==6.21.4
+pillow==12.3.0
+filelock==3.32.7
