@@ -1,0 +1,12 @@
+{
+  "mode": "offline",
+  "error": {
+    "code": "insufficient_knowledge",
+    "message": "同一种配对关系下不足 4 条可靠知识，请补充资料或调整范围。",
+    "retryable": false,
+    "details": {
+      "eligible_count": 3,
+      "excluded_count": 0
+    }
+  }
+}

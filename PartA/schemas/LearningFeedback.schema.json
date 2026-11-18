@@ -1,0 +1,333 @@
+{
+  "$defs": {
+    "KnowledgePerformance": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "minLength": 1,
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "first_attempt_correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Attempt Correct"
+        },
+        "attempts": {
+          "minimum": 0,
+          "title": "Attempts",
+          "type": "integer"
+        },
+        "errors": {
+          "minimum": 0,
+          "title": "Errors",
+          "type": "integer"
+        },
+        "hints": {
+          "minimum": 0,
+          "title": "Hints",
+          "type": "integer"
+        },
+        "completed": {
+          "title": "Completed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "attempts",
+        "errors",
+        "hints",
+        "completed"
+      ],
+      "title": "KnowledgePerformance",
+      "type": "object"
+    },
+    "LearningMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "first_attempt_accuracy": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Attempt Accuracy"
+        },
+        "total_attempt_accuracy": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Attempt Accuracy"
+        },
+        "completion_rate": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Completion Rate",
+          "type": "number"
+        },
+        "total_attempts": {
+          "minimum": 0,
+          "title": "Total Attempts",
+          "type": "integer"
+        },
+        "total_errors": {
+          "minimum": 0,
+          "title": "Total Errors",
+          "type": "integer"
+        },
+        "hints_used": {
+          "minimum": 0,
+          "title": "Hints Used",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "completion_rate",
+        "total_attempts",
+        "total_errors",
+        "hints_used"
+      ],
+      "title": "LearningMetrics",
+      "type": "object"
+    },
+    "LearningStatistics": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "minLength": 1,
+          "title": "Session Id",
+          "type": "string"
+        },
+        "game_id": {
+          "minLength": 1,
+          "title": "Game Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "completed",
+            "exited"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "metrics": {
+          "$ref": "#/$defs/LearningMetrics"
+        },
+        "by_knowledge": {
+          "items": {
+            "$ref": "#/$defs/KnowledgePerformance"
+          },
+          "title": "By Knowledge",
+          "type": "array"
+        },
+        "weak_knowledge_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Weak Knowledge Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "session_id",
+        "game_id",
+        "status",
+        "metrics",
+        "by_knowledge",
+        "weak_knowledge_ids"
+      ],
+      "title": "LearningStatistics",
+      "type": "object"
+    },
+    "PracticeRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "material_id": {
+          "minLength": 1,
+          "title": "Material Id",
+          "type": "string"
+        },
+        "preferences": {
+          "$ref": "#/$defs/UserPreferences"
+        },
+        "previous_game_id": {
+          "minLength": 1,
+          "title": "Previous Game Id",
+          "type": "string"
+        },
+        "requires_confirmation": {
+          "const": true,
+          "default": true,
+          "title": "Requires Confirmation",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "material_id",
+        "preferences",
+        "previous_game_id"
+      ],
+      "title": "PracticeRequest",
+      "type": "object"
+    },
+    "ReviewAdvice": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "minLength": 1,
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "explanation",
+        "source_refs"
+      ],
+      "title": "ReviewAdvice",
+      "type": "object"
+    },
+    "UserPreferences": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "default": "beginner",
+          "enum": [
+            "beginner",
+            "familiar"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "learning_goal": {
+          "default": "recognize",
+          "enum": [
+            "recognize",
+            "distinguish"
+          ],
+          "title": "Learning Goal",
+          "type": "string"
+        },
+        "pair_count": {
+          "default": 6,
+          "maximum": 8,
+          "minimum": 4,
+          "title": "Pair Count",
+          "type": "integer"
+        },
+        "selected_knowledge_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Knowledge Ids"
+        },
+        "excluded_knowledge_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Knowledge Ids",
+          "type": "array"
+        },
+        "weak_knowledge_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Weak Knowledge Ids",
+          "type": "array"
+        }
+      },
+      "title": "UserPreferences",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "reviews": {
+      "items": {
+        "$ref": "#/$defs/ReviewAdvice"
+      },
+      "title": "Reviews",
+      "type": "array"
+    },
+    "statistics": {
+      "$ref": "#/$defs/LearningStatistics"
+    },
+    "completion_note": {
+      "minLength": 1,
+      "title": "Completion Note",
+      "type": "string"
+    },
+    "practice": {
+      "$ref": "#/$defs/PracticeRequest"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "summary",
+    "reviews",
+    "statistics",
+    "completion_note",
+    "practice"
+  ],
+  "title": "LearningFeedback",
+  "type": "object"
+}

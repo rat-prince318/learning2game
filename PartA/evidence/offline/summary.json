@@ -1,0 +1,44 @@
+{
+  "mode": "offline",
+  "live_api_called": false,
+  "content_accuracy_measured": false,
+  "runs": [
+    {
+      "subject": "computing",
+      "level": "beginner",
+      "status": "completed",
+      "repair_count": 0
+    },
+    {
+      "subject": "computing",
+      "level": "familiar",
+      "status": "completed",
+      "repair_count": 0
+    },
+    {
+      "subject": "biology",
+      "level": "beginner",
+      "status": "completed",
+      "repair_count": 0
+    },
+    {
+      "subject": "biology",
+      "level": "familiar",
+      "status": "completed",
+      "repair_count": 0
+    },
+    {
+      "subject": "geography",
+      "level": "beginner",
+      "status": "completed",
+      "repair_count": 0
+    },
+    {
+      "subject": "geography",
+      "level": "familiar",
+      "status": "completed",
+      "repair_count": 0
+    }
+  ],
+  "note": "Offline control-flow evidence only. Not a measurement of DeepSeek generation accuracy."
+}

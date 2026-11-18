@@ -1,0 +1,132 @@
+{
+  "$defs": {
+    "Pair": {
+      "additionalProperties": false,
+      "properties": {
+        "pair_id": {
+          "minLength": 1,
+          "title": "Pair Id",
+          "type": "string"
+        },
+        "knowledge_id": {
+          "minLength": 1,
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "left": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Left",
+          "type": "string"
+        },
+        "right": {
+          "maxLength": 180,
+          "minLength": 1,
+          "title": "Right",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pair_id",
+        "knowledge_id",
+        "left",
+        "right",
+        "explanation",
+        "source_refs"
+      ],
+      "title": "Pair",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "instructions": {
+      "maxLength": 400,
+      "minLength": 1,
+      "title": "Instructions",
+      "type": "string"
+    },
+    "pairs": {
+      "items": {
+        "$ref": "#/$defs/Pair"
+      },
+      "maxItems": 8,
+      "minItems": 4,
+      "title": "Pairs",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "game_id": {
+      "minLength": 1,
+      "title": "Game Id",
+      "type": "string"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "material_id": {
+      "minLength": 1,
+      "title": "Material Id",
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "zh",
+        "en"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "relation_type": {
+      "minLength": 1,
+      "title": "Relation Type",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "title",
+    "instructions",
+    "pairs",
+    "game_id",
+    "plan_id",
+    "material_id",
+    "language",
+    "relation_type"
+  ],
+  "title": "GameConfigInternal",
+  "type": "object"
+}

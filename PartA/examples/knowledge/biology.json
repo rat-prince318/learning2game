@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "material_id": "biology",
+  "language": "en",
+  "provenance": "fixture",
+  "knowledge": [
+    {
+      "knowledge_id": "biology_01",
+      "concept": "Heart",
+      "definition": "Pumps blood through the circulatory system.",
+      "relation_type": "organ_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_01"
+      ],
+      "evidence": "Heart: Pumps blood through the circulatory system.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_02",
+      "concept": "Lungs",
+      "definition": "Exchange oxygen and carbon dioxide between air and blood.",
+      "relation_type": "organ_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_02"
+      ],
+      "evidence": "Lungs: Exchange oxygen and carbon dioxide between air and blood.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_03",
+      "concept": "Stomach",
+      "definition": "Mixes food with acid and enzymes to begin substantial protein digestion.",
+      "relation_type": "organ_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_03"
+      ],
+      "evidence": "Stomach: Mixes food with acid and enzymes to begin substantial protein digestion.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_04",
+      "concept": "Kidneys",
+      "definition": "Filter blood and regulate water and salts by producing urine.",
+      "relation_type": "organ_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_04"
+      ],
+      "evidence": "Kidneys: Filter blood and regulate water and salts by producing urine.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_05",
+      "concept": "Liver",
+      "definition": "Produces bile, which helps disperse fats during digestion.",
+      "relation_type": "organ_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_05"
+      ],
+      "evidence": "Liver: Produces bile, which helps disperse fats during digestion.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_06",
+      "concept": "Pancreas",
+      "definition": "Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+      "relation_type": "organ_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_06"
+      ],
+      "evidence": "Pancreas: Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_07",
+      "concept": "Red blood cells",
+      "definition": "Carry oxygen using the protein hemoglobin.",
+      "relation_type": "organ_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_07"
+      ],
+      "evidence": "Red blood cells: Carry oxygen using the protein hemoglobin.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "biology_08",
+      "concept": "Small intestine",
+      "definition": "Absorbs most digested nutrients through its lining.",
+      "relation_type": "organ_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_biology_08"
+      ],
+      "evidence": "Small intestine: Absorbs most digested nutrients through its lining.",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "source_biology_01",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 1",
+      "evidence": "Heart: Pumps blood through the circulatory system.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_02",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 2",
+      "evidence": "Lungs: Exchange oxygen and carbon dioxide between air and blood.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_03",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 3",
+      "evidence": "Stomach: Mixes food with acid and enzymes to begin substantial protein digestion.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_04",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 4",
+      "evidence": "Kidneys: Filter blood and regulate water and salts by producing urine.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_05",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 5",
+      "evidence": "Liver: Produces bile, which helps disperse fats during digestion.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_06",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 6",
+      "evidence": "Pancreas: Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_07",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 7",
+      "evidence": "Red blood cells: Carry oxygen using the protein hemoglobin.",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_biology_08",
+      "material_id": "biology",
+      "locator": "materials/biology.md — item 8",
+      "evidence": "Small intestine: Absorbs most digested nutrients through its lining.",
+      "modality": "text"
+    }
+  ],
+  "warnings": [
+    "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+  ]
+}

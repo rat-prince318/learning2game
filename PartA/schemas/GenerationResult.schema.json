@@ -1,0 +1,274 @@
+{
+  "$defs": {
+    "GameConfigInternal": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "instructions": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Instructions",
+          "type": "string"
+        },
+        "pairs": {
+          "items": {
+            "$ref": "#/$defs/Pair"
+          },
+          "maxItems": 8,
+          "minItems": 4,
+          "title": "Pairs",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "game_id": {
+          "minLength": 1,
+          "title": "Game Id",
+          "type": "string"
+        },
+        "plan_id": {
+          "minLength": 1,
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "material_id": {
+          "minLength": 1,
+          "title": "Material Id",
+          "type": "string"
+        },
+        "language": {
+          "enum": [
+            "zh",
+            "en"
+          ],
+          "title": "Language",
+          "type": "string"
+        },
+        "relation_type": {
+          "minLength": 1,
+          "title": "Relation Type",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "instructions",
+        "pairs",
+        "game_id",
+        "plan_id",
+        "material_id",
+        "language",
+        "relation_type"
+      ],
+      "title": "GameConfigInternal",
+      "type": "object"
+    },
+    "Pair": {
+      "additionalProperties": false,
+      "properties": {
+        "pair_id": {
+          "minLength": 1,
+          "title": "Pair Id",
+          "type": "string"
+        },
+        "knowledge_id": {
+          "minLength": 1,
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "left": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Left",
+          "type": "string"
+        },
+        "right": {
+          "maxLength": 180,
+          "minLength": 1,
+          "title": "Right",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pair_id",
+        "knowledge_id",
+        "left",
+        "right",
+        "explanation",
+        "source_refs"
+      ],
+      "title": "Pair",
+      "type": "object"
+    },
+    "ValidationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "pair_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pair Id"
+        },
+        "knowledge_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Knowledge Id"
+        },
+        "code": {
+          "enum": [
+            "structure",
+            "knowledge_set",
+            "duplicate_id",
+            "unknown_knowledge",
+            "pair_id",
+            "concept_changed",
+            "invalid_source",
+            "answer_leakage",
+            "duplicate_card",
+            "plan_metadata",
+            "unsupported",
+            "contradiction",
+            "ambiguous",
+            "image_mismatch"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "suggestion": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Suggestion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "reason",
+        "suggestion"
+      ],
+      "title": "ValidationIssue",
+      "type": "object"
+    },
+    "ValidationReport": {
+      "additionalProperties": false,
+      "properties": {
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/ValidationIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "semantic_checked": {
+          "default": false,
+          "title": "Semantic Checked",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "passed"
+      ],
+      "title": "ValidationReport",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": [
+        "completed",
+        "failed",
+        "needs_confirmation"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "game": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GameConfigInternal"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "validation": {
+      "$ref": "#/$defs/ValidationReport"
+    },
+    "repair_count": {
+      "maximum": 2,
+      "minimum": 0,
+      "title": "Repair Count",
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "status",
+    "validation",
+    "repair_count"
+  ],
+  "title": "GenerationResult",
+  "type": "object"
+}

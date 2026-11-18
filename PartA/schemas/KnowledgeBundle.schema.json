@@ -1,0 +1,194 @@
+{
+  "$defs": {
+    "KnowledgeItem": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "minLength": 1,
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "concept": {
+          "minLength": 1,
+          "title": "Concept",
+          "type": "string"
+        },
+        "definition": {
+          "minLength": 1,
+          "title": "Definition",
+          "type": "string"
+        },
+        "relation_type": {
+          "minLength": 1,
+          "title": "Relation Type",
+          "type": "string"
+        },
+        "difficulty": {
+          "default": "basic",
+          "enum": [
+            "basic",
+            "advanced"
+          ],
+          "title": "Difficulty",
+          "type": "string"
+        },
+        "learning_objective": {
+          "default": "",
+          "title": "Learning Objective",
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "evidence": {
+          "default": "",
+          "title": "Evidence",
+          "type": "string"
+        },
+        "modality": {
+          "default": "text",
+          "enum": [
+            "text",
+            "image",
+            "mixed"
+          ],
+          "title": "Modality",
+          "type": "string"
+        },
+        "quality": {
+          "default": "reliable",
+          "enum": [
+            "reliable",
+            "uncertain",
+            "conflict"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "concept",
+        "definition",
+        "relation_type"
+      ],
+      "title": "KnowledgeItem",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "material_id": {
+          "minLength": 1,
+          "title": "Material Id",
+          "type": "string"
+        },
+        "locator": {
+          "minLength": 1,
+          "title": "Locator",
+          "type": "string"
+        },
+        "evidence": {
+          "minLength": 1,
+          "title": "Evidence",
+          "type": "string"
+        },
+        "modality": {
+          "default": "text",
+          "enum": [
+            "text",
+            "image",
+            "mixed"
+          ],
+          "title": "Modality",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "material_id",
+        "locator",
+        "evidence"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "material_id": {
+      "minLength": 1,
+      "title": "Material Id",
+      "type": "string"
+    },
+    "language": {
+      "default": "zh",
+      "enum": [
+        "zh",
+        "en",
+        "mixed"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "provenance": {
+      "default": "extracted",
+      "enum": [
+        "fixture",
+        "extracted"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "knowledge": {
+      "items": {
+        "$ref": "#/$defs/KnowledgeItem"
+      },
+      "title": "Knowledge",
+      "type": "array"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "material_id",
+    "knowledge",
+    "sources"
+  ],
+  "title": "KnowledgeBundle",
+  "type": "object"
+}

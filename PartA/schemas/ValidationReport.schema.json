@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "ValidationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "pair_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pair Id"
+        },
+        "knowledge_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Knowledge Id"
+        },
+        "code": {
+          "enum": [
+            "structure",
+            "knowledge_set",
+            "duplicate_id",
+            "unknown_knowledge",
+            "pair_id",
+            "concept_changed",
+            "invalid_source",
+            "answer_leakage",
+            "duplicate_card",
+            "plan_metadata",
+            "unsupported",
+            "contradiction",
+            "ambiguous",
+            "image_mismatch"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "suggestion": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Suggestion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "reason",
+        "suggestion"
+      ],
+      "title": "ValidationIssue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/ValidationIssue"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "semantic_checked": {
+      "default": false,
+      "title": "Semantic Checked",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "passed"
+  ],
+  "title": "ValidationReport",
+  "type": "object"
+}

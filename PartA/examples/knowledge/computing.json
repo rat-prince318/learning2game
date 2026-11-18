@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "material_id": "computing",
+  "language": "zh",
+  "provenance": "fixture",
+  "knowledge": [
+    {
+      "knowledge_id": "computing_01",
+      "concept": "CPU",
+      "definition": "执行程序指令并完成算术和逻辑运算。",
+      "relation_type": "component_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_01"
+      ],
+      "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_02",
+      "concept": "RAM",
+      "definition": "临时保存正在使用的数据和程序，断电后内容通常丢失。",
+      "relation_type": "component_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_02"
+      ],
+      "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_03",
+      "concept": "固态硬盘",
+      "definition": "使用闪存保存数据，断电后仍能保留内容。",
+      "relation_type": "component_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_03"
+      ],
+      "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_04",
+      "concept": "操作系统",
+      "definition": "管理计算机硬件资源，并为应用程序提供运行服务。",
+      "relation_type": "component_function",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_04"
+      ],
+      "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_05",
+      "concept": "路由器",
+      "definition": "根据网络地址在不同网络之间转发数据包。",
+      "relation_type": "component_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_05"
+      ],
+      "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_06",
+      "concept": "交换机",
+      "definition": "依据设备的 MAC 地址在局域网内转发数据帧。",
+      "relation_type": "component_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_06"
+      ],
+      "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_07",
+      "concept": "编译器",
+      "definition": "将源程序翻译成目标程序。",
+      "relation_type": "component_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_07"
+      ],
+      "evidence": "编译器: 将源程序翻译成目标程序。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "computing_08",
+      "concept": "递归",
+      "definition": "函数直接或间接调用自身，并通过终止条件结束调用。",
+      "relation_type": "component_function",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_computing_08"
+      ],
+      "evidence": "递归: 函数直接或间接调用自身，并通过终止条件结束调用。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "source_computing_01",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 1",
+      "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_02",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 2",
+      "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_03",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 3",
+      "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_04",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 4",
+      "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_05",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 5",
+      "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_06",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 6",
+      "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_07",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 7",
+      "evidence": "编译器: 将源程序翻译成目标程序。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_computing_08",
+      "material_id": "computing",
+      "locator": "materials/computing.md — item 8",
+      "evidence": "递归: 函数直接或间接调用自身，并通过终止条件结束调用。",
+      "modality": "text"
+    }
+  ],
+  "warnings": [
+    "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+  ]
+}

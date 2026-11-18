@@ -1,0 +1,98 @@
+{
+  "computing_01": {
+    "familiar": "承担程序指令的运算与执行工作。",
+    "practice": "按程序要求进行算术、逻辑处理的核心部件。"
+  },
+  "computing_02": {
+    "familiar": "为正在运行的程序提供易失性工作存储空间。",
+    "practice": "供运行中的程序暂存数据，通常不能在断电后保留内容。"
+  },
+  "computing_03": {
+    "familiar": "通过非易失性闪存实现持久数据存储。",
+    "practice": "利用闪存长期保存文件，停止供电后内容仍可保留。"
+  },
+  "computing_04": {
+    "familiar": "协调硬件资源的分配并支持应用程序运行。",
+    "practice": "为应用程序提供运行环境，统一管理硬件资源。"
+  },
+  "computing_05": {
+    "familiar": "依据网络地址选择跨网络的数据包转发路径。",
+    "practice": "使数据包能够按网络地址从一个网络转发到另一个网络。"
+  },
+  "computing_06": {
+    "familiar": "在局域网内部按 MAC 地址转发数据帧。",
+    "practice": "将局域网的数据帧按目标 MAC 地址送向相应设备。"
+  },
+  "computing_07": {
+    "familiar": "把源语言编写的程序转换为目标语言程序。",
+    "practice": "完成从源代码到目标程序的翻译工作。"
+  },
+  "computing_08": {
+    "familiar": "利用自身调用分解问题，并依靠终止条件停止。",
+    "practice": "通过直接或间接的自身调用处理问题，必须有停止条件。"
+  },
+  "biology_01": {
+    "familiar": "Drives blood circulation by pumping.",
+    "practice": "Propels blood around the body's circulatory system."
+  },
+  "biology_02": {
+    "familiar": "Provide the site of gas exchange between air and blood.",
+    "practice": "Transfer oxygen and carbon dioxide between inhaled air and the bloodstream."
+  },
+  "biology_03": {
+    "familiar": "Uses acid and enzymes while mixing food during early protein digestion.",
+    "practice": "Churns food and begins substantial protein breakdown with acid and enzymes."
+  },
+  "biology_04": {
+    "familiar": "Form urine to remove wastes and regulate water and salt balance.",
+    "practice": "Regulate water and salts and remove blood-borne wastes through urine formation."
+  },
+  "biology_05": {
+    "familiar": "Supplies the bile used to disperse dietary fats.",
+    "practice": "Makes a digestive fluid that helps break fats into smaller droplets."
+  },
+  "biology_06": {
+    "familiar": "Provides intestinal digestive enzymes and the blood glucose hormone insulin.",
+    "practice": "Supplies enzymes for intestinal digestion and secretes insulin into the bloodstream."
+  },
+  "biology_07": {
+    "familiar": "Transport oxygen bound to hemoglobin.",
+    "practice": "Use hemoglobin to deliver oxygen through the circulation."
+  },
+  "biology_08": {
+    "familiar": "Provides the main surface for absorbing digested nutrients.",
+    "practice": "Transfers most nutrients from digested food across its inner lining."
+  },
+  "geography_01": {
+    "familiar": "通过南北两极并垂直于赤道的半圆线。",
+    "practice": "从北极延伸到南极且垂直于赤道的半圆弧线。"
+  },
+  "geography_02": {
+    "familiar": "在地球表面平行于赤道分布的圆。",
+    "practice": "沿东西方向环绕地球、与赤道保持平行的圆圈。"
+  },
+  "geography_03": {
+    "familiar": "由地图中相同海拔的点连接形成的线。",
+    "practice": "把地图上高程相等的位置连成的曲线。"
+  },
+  "geography_04": {
+    "familiar": "以平均海平面为基准测得的地面点垂直高度。",
+    "practice": "从平均海平面计算到地面某一点的垂直距离。"
+  },
+  "geography_05": {
+    "familiar": "海陆受热差异造成的昼夜换向局地风。",
+    "practice": "沿海地区因陆地和海洋昼夜温度变化不同而形成的换向风。"
+  },
+  "geography_06": {
+    "familiar": "两个相邻岩石圈板块的接触区域。",
+    "practice": "岩石圈中不同板块彼此相接的位置。"
+  },
+  "geography_07": {
+    "familiar": "地表水流剥蚀并带走岩石和土壤的过程。",
+    "practice": "流动水体不断剥离并移走地表物质的作用。"
+  },
+  "geography_08": {
+    "familiar": "某些大气气体通过吸收和再辐射地表红外辐射产生的增暖作用。",
+    "practice": "地表红外辐射被大气中的特定气体吸收并再辐射而导致的增暖现象。"
+  }
+}

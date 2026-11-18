@@ -1,0 +1,504 @@
+{
+  "mode": "offline",
+  "subject": "geography",
+  "level": "familiar",
+  "model_validation_is_simulated": true,
+  "plan": {
+    "selected_knowledge_ids": [
+      "geography_05",
+      "geography_06",
+      "geography_07",
+      "geography_08",
+      "geography_01",
+      "geography_02"
+    ],
+    "relation_type": "concept_definition",
+    "difficulty": "medium",
+    "language": "zh",
+    "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。",
+    "schema_version": "1.0",
+    "plan_id": "plan_41151e3249454a1ca5310097ac57c16a",
+    "material_id": "geography",
+    "knowledge_digest": "6775077f50c053191b1591e7ec526cf88e0cf429fdd6a4cee91ef44229240002",
+    "actual_pair_count": 6,
+    "preferences": {
+      "level": "familiar",
+      "learning_goal": "recognize",
+      "pair_count": 6,
+      "selected_knowledge_ids": null,
+      "excluded_knowledge_ids": [],
+      "weak_knowledge_ids": []
+    },
+    "warnings": [
+      "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+    ]
+  },
+  "generation": {
+    "status": "completed",
+    "game": {
+      "title": "离线配对演示",
+      "instructions": "选择概念对应的描述。",
+      "pairs": [
+        {
+          "pair_id": "pair_geography_01",
+          "knowledge_id": "geography_01",
+          "left": "经线",
+          "right": "通过南北两极并垂直于赤道的半圆线。",
+          "explanation": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+          "source_refs": [
+            "source_geography_01"
+          ]
+        },
+        {
+          "pair_id": "pair_geography_02",
+          "knowledge_id": "geography_02",
+          "left": "纬线",
+          "right": "在地球表面平行于赤道分布的圆。",
+          "explanation": "纬线: 地球表面上与赤道平行的圆圈。",
+          "source_refs": [
+            "source_geography_02"
+          ]
+        },
+        {
+          "pair_id": "pair_geography_05",
+          "knowledge_id": "geography_05",
+          "left": "海陆风",
+          "right": "海陆受热差异造成的昼夜换向局地风。",
+          "explanation": "海陆风: 由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+          "source_refs": [
+            "source_geography_05"
+          ]
+        },
+        {
+          "pair_id": "pair_geography_06",
+          "knowledge_id": "geography_06",
+          "left": "板块边界",
+          "right": "两个相邻岩石圈板块的接触区域。",
+          "explanation": "板块边界: 相邻岩石圈板块相互接触的地带。",
+          "source_refs": [
+            "source_geography_06"
+          ]
+        },
+        {
+          "pair_id": "pair_geography_07",
+          "knowledge_id": "geography_07",
+          "left": "流水侵蚀",
+          "right": "地表水流剥蚀并带走岩石和土壤的过程。",
+          "explanation": "流水侵蚀: 流动的水对地表岩石和土壤进行剥蚀、搬离的作用。",
+          "source_refs": [
+            "source_geography_07"
+          ]
+        },
+        {
+          "pair_id": "pair_geography_08",
+          "knowledge_id": "geography_08",
+          "left": "温室效应",
+          "right": "某些大气气体通过吸收和再辐射地表红外辐射产生的增暖作用。",
+          "explanation": "温室效应: 大气中的某些气体吸收并再辐射地表发出的红外辐射，使地表增暖。",
+          "source_refs": [
+            "source_geography_08"
+          ]
+        }
+      ],
+      "schema_version": "1.0",
+      "game_id": "game_5e180d55728f4053bacf62e2f07e4cfd",
+      "plan_id": "plan_41151e3249454a1ca5310097ac57c16a",
+      "material_id": "geography",
+      "language": "zh",
+      "relation_type": "concept_definition",
+      "warnings": []
+    },
+    "validation": {
+      "passed": true,
+      "issues": [],
+      "semantic_checked": true
+    },
+    "repair_count": 0,
+    "warnings": []
+  },
+  "feedback": {
+    "summary": "本轮表现提示可继续复习以下概念，并结合资料比较它们的区别。",
+    "reviews": [
+      {
+        "knowledge_id": "geography_01",
+        "explanation": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+        "source_refs": [
+          "source_geography_01"
+        ]
+      },
+      {
+        "knowledge_id": "geography_02",
+        "explanation": "纬线: 地球表面上与赤道平行的圆圈。",
+        "source_refs": [
+          "source_geography_02"
+        ]
+      }
+    ],
+    "statistics": {
+      "session_id": "demo_fixture_dbb7f81d28294696bd73629e2b107607",
+      "game_id": "game_5e180d55728f4053bacf62e2f07e4cfd",
+      "status": "completed",
+      "metrics": {
+        "first_attempt_accuracy": 0.8333333333333334,
+        "total_attempt_accuracy": 0.8571428571428571,
+        "completion_rate": 1.0,
+        "total_attempts": 7,
+        "total_errors": 1,
+        "hints_used": 1
+      },
+      "by_knowledge": [
+        {
+          "knowledge_id": "geography_01",
+          "first_attempt_correct": false,
+          "attempts": 2,
+          "errors": 1,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "geography_02",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 1,
+          "completed": true
+        },
+        {
+          "knowledge_id": "geography_05",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "geography_06",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "geography_07",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "geography_08",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        }
+      ],
+      "weak_knowledge_ids": [
+        "geography_01",
+        "geography_02"
+      ]
+    },
+    "completion_note": "本轮已完成；本次表现不等同于确定的知识掌握程度。",
+    "practice": {
+      "material_id": "geography",
+      "preferences": {
+        "level": "familiar",
+        "learning_goal": "recognize",
+        "pair_count": 6,
+        "selected_knowledge_ids": null,
+        "excluded_knowledge_ids": [],
+        "weak_knowledge_ids": [
+          "geography_01",
+          "geography_02"
+        ]
+      },
+      "previous_game_id": "game_5e180d55728f4053bacf62e2f07e4cfd",
+      "requires_confirmation": true
+    },
+    "warnings": []
+  },
+  "events": [
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "design_matching_plan",
+      "call_id": "offline_7b4f360327c74f2082b22e30af53ff70",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "design_matching_plan",
+      "call_id": "offline_7b4f360327c74f2082b22e30af53ff70",
+      "fields": [],
+      "argument_bytes": 2
+    },
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "design_matching_plan",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "awaiting_confirmation",
+      "pair_count": 6
+    },
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "design_matching_plan",
+      "call_id": "offline_7b4f360327c74f2082b22e30af53ff70",
+      "ok": true,
+      "result_fields": [
+        "actual_pair_count",
+        "difficulty",
+        "knowledge_digest",
+        "language",
+        "material_id",
+        "plan_id",
+        "preferences",
+        "rationale",
+        "relation_type",
+        "schema_version",
+        "selected_knowledge_ids",
+        "warnings"
+      ],
+      "result_summary": {
+        "actual_pair_count": 6,
+        "warnings_count": 1
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_8aa1999a4662483aa5944be249274362",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_matching_config",
+      "call_id": "offline_40af422b44b84700a8ec0087638d79ef",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_matching_config",
+      "call_id": "offline_40af422b44b84700a8ec0087638d79ef",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_matching_config",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "generating",
+      "candidate_ready": true
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_matching_config",
+      "call_id": "offline_40af422b44b84700a8ec0087638d79ef",
+      "ok": true,
+      "result_fields": [
+        "candidate",
+        "next_action"
+      ],
+      "result_summary": {
+        "next_action": "validate_matching_config",
+        "candidate_pair_count": 6
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "validate_matching_config",
+      "call_id": "offline_3b168de23ffe446c9f8c29c446f16252",
+      "tool_number": 2
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "validate_matching_config",
+      "call_id": "offline_3b168de23ffe446c9f8c29c446f16252",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validating",
+      "deterministic_issues": 0
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "validate_matching_config",
+      "request_number": 4
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validation_result",
+      "passed": true,
+      "semantic_checked": true,
+      "issue_codes": []
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "validate_matching_config",
+      "call_id": "offline_3b168de23ffe446c9f8c29c446f16252",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_count",
+        "validation"
+      ],
+      "result_summary": {
+        "repair_count": 0,
+        "passed": true,
+        "semantic_checked": true,
+        "issue_count": 0,
+        "next_action": "complete"
+      },
+      "elapsed_ms": 1
+    },
+    {
+      "run_id": "run_a624d14180d949149f2f1437e6fdfda7",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 4,
+      "tool_calls": 2
+    },
+    {
+      "run_id": "run_070db546a61041aa8e409302f34c7e66",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_070db546a61041aa8e409302f34c7e66",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_e403f9167dfb4c33bf96546a85bd4a80",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_070db546a61041aa8e409302f34c7e66",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_e403f9167dfb4c33bf96546a85bd4a80",
+      "fields": [
+        "session_id"
+      ],
+      "argument_bytes": 63
+    },
+    {
+      "run_id": "run_070db546a61041aa8e409302f34c7e66",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_learning_feedback",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_070db546a61041aa8e409302f34c7e66",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_e403f9167dfb4c33bf96546a85bd4a80",
+      "ok": true,
+      "result_fields": [
+        "completion_note",
+        "practice",
+        "reviews",
+        "statistics",
+        "summary",
+        "warnings"
+      ],
+      "result_summary": {
+        "reviews_count": 2,
+        "warnings_count": 0
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_070db546a61041aa8e409302f34c7e66",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    }
+  ]
+}

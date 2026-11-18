@@ -1,0 +1,73 @@
+{
+  "title": "离线配对演示",
+  "instructions": "选择概念对应的描述。",
+  "pairs": [
+    {
+      "pair_id": "pair_geography_01",
+      "knowledge_id": "geography_01",
+      "left": "经线",
+      "right": "连接南北两极、与赤道垂直的半圆弧。",
+      "explanation": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+      "source_refs": [
+        "source_geography_01"
+      ]
+    },
+    {
+      "pair_id": "pair_geography_02",
+      "knowledge_id": "geography_02",
+      "left": "纬线",
+      "right": "地球表面上与赤道平行的圆圈。",
+      "explanation": "纬线: 地球表面上与赤道平行的圆圈。",
+      "source_refs": [
+        "source_geography_02"
+      ]
+    },
+    {
+      "pair_id": "pair_geography_03",
+      "knowledge_id": "geography_03",
+      "left": "等高线",
+      "right": "地图上连接海拔高度相同各点的曲线。",
+      "explanation": "等高线: 地图上连接海拔高度相同各点的曲线。",
+      "source_refs": [
+        "source_geography_03"
+      ]
+    },
+    {
+      "pair_id": "pair_geography_04",
+      "knowledge_id": "geography_04",
+      "left": "海拔",
+      "right": "地面某点相对于平均海平面的垂直高度。",
+      "explanation": "海拔: 地面某点相对于平均海平面的垂直高度。",
+      "source_refs": [
+        "source_geography_04"
+      ]
+    },
+    {
+      "pair_id": "pair_geography_05",
+      "knowledge_id": "geography_05",
+      "left": "海陆风",
+      "right": "由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+      "explanation": "海陆风: 由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+      "source_refs": [
+        "source_geography_05"
+      ]
+    },
+    {
+      "pair_id": "pair_geography_06",
+      "knowledge_id": "geography_06",
+      "left": "板块边界",
+      "right": "相邻岩石圈板块相互接触的地带。",
+      "explanation": "板块边界: 相邻岩石圈板块相互接触的地带。",
+      "source_refs": [
+        "source_geography_06"
+      ]
+    }
+  ],
+  "schema_version": "1.0",
+  "game_id": "fixture_game_geography",
+  "plan_id": "fixture_plan_geography",
+  "material_id": "geography",
+  "language": "zh",
+  "relation_type": "concept_definition",
+  "warnings": []
+}

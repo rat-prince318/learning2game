@@ -1,0 +1,61 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "level": {
+      "default": "beginner",
+      "enum": [
+        "beginner",
+        "familiar"
+      ],
+      "title": "Level",
+      "type": "string"
+    },
+    "learning_goal": {
+      "default": "recognize",
+      "enum": [
+        "recognize",
+        "distinguish"
+      ],
+      "title": "Learning Goal",
+      "type": "string"
+    },
+    "pair_count": {
+      "default": 6,
+      "maximum": 8,
+      "minimum": 4,
+      "title": "Pair Count",
+      "type": "integer"
+    },
+    "selected_knowledge_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Knowledge Ids"
+    },
+    "excluded_knowledge_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Excluded Knowledge Ids",
+      "type": "array"
+    },
+    "weak_knowledge_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Weak Knowledge Ids",
+      "type": "array"
+    }
+  },
+  "title": "UserPreferences",
+  "type": "object"
+}

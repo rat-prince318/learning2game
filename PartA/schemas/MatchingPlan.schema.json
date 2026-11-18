@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "UserPreferences": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "default": "beginner",
+          "enum": [
+            "beginner",
+            "familiar"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "learning_goal": {
+          "default": "recognize",
+          "enum": [
+            "recognize",
+            "distinguish"
+          ],
+          "title": "Learning Goal",
+          "type": "string"
+        },
+        "pair_count": {
+          "default": 6,
+          "maximum": 8,
+          "minimum": 4,
+          "title": "Pair Count",
+          "type": "integer"
+        },
+        "selected_knowledge_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Knowledge Ids"
+        },
+        "excluded_knowledge_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Knowledge Ids",
+          "type": "array"
+        },
+        "weak_knowledge_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Weak Knowledge Ids",
+          "type": "array"
+        }
+      },
+      "title": "UserPreferences",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "selected_knowledge_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 4,
+      "title": "Selected Knowledge Ids",
+      "type": "array"
+    },
+    "relation_type": {
+      "minLength": 1,
+      "title": "Relation Type",
+      "type": "string"
+    },
+    "difficulty": {
+      "enum": [
+        "easy",
+        "medium"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "zh",
+        "en"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "plan_id": {
+      "minLength": 1,
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "material_id": {
+      "minLength": 1,
+      "title": "Material Id",
+      "type": "string"
+    },
+    "knowledge_digest": {
+      "minLength": 1,
+      "title": "Knowledge Digest",
+      "type": "string"
+    },
+    "actual_pair_count": {
+      "maximum": 8,
+      "minimum": 4,
+      "title": "Actual Pair Count",
+      "type": "integer"
+    },
+    "preferences": {
+      "$ref": "#/$defs/UserPreferences"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "selected_knowledge_ids",
+    "relation_type",
+    "difficulty",
+    "language",
+    "rationale",
+    "plan_id",
+    "material_id",
+    "knowledge_digest",
+    "actual_pair_count",
+    "preferences"
+  ],
+  "title": "MatchingPlan",
+  "type": "object"
+}

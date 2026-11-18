@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: matching-agent
+Version: 0.1.0
+Summary: AIE1903 Matching Game Agent — team member A
+Requires-Python: >=3.12
+Requires-Dist: openai<3,>=1.66
+Requires-Dist: pydantic<3,>=2.10
+Requires-Dist: python-dotenv<2,>=1.0
+Provides-Extra: dev
+Requires-Dist: pytest<10,>=8; extra == "dev"
+Requires-Dist: pytest-asyncio<2,>=0.25; extra == "dev"

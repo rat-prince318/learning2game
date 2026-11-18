@@ -1,0 +1,30 @@
+{
+  "selected_knowledge_ids": [
+    "computing_01",
+    "computing_02",
+    "computing_03",
+    "computing_04",
+    "computing_05",
+    "computing_06"
+  ],
+  "relation_type": "component_function",
+  "difficulty": "easy",
+  "language": "zh",
+  "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。",
+  "schema_version": "1.0",
+  "plan_id": "fixture_plan_computing",
+  "material_id": "computing",
+  "knowledge_digest": "64bb9adbad94f86889069fe1cfa3cca7b5feca9db2c4ed19d1e0997894ff01f7",
+  "actual_pair_count": 6,
+  "preferences": {
+    "level": "beginner",
+    "learning_goal": "recognize",
+    "pair_count": 6,
+    "selected_knowledge_ids": null,
+    "excluded_knowledge_ids": [],
+    "weak_knowledge_ids": []
+  },
+  "warnings": [
+    "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+  ]
+}

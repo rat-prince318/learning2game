@@ -1,0 +1,104 @@
+{
+  "summary": "本轮表现提示可继续复习以下概念，并结合资料比较它们的区别。",
+  "reviews": [
+    {
+      "knowledge_id": "computing_01",
+      "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+      "source_refs": [
+        "source_computing_01"
+      ]
+    },
+    {
+      "knowledge_id": "computing_02",
+      "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+      "source_refs": [
+        "source_computing_02"
+      ]
+    }
+  ],
+  "statistics": {
+    "session_id": "fixture_session_computing",
+    "game_id": "fixture_game_computing",
+    "status": "completed",
+    "metrics": {
+      "first_attempt_accuracy": 0.8333333333333334,
+      "total_attempt_accuracy": 0.8571428571428571,
+      "completion_rate": 1.0,
+      "total_attempts": 7,
+      "total_errors": 1,
+      "hints_used": 1
+    },
+    "by_knowledge": [
+      {
+        "knowledge_id": "computing_01",
+        "first_attempt_correct": false,
+        "attempts": 2,
+        "errors": 1,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "computing_02",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 1,
+        "completed": true
+      },
+      {
+        "knowledge_id": "computing_03",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "computing_04",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "computing_05",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "computing_06",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      }
+    ],
+    "weak_knowledge_ids": [
+      "computing_01",
+      "computing_02"
+    ]
+  },
+  "completion_note": "本轮已完成；本次表现不等同于确定的知识掌握程度。",
+  "practice": {
+    "material_id": "computing",
+    "preferences": {
+      "level": "beginner",
+      "learning_goal": "recognize",
+      "pair_count": 6,
+      "selected_knowledge_ids": null,
+      "excluded_knowledge_ids": [],
+      "weak_knowledge_ids": [
+        "computing_01",
+        "computing_02"
+      ]
+    },
+    "previous_game_id": "fixture_game_computing",
+    "requires_confirmation": true
+  },
+  "warnings": []
+}

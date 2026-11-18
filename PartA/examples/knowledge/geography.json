@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "material_id": "geography",
+  "language": "zh",
+  "provenance": "fixture",
+  "knowledge": [
+    {
+      "knowledge_id": "geography_01",
+      "concept": "经线",
+      "definition": "连接南北两极、与赤道垂直的半圆弧。",
+      "relation_type": "concept_definition",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_01"
+      ],
+      "evidence": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_02",
+      "concept": "纬线",
+      "definition": "地球表面上与赤道平行的圆圈。",
+      "relation_type": "concept_definition",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_02"
+      ],
+      "evidence": "纬线: 地球表面上与赤道平行的圆圈。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_03",
+      "concept": "等高线",
+      "definition": "地图上连接海拔高度相同各点的曲线。",
+      "relation_type": "concept_definition",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_03"
+      ],
+      "evidence": "等高线: 地图上连接海拔高度相同各点的曲线。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_04",
+      "concept": "海拔",
+      "definition": "地面某点相对于平均海平面的垂直高度。",
+      "relation_type": "concept_definition",
+      "difficulty": "basic",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_04"
+      ],
+      "evidence": "海拔: 地面某点相对于平均海平面的垂直高度。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_05",
+      "concept": "海陆风",
+      "definition": "由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+      "relation_type": "concept_definition",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_05"
+      ],
+      "evidence": "海陆风: 由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_06",
+      "concept": "板块边界",
+      "definition": "相邻岩石圈板块相互接触的地带。",
+      "relation_type": "concept_definition",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_06"
+      ],
+      "evidence": "板块边界: 相邻岩石圈板块相互接触的地带。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_07",
+      "concept": "流水侵蚀",
+      "definition": "流动的水对地表岩石和土壤进行剥蚀、搬离的作用。",
+      "relation_type": "concept_definition",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_07"
+      ],
+      "evidence": "流水侵蚀: 流动的水对地表岩石和土壤进行剥蚀、搬离的作用。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    },
+    {
+      "knowledge_id": "geography_08",
+      "concept": "温室效应",
+      "definition": "大气中的某些气体吸收并再辐射地表发出的红外辐射，使地表增暖。",
+      "relation_type": "concept_definition",
+      "difficulty": "advanced",
+      "learning_objective": "Match the concept to its evidenced description.",
+      "source_refs": [
+        "source_geography_08"
+      ],
+      "evidence": "温室效应: 大气中的某些气体吸收并再辐射地表发出的红外辐射，使地表增暖。",
+      "modality": "text",
+      "quality": "reliable",
+      "warnings": []
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "source_geography_01",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 1",
+      "evidence": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_02",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 2",
+      "evidence": "纬线: 地球表面上与赤道平行的圆圈。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_03",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 3",
+      "evidence": "等高线: 地图上连接海拔高度相同各点的曲线。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_04",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 4",
+      "evidence": "海拔: 地面某点相对于平均海平面的垂直高度。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_05",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 5",
+      "evidence": "海陆风: 由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_06",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 6",
+      "evidence": "板块边界: 相邻岩石圈板块相互接触的地带。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_07",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 7",
+      "evidence": "流水侵蚀: 流动的水对地表岩石和土壤进行剥蚀、搬离的作用。",
+      "modality": "text"
+    },
+    {
+      "source_id": "source_geography_08",
+      "material_id": "geography",
+      "locator": "materials/geography.md — item 8",
+      "evidence": "温室效应: 大气中的某些气体吸收并再辐射地表发出的红外辐射，使地表增暖。",
+      "modality": "text"
+    }
+  ],
+  "warnings": [
+    "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+  ]
+}
