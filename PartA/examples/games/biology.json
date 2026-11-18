@@ -1,0 +1,73 @@
+{
+  "title": "Offline matching demonstration",
+  "instructions": "Match each concept to its description.",
+  "pairs": [
+    {
+      "pair_id": "pair_biology_01",
+      "knowledge_id": "biology_01",
+      "left": "Heart",
+      "right": "Pumps blood through the circulatory system.",
+      "explanation": "Heart: Pumps blood through the circulatory system.",
+      "source_refs": [
+        "source_biology_01"
+      ]
+    },
+    {
+      "pair_id": "pair_biology_02",
+      "knowledge_id": "biology_02",
+      "left": "Lungs",
+      "right": "Exchange oxygen and carbon dioxide between air and blood.",
+      "explanation": "Lungs: Exchange oxygen and carbon dioxide between air and blood.",
+      "source_refs": [
+        "source_biology_02"
+      ]
+    },
+    {
+      "pair_id": "pair_biology_03",
+      "knowledge_id": "biology_03",
+      "left": "Stomach",
+      "right": "Mixes food with acid and enzymes to begin substantial protein digestion.",
+      "explanation": "Stomach: Mixes food with acid and enzymes to begin substantial protein digestion.",
+      "source_refs": [
+        "source_biology_03"
+      ]
+    },
+    {
+      "pair_id": "pair_biology_04",
+      "knowledge_id": "biology_04",
+      "left": "Kidneys",
+      "right": "Filter blood and regulate water and salts by producing urine.",
+      "explanation": "Kidneys: Filter blood and regulate water and salts by producing urine.",
+      "source_refs": [
+        "source_biology_04"
+      ]
+    },
+    {
+      "pair_id": "pair_biology_05",
+      "knowledge_id": "biology_05",
+      "left": "Liver",
+      "right": "Produces bile, which helps disperse fats during digestion.",
+      "explanation": "Liver: Produces bile, which helps disperse fats during digestion.",
+      "source_refs": [
+        "source_biology_05"
+      ]
+    },
+    {
+      "pair_id": "pair_biology_06",
+      "knowledge_id": "biology_06",
+      "left": "Pancreas",
+      "right": "Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+      "explanation": "Pancreas: Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+      "source_refs": [
+        "source_biology_06"
+      ]
+    }
+  ],
+  "schema_version": "1.0",
+  "game_id": "fixture_game_biology",
+  "plan_id": "fixture_plan_biology",
+  "material_id": "biology",
+  "language": "en",
+  "relation_type": "organ_function",
+  "warnings": []
+}

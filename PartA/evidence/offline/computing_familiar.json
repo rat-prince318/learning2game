@@ -1,0 +1,504 @@
+{
+  "mode": "offline",
+  "subject": "computing",
+  "level": "familiar",
+  "model_validation_is_simulated": true,
+  "plan": {
+    "selected_knowledge_ids": [
+      "computing_05",
+      "computing_06",
+      "computing_07",
+      "computing_08",
+      "computing_01",
+      "computing_02"
+    ],
+    "relation_type": "component_function",
+    "difficulty": "medium",
+    "language": "zh",
+    "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。",
+    "schema_version": "1.0",
+    "plan_id": "plan_bd10e458bca9472eadc35e363a3ce538",
+    "material_id": "computing",
+    "knowledge_digest": "64bb9adbad94f86889069fe1cfa3cca7b5feca9db2c4ed19d1e0997894ff01f7",
+    "actual_pair_count": 6,
+    "preferences": {
+      "level": "familiar",
+      "learning_goal": "recognize",
+      "pair_count": 6,
+      "selected_knowledge_ids": null,
+      "excluded_knowledge_ids": [],
+      "weak_knowledge_ids": []
+    },
+    "warnings": [
+      "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+    ]
+  },
+  "generation": {
+    "status": "completed",
+    "game": {
+      "title": "离线配对演示",
+      "instructions": "选择概念对应的描述。",
+      "pairs": [
+        {
+          "pair_id": "pair_computing_01",
+          "knowledge_id": "computing_01",
+          "left": "CPU",
+          "right": "承担程序指令的运算与执行工作。",
+          "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+          "source_refs": [
+            "source_computing_01"
+          ]
+        },
+        {
+          "pair_id": "pair_computing_02",
+          "knowledge_id": "computing_02",
+          "left": "RAM",
+          "right": "为正在运行的程序提供易失性工作存储空间。",
+          "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+          "source_refs": [
+            "source_computing_02"
+          ]
+        },
+        {
+          "pair_id": "pair_computing_05",
+          "knowledge_id": "computing_05",
+          "left": "路由器",
+          "right": "依据网络地址选择跨网络的数据包转发路径。",
+          "explanation": "路由器: 根据网络地址在不同网络之间转发数据包。",
+          "source_refs": [
+            "source_computing_05"
+          ]
+        },
+        {
+          "pair_id": "pair_computing_06",
+          "knowledge_id": "computing_06",
+          "left": "交换机",
+          "right": "在局域网内部按 MAC 地址转发数据帧。",
+          "explanation": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+          "source_refs": [
+            "source_computing_06"
+          ]
+        },
+        {
+          "pair_id": "pair_computing_07",
+          "knowledge_id": "computing_07",
+          "left": "编译器",
+          "right": "把源语言编写的程序转换为目标语言程序。",
+          "explanation": "编译器: 将源程序翻译成目标程序。",
+          "source_refs": [
+            "source_computing_07"
+          ]
+        },
+        {
+          "pair_id": "pair_computing_08",
+          "knowledge_id": "computing_08",
+          "left": "递归",
+          "right": "利用自身调用分解问题，并依靠终止条件停止。",
+          "explanation": "递归: 函数直接或间接调用自身，并通过终止条件结束调用。",
+          "source_refs": [
+            "source_computing_08"
+          ]
+        }
+      ],
+      "schema_version": "1.0",
+      "game_id": "game_0d86e3a4197f48f0a368e96644050194",
+      "plan_id": "plan_bd10e458bca9472eadc35e363a3ce538",
+      "material_id": "computing",
+      "language": "zh",
+      "relation_type": "component_function",
+      "warnings": []
+    },
+    "validation": {
+      "passed": true,
+      "issues": [],
+      "semantic_checked": true
+    },
+    "repair_count": 0,
+    "warnings": []
+  },
+  "feedback": {
+    "summary": "本轮表现提示可继续复习以下概念，并结合资料比较它们的区别。",
+    "reviews": [
+      {
+        "knowledge_id": "computing_01",
+        "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+        "source_refs": [
+          "source_computing_01"
+        ]
+      },
+      {
+        "knowledge_id": "computing_02",
+        "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+        "source_refs": [
+          "source_computing_02"
+        ]
+      }
+    ],
+    "statistics": {
+      "session_id": "demo_fixture_e3b8cf99e259452bb6660cf0cb5b937a",
+      "game_id": "game_0d86e3a4197f48f0a368e96644050194",
+      "status": "completed",
+      "metrics": {
+        "first_attempt_accuracy": 0.8333333333333334,
+        "total_attempt_accuracy": 0.8571428571428571,
+        "completion_rate": 1.0,
+        "total_attempts": 7,
+        "total_errors": 1,
+        "hints_used": 1
+      },
+      "by_knowledge": [
+        {
+          "knowledge_id": "computing_01",
+          "first_attempt_correct": false,
+          "attempts": 2,
+          "errors": 1,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "computing_02",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 1,
+          "completed": true
+        },
+        {
+          "knowledge_id": "computing_05",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "computing_06",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "computing_07",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "computing_08",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        }
+      ],
+      "weak_knowledge_ids": [
+        "computing_01",
+        "computing_02"
+      ]
+    },
+    "completion_note": "本轮已完成；本次表现不等同于确定的知识掌握程度。",
+    "practice": {
+      "material_id": "computing",
+      "preferences": {
+        "level": "familiar",
+        "learning_goal": "recognize",
+        "pair_count": 6,
+        "selected_knowledge_ids": null,
+        "excluded_knowledge_ids": [],
+        "weak_knowledge_ids": [
+          "computing_01",
+          "computing_02"
+        ]
+      },
+      "previous_game_id": "game_0d86e3a4197f48f0a368e96644050194",
+      "requires_confirmation": true
+    },
+    "warnings": []
+  },
+  "events": [
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "design_matching_plan",
+      "call_id": "offline_c84433a52ddc4918a6ddf536f0c6d397",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "design_matching_plan",
+      "call_id": "offline_c84433a52ddc4918a6ddf536f0c6d397",
+      "fields": [],
+      "argument_bytes": 2
+    },
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "design_matching_plan",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "awaiting_confirmation",
+      "pair_count": 6
+    },
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "design_matching_plan",
+      "call_id": "offline_c84433a52ddc4918a6ddf536f0c6d397",
+      "ok": true,
+      "result_fields": [
+        "actual_pair_count",
+        "difficulty",
+        "knowledge_digest",
+        "language",
+        "material_id",
+        "plan_id",
+        "preferences",
+        "rationale",
+        "relation_type",
+        "schema_version",
+        "selected_knowledge_ids",
+        "warnings"
+      ],
+      "result_summary": {
+        "actual_pair_count": 6,
+        "warnings_count": 1
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_d36c39f39eee431f8f315da87a49e23a",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_matching_config",
+      "call_id": "offline_998bd60e8800487fa35b4027f2eb91c7",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_matching_config",
+      "call_id": "offline_998bd60e8800487fa35b4027f2eb91c7",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_matching_config",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "generating",
+      "candidate_ready": true
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_matching_config",
+      "call_id": "offline_998bd60e8800487fa35b4027f2eb91c7",
+      "ok": true,
+      "result_fields": [
+        "candidate",
+        "next_action"
+      ],
+      "result_summary": {
+        "next_action": "validate_matching_config",
+        "candidate_pair_count": 6
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "validate_matching_config",
+      "call_id": "offline_e2c37a461c0c48bb94523d32f4b42a0a",
+      "tool_number": 2
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "validate_matching_config",
+      "call_id": "offline_e2c37a461c0c48bb94523d32f4b42a0a",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validating",
+      "deterministic_issues": 0
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "validate_matching_config",
+      "request_number": 4
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validation_result",
+      "passed": true,
+      "semantic_checked": true,
+      "issue_codes": []
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "validate_matching_config",
+      "call_id": "offline_e2c37a461c0c48bb94523d32f4b42a0a",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_count",
+        "validation"
+      ],
+      "result_summary": {
+        "repair_count": 0,
+        "passed": true,
+        "semantic_checked": true,
+        "issue_count": 0,
+        "next_action": "complete"
+      },
+      "elapsed_ms": 1
+    },
+    {
+      "run_id": "run_5207908177ac4ff08177f07336ce4200",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 4,
+      "tool_calls": 2
+    },
+    {
+      "run_id": "run_46d109a71bfd4ae2b7884d80a32f7eb4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_46d109a71bfd4ae2b7884d80a32f7eb4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_94f2fa7a405d40ee822f85c7ec00acfb",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_46d109a71bfd4ae2b7884d80a32f7eb4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_94f2fa7a405d40ee822f85c7ec00acfb",
+      "fields": [
+        "session_id"
+      ],
+      "argument_bytes": 63
+    },
+    {
+      "run_id": "run_46d109a71bfd4ae2b7884d80a32f7eb4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_learning_feedback",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_46d109a71bfd4ae2b7884d80a32f7eb4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_94f2fa7a405d40ee822f85c7ec00acfb",
+      "ok": true,
+      "result_fields": [
+        "completion_note",
+        "practice",
+        "reviews",
+        "statistics",
+        "summary",
+        "warnings"
+      ],
+      "result_summary": {
+        "reviews_count": 2,
+        "warnings_count": 0
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_46d109a71bfd4ae2b7884d80a32f7eb4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    }
+  ]
+}

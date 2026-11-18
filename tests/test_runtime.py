@@ -1,3 +1,4 @@
+from pathlib import Path
 from threading import Event
 
 import pytest
@@ -7,6 +8,29 @@ from backend.cleanup import delete_material
 from backend.db import connection
 from backend.main import create_app
 from backend.services import DEMO_MATERIAL_TEXT
+
+
+def test_windows_file_lock_keeps_cleanup_pending_across_restart(tmp_path, monkeypatch):
+    app = create_app(data_dir=tmp_path, demo=True)
+    with TestClient(app) as client:
+        upload = client.post("/materials", files={"file": ("course.txt", DEMO_MATERIAL_TEXT.encode())}).json()
+        material = upload["material_id"]
+        path = tmp_path / "uploads" / (material + ".txt")
+        real_unlink = Path.unlink
+
+        def busy_file(other, *args, **kwargs):
+            if other == path:
+                raise PermissionError("File still open")
+            return real_unlink(other, *args, **kwargs)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "unlink", busy_file)
+            response = client.delete("/materials/" + material, headers={"X-Material-Token": upload["delete_token"]})
+        assert response.status_code == 202 and response.json()["file_pending"]
+        assert path.exists()
+        assert client.get("/materials/" + material + "/knowledge").status_code == 404
+    with TestClient(create_app(data_dir=tmp_path, demo=True)):
+        assert not path.exists()
 
 
 def test_restart_recovers_interrupted_work_and_cleanup_is_scoped(tmp_path):

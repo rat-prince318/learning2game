@@ -10,6 +10,7 @@ from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, FastAPI, HTTPException, Request
+from matching_agent.errors import AgentError
 from pydantic import Field, StrictBool, ValidationError
 
 from .db import connection
@@ -129,6 +130,17 @@ def _execute(app, job_id, operation, *args):
         return
     except OutputError as exc:
         message = str(exc)
+    except AgentError as exc:
+        # A may attach internal validation details. Publish only known static guidance.
+        explanations = {
+            "missing_api_key": "请在后端配置出题模型的 API 凭证，或切换为本地模式。",
+            "model_request_rejected": "请检查后端配置的模型名、凭证和工具调用权限。",
+            "model_unavailable": "模型服务繁忙，请稍后重试。",
+            "model_timeout": "模型响应超时，请稍后重试或减少本轮题量。",
+            "insufficient_knowledge": "可用知识点较少，请调低题量或增加带定义与出处的资料。",
+            "game_quality": "卡片校验需要更清楚的证据，请调整知识点或改用另一段资料。",
+        }
+        message = explanations.get(exc.code, "模型返回的内容需要重新核验，请重试本步或调整方案。")
     except TimeoutError:
         message = "The service timed out. Retry this operation."
     except ValidationError:
@@ -157,11 +169,20 @@ def _knowledge(conn, material_id) -> MaterialResult:
 
 
 def _extract(job: _Progress, material_id: str):
+    from .material_adapter import MaterialError
+
     with connection(job.app) as conn:
-        path = Path(_material(conn, material_id)["path"])
+        row = _material(conn, material_id)
+        path = Path(row["path"])
+        options = {**json.loads(row["options_json"]), "original_name": row["original_name"]}
     with job.stage("extracting"):
         try:
-            extracted = call_service(job.app, "extract", path, tool_trace=job.tools)
+            if callable(getattr(job.app.state.services, "extract_options", None)):
+                extracted = call_service(job.app, "extract_options", path, options, tool_trace=job.tools)
+            else:
+                extracted = call_service(job.app, "extract", path, tool_trace=job.tools)
+        except MaterialError as exc:
+            raise OutputError(str(exc)) from None
         except ValueError:
             if job.app.state.mode == "demo":
                 raise OutputError("Demo mode accepts only the supplied sample handout.") from None

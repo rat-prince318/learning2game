@@ -1,0 +1,67 @@
+{
+  "session_id": "fixture_session_biology",
+  "game_id": "fixture_game_biology",
+  "status": "completed",
+  "metrics": {
+    "first_attempt_accuracy": 0.8333333333333334,
+    "total_attempt_accuracy": 0.8571428571428571,
+    "completion_rate": 1.0,
+    "total_attempts": 7,
+    "total_errors": 1,
+    "hints_used": 1
+  },
+  "by_knowledge": [
+    {
+      "knowledge_id": "biology_01",
+      "first_attempt_correct": false,
+      "attempts": 2,
+      "errors": 1,
+      "hints": 0,
+      "completed": true
+    },
+    {
+      "knowledge_id": "biology_02",
+      "first_attempt_correct": true,
+      "attempts": 1,
+      "errors": 0,
+      "hints": 1,
+      "completed": true
+    },
+    {
+      "knowledge_id": "biology_03",
+      "first_attempt_correct": true,
+      "attempts": 1,
+      "errors": 0,
+      "hints": 0,
+      "completed": true
+    },
+    {
+      "knowledge_id": "biology_04",
+      "first_attempt_correct": true,
+      "attempts": 1,
+      "errors": 0,
+      "hints": 0,
+      "completed": true
+    },
+    {
+      "knowledge_id": "biology_05",
+      "first_attempt_correct": true,
+      "attempts": 1,
+      "errors": 0,
+      "hints": 0,
+      "completed": true
+    },
+    {
+      "knowledge_id": "biology_06",
+      "first_attempt_correct": true,
+      "attempts": 1,
+      "errors": 0,
+      "hints": 0,
+      "completed": true
+    }
+  ],
+  "weak_knowledge_ids": [
+    "biology_01",
+    "biology_02"
+  ]
+}

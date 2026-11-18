@@ -1,0 +1,73 @@
+{
+  "title": "离线配对演示",
+  "instructions": "选择概念对应的描述。",
+  "pairs": [
+    {
+      "pair_id": "pair_computing_01",
+      "knowledge_id": "computing_01",
+      "left": "CPU",
+      "right": "执行程序指令并完成算术和逻辑运算。",
+      "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+      "source_refs": [
+        "source_computing_01"
+      ]
+    },
+    {
+      "pair_id": "pair_computing_02",
+      "knowledge_id": "computing_02",
+      "left": "RAM",
+      "right": "临时保存正在使用的数据和程序，断电后内容通常丢失。",
+      "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+      "source_refs": [
+        "source_computing_02"
+      ]
+    },
+    {
+      "pair_id": "pair_computing_03",
+      "knowledge_id": "computing_03",
+      "left": "固态硬盘",
+      "right": "使用闪存保存数据，断电后仍能保留内容。",
+      "explanation": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+      "source_refs": [
+        "source_computing_03"
+      ]
+    },
+    {
+      "pair_id": "pair_computing_04",
+      "knowledge_id": "computing_04",
+      "left": "操作系统",
+      "right": "管理计算机硬件资源，并为应用程序提供运行服务。",
+      "explanation": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+      "source_refs": [
+        "source_computing_04"
+      ]
+    },
+    {
+      "pair_id": "pair_computing_05",
+      "knowledge_id": "computing_05",
+      "left": "路由器",
+      "right": "根据网络地址在不同网络之间转发数据包。",
+      "explanation": "路由器: 根据网络地址在不同网络之间转发数据包。",
+      "source_refs": [
+        "source_computing_05"
+      ]
+    },
+    {
+      "pair_id": "pair_computing_06",
+      "knowledge_id": "computing_06",
+      "left": "交换机",
+      "right": "依据设备的 MAC 地址在局域网内转发数据帧。",
+      "explanation": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+      "source_refs": [
+        "source_computing_06"
+      ]
+    }
+  ],
+  "schema_version": "1.0",
+  "game_id": "fixture_game_computing",
+  "plan_id": "fixture_plan_computing",
+  "material_id": "computing",
+  "language": "zh",
+  "relation_type": "component_function",
+  "warnings": []
+}

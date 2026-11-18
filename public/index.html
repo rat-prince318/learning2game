@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#123f43" />
+    <meta name="description" content="把课件变成有来源的配对练习，再根据自己的学习记录复习。" />
+    <title>Learning2Game 学习配对工作室</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/js/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <header class="site-header">
+      <a class="brand" href="#create" aria-label="Learning2Game 创建练习"
+        ><span class="brand-mark" aria-hidden="true">L<span>↔</span>G</span
+        ><span>Learning<span class="brand-two">2</span>Game<small>学习配对工作室</small></span></a
+      >
+      <nav aria-label="学习流程" class="steps">
+        <a href="#create" data-route="create"><span>1</span>创建练习</a>
+        <a href="#play" data-route="play"><span>2</span>配对练习</a>
+        <a href="#report" data-route="report"><span>3</span>学习报告</a>
+      </nav>
+      <button id="mode-button" class="mode-button" type="button" aria-haspopup="dialog">
+        连接中
+      </button>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="global-error" class="error-banner" role="alert" hidden>
+        <div>
+          <strong>请检查本次操作</strong>
+          <p id="error-message"></p>
+        </div>
+        <button id="retry-global" type="button" class="button small">重试</button
+        ><button id="dismiss-error" type="button" class="icon-button" aria-label="关闭提示">
+          ×
+        </button>
+      </div>
+      <section id="page-create" class="page" aria-labelledby="create-title">
+        <div class="studio-hero">
+          <div class="studio-lead">
+            <h1 id="create-title" tabindex="-1">把课件变成<br /><em>配对练习。</em></h1>
+            <p>
+              选一段课件，或从植物细胞示例开始。<br />每张卡片都有出处，每轮都有自己的复习记录。
+            </p>
+            <div class="hero-actions">
+              <button id="sample-button" class="button primary" type="button">
+                用细胞讲义试一轮 <span aria-hidden="true">→</span></button
+              ><a class="hero-link" href="#upload-panel" id="go-upload">使用自己的资料 ↓</a>
+            </div>
+          </div>
+          <figure class="hero-figure">
+            <img
+              src="/examples/cell-diagram.svg"
+              alt="植物细胞剖面示意，标注细胞核、叶绿体、液泡等结构"
+            />
+            <figcaption><span>植物细胞</span><span>结构与功能</span></figcaption>
+          </figure>
+        </div>
+        <div class="create-grid">
+          <div class="create-inputs">
+            <section id="upload-panel" class="panel" aria-labelledby="material-title">
+              <div class="panel-heading"><h2 id="material-title">学习资料</h2></div>
+              <div id="drop-zone" class="drop-zone">
+                <span class="upload-symbol" aria-hidden="true">↥</span
+                ><strong>把一份课件拖到这里</strong>
+                <p id="upload-types">支持文档和图片</p>
+                <label class="button secondary file-label" for="material-file">选择文件</label
+                ><input
+                  id="material-file"
+                  class="visually-hidden"
+                  type="file"
+                  accept=".pdf,.txt,.md,.docx,.pptx,.png,.jpg,.jpeg"
+                  aria-describedby="upload-types"
+                />
+              </div>
+              <div id="selected-file" class="selected-file" hidden>
+                <div><strong id="file-name"></strong><small id="file-size"></small></div>
+                <button id="remove-file" class="text-button" type="button">移除</button>
+              </div>
+              <div id="pdf-options" class="field" hidden>
+                <label for="pdf-pages">指定 PDF 页码</label
+                ><input
+                  id="pdf-pages"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="例如 1,3-5"
+                  aria-describedby="page-help"
+                /><small id="page-help">页码从 1 开始，最多选 10 页。留空使用默认范围。</small>
+              </div>
+              <details id="file-preview" class="preview-details" hidden>
+                <summary>预览文字</summary>
+                <pre id="preview-content"></pre>
+              </details>
+              <p class="privacy-note" id="privacy-note"></p>
+              <a id="vision-example" class="text-button" href="/examples/campus-printing.pdf" download hidden>下载校园打印图文示例（PDF）</a>
+            </section>
+            <section class="panel" aria-labelledby="preferences-title">
+              <div class="panel-heading"><h2 id="preferences-title">练习设置</h2></div>
+              <form id="preferences-form">
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="learner-level">学习水平</label
+                    ><select id="learner-level">
+                      <option value="beginner">刚接触这门课</option>
+                      <option value="familiar">已经有基础</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="learning-goal">练习目标</label
+                    ><select id="learning-goal">
+                      <option value="recognize">认识概念</option>
+                      <option value="distinguish">区分易混概念</option>
+                      <option value="preview">课前预习</option>
+                      <option value="review">课后复习</option>
+                      <option value="classroom">课堂练习</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="difficulty">难度</label
+                    ><select id="difficulty">
+                      <option value="easy">基础</option>
+                      <option value="medium" selected>标准</option>
+                      <option value="hard">挑战</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="pair-count">期望题量</label
+                    ><select id="pair-count">
+                      <option value="2">2 对</option>
+                      <option value="4">4 对</option>
+                      <option value="6" selected>6 对</option>
+                      <option value="8">8 对</option>
+                      <option value="12">12 对</option>
+                    </select>
+                  </div>
+                </div>
+                <label class="checkbox-label"
+                  ><input id="timer-enabled" type="checkbox" />限时练习</label
+                >
+                <div id="timer-options" class="field" hidden>
+                  <label for="time-limit">本轮时长</label
+                  ><select id="time-limit">
+                    <option value="120">2 分钟</option>
+                    <option value="180" selected>3 分钟</option>
+                    <option value="300">5 分钟</option>
+                  </select>
+                </div>
+                <button id="analyze-button" class="button primary full-width" type="submit">
+                  分析资料并推荐方案 →
+                </button>
+              </form>
+            </section>
+          </div>
+          <div class="create-output">
+            <section class="panel workflow-panel" aria-labelledby="workflow-title">
+              <div class="panel-heading">
+                <h2 id="workflow-title">制作进度</h2>
+                <span id="state-tag" class="tag">等待选材</span>
+              </div>
+              <ol id="workflow-steps" class="workflow-steps">
+                <li data-step="material">
+                  <span>1</span>
+                  <div><strong>读懂课件</strong><small>提取知识点，标出原始出处</small></div>
+                </li>
+                <li data-step="plan">
+                  <span>2</span>
+                  <div><strong>确认练习范围</strong><small>挑选这一轮想练的知识点</small></div>
+                </li>
+                <li data-step="generate">
+                  <span>3</span>
+                  <div><strong>生成配对卡</strong><small>校验配对关系、数量和来源</small></div>
+                </li>
+                <li data-step="ready">
+                  <span>4</span>
+                  <div><strong>开始练习</strong><small>配对后查看报告，重练薄弱点</small></div>
+                </li>
+              </ol>
+              <p id="job-status" role="status">请选择课件或试用示例。</p>
+            </section>
+            <section id="plan-panel" class="panel plan-panel" aria-labelledby="plan-title" hidden>
+              <h2 id="plan-title">推荐练习方案</h2>
+              <p id="plan-rationale"></p>
+              <div id="plan-summary" class="plan-summary"></div>
+              <fieldset class="choice-set">
+                <legend>选择本轮知识点（2 至 12 个）</legend>
+                <div id="plan-choices"></div>
+              </fieldset>
+              <label class="field" for="plan-difficulty"
+                >本轮难度<select id="plan-difficulty">
+                  <option value="easy">基础</option>
+                  <option value="medium">标准</option>
+                  <option value="hard">挑战</option>
+                </select></label
+              >
+              <p id="plan-warnings" class="muted"></p>
+              <label class="checkbox-label"
+                ><input id="confirm-plan" type="checkbox" />我已核对本轮知识点与练习设置</label
+              ><button
+                id="generate-button"
+                type="button"
+                class="button primary full-width"
+                disabled
+              >
+                确认方案并生成游戏 →
+              </button>
+            </section>
+            <section id="ready-panel" class="panel ready-panel" hidden>
+              <span class="ready-check" aria-hidden="true">✓</span>
+              <div>
+                <h2>配对卡已就绪</h2>
+                <p id="ready-description"></p>
+                <button id="start-button" type="button" class="button primary">开始配对 →</button>
+              </div>
+            </section>
+            <section id="knowledge-panel" class="panel" aria-labelledby="knowledge-title" hidden>
+              <div class="panel-heading">
+                <h2 id="knowledge-title">知识点与出处</h2>
+                <span id="knowledge-count" class="tag"></span>
+              </div>
+              <div id="knowledge-warnings"></div>
+              <div id="knowledge-list" class="knowledge-list"></div>
+            </section>
+            <details class="panel tool-details">
+              <summary>查看工具调用记录</summary>
+              <p id="trace-note" class="muted"></p>
+              <ol id="tool-log" class="tool-log"></ol>
+            </details>
+          </div>
+        </div>
+      </section>
+      <section id="page-play" class="page" aria-labelledby="play-title" hidden>
+        <div class="page-heading compact">
+          <div>
+            <h1 id="play-title" tabindex="-1">配对练习</h1>
+            <p class="lede">在左栏选一个概念，再到右栏找到对应的描述。</p>
+          </div>
+          <button id="restart-button" type="button" class="button secondary">↻ 重新开始</button>
+        </div>
+        <div class="game-stats">
+          <div><small>配对进度</small><strong id="play-progress">0 / 0</strong></div>
+          <div><small>本轮错误</small><strong id="play-errors">0</strong></div>
+          <div><small>使用提示</small><strong id="play-hints">0</strong></div>
+          <div><small id="time-label">已用时间</small><strong id="play-time">00:00</strong></div>
+          <progress id="play-progress-bar" max="1" value="0" aria-label="配对完成进度"></progress>
+        </div>
+        <div class="play-grid">
+          <section class="panel board-panel" aria-label="配对卡片">
+            <div id="selection-status" class="selection-status" role="status"></div>
+            <div class="matching-board">
+              <div class="card-column">
+                <h2>概念与结构</h2>
+                <div id="left-cards" role="group" aria-label="左侧卡片"></div>
+              </div>
+              <div class="board-link" aria-hidden="true">↔</div>
+              <div class="card-column">
+                <h2>释义与关系</h2>
+                <div id="right-cards" role="group" aria-label="右侧卡片"></div>
+              </div>
+            </div>
+          </section>
+          <aside class="play-sidebar">
+            <section class="panel feedback-panel">
+              <h2>配对反馈</h2>
+              <div id="attempt-feedback" class="feedback-content" aria-live="polite"></div>
+              <div id="attempt-retry" hidden>
+                <button id="retry-attempt-button" type="button" class="button secondary">
+                  重试本次配对</button
+                ><button id="sync-session-button" type="button" class="text-button">
+                  同步会话进度
+                </button>
+              </div>
+            </section>
+            <section class="panel hint-panel">
+              <h2>找一点线索</h2>
+              <p>选中左侧卡片后可以查看提示。</p>
+              <button id="hint-button" class="button secondary full-width" type="button" disabled>
+                查看当前概念的提示
+              </button>
+              <div id="hint-content" class="hint-content" aria-live="polite" hidden></div>
+            </section>
+            <button id="finish-button" type="button" class="button primary full-width">
+              结束并查看报告 →
+            </button>
+            <p class="muted sidebar-note">可提前结束，剩余知识点会列入复习清单。</p>
+          </aside>
+        </div>
+      </section>
+      <section id="page-report" class="page" aria-labelledby="report-title" hidden>
+        <div class="page-heading compact">
+          <div>
+            <h1 id="report-title" tabindex="-1">本轮<span>学习报告</span></h1>
+            <p id="report-subtitle" class="lede"></p>
+          </div>
+          <button id="export-report" class="button secondary" type="button">下载报告 ↓</button>
+        </div>
+        <div id="report-content"></div>
+        <div class="report-actions">
+          <button id="practice-button" type="button" class="button primary">再练薄弱知识点 →</button
+          ><button id="report-restart" type="button" class="button secondary">重玩这组卡片</button
+          ><button id="new-material" type="button" class="text-button">换一份资料</button>
+        </div>
+      </section>
+      <section id="empty-page" class="panel empty-page" hidden>
+        <h1 id="empty-title" tabindex="-1">等待创建练习</h1>
+        <p id="empty-message"></p>
+        <a class="button secondary" href="#create">去创建练习 →</a>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span>Learning2Game</span>
+      <div>
+        <button id="privacy-button" class="text-button" type="button">资料与隐私</button
+        ><button id="clear-data-button" class="text-button" type="button">清理本次记录</button>
+      </div>
+    </footer>
+    <dialog id="privacy-dialog">
+      <div class="dialog-heading">
+        <h2>资料与隐私</h2>
+        <button class="icon-button" data-close-dialog type="button" aria-label="关闭">×</button>
+      </div>
+      <p id="privacy-detail"></p>
+      <p>
+        学习资料和会话数据保存在服务端。浏览器保存本轮练习的引用，供刷新后继续。可在下方管理这台浏览器上传的资料。
+      </p>
+      <h3>本机资料</h3>
+      <ul id="saved-materials" class="saved-materials"></ul>
+    </dialog>
+    <dialog id="confirm-dialog">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="icon-button" data-close-dialog type="button" aria-label="关闭">×</button>
+      </div>
+      <p id="dialog-message"></p>
+      <div class="dialog-actions">
+        <button id="cancel-dialog" class="button secondary" type="button">取消</button
+        ><button id="confirm-dialog-action" class="button primary" type="button">确认</button>
+      </div>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </body>
+</html>

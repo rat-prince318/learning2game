@@ -129,7 +129,7 @@ class DemoServices:
         if len(knowledge) < preferences.pair_count:
             warnings.append(f"本轮可选知识点只有 {len(knowledge)} 个，已相应减少卡片数量。")
         return MatchingPlan(
-            title=f"机器学习入门 · {purpose[preferences.goal]}（示例）",
+            title=f"机器学习入门：{purpose[preferences.goal]}（示例）",
             goal=preferences.goal,
             learner_level=preferences.learner_level,
             difficulty=preferences.difficulty,

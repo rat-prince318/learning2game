@@ -42,10 +42,14 @@ class KnowledgeItem(StrictModel):
     example: CardText | None = None
     knowledge_type: Title | None = None
     source_type: Title | None = None
+    evidence: CardText | None = None
+    source_ids: list[Identifier] = Field(default_factory=list, max_length=100)
+    page: int | None = Field(default=None, ge=1)
 
 
 class MaterialResult(StrictModel):
     knowledge: list[KnowledgeItem] = Field(min_length=1, max_length=1000)
+    warnings: list[SourceRef] = Field(default_factory=list, max_length=24)
 
     @model_validator(mode="after")
     def distinct_items(self) -> Self:

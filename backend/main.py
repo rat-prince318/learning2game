@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import materials, pipeline, sessions
@@ -76,18 +77,30 @@ def _load_services(spec: str):
 
 def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
                services: Services | None = None, max_upload_bytes: int | None = None) -> FastAPI:
+    # The old demo fixture remains available for existing D API clients.
+    configured = os.getenv("EDUGAME_MODE", "").strip().lower()
     if demo is None:
-        demo = os.getenv("EDUGAME_DEMO", "0").lower() in {"1", "yes", "true"}
+        demo = services is None and (configured == "demo" or
+               (not configured and os.getenv("EDUGAME_DEMO", "0").lower() in {"1", "yes", "true"}))
     spec = os.getenv("EDUGAME_SERVICE_FACTORY", "")
     if demo and (services is not None or spec):
         raise ValueError("Choose one service mode: explicit demo or an A/B adapter.")
     if demo:
         services = DemoServices()
-    elif services is None and spec:
+        mode = "demo"
+    elif services is not None:
+        mode = "integrated"
+    elif spec:
         services = _load_services(spec)
-
-    mode = "demo" if demo else ("integrated" if services is not None else "unconfigured")
-    root = Path(data_dir or os.getenv("EDUGAME_DATA_DIR") or Path(".local", "demo" if demo else "live")).resolve()
+        mode = "integrated"
+    else:
+        mode = configured or "offline"
+        if mode not in {"offline", "live", "unconfigured"}:
+            raise ValueError("EDUGAME_MODE must be offline, live or demo.")
+        if mode != "unconfigured":
+            from .integration import CourseServices
+            services = CourseServices(live=(mode == "live"))
+    root = Path(data_dir or os.getenv("EDUGAME_DATA_DIR") or Path(".local", mode)).resolve()
 
     @asynccontextmanager
     async def lifespan(app):
@@ -100,15 +113,15 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
             log.info("EduGame backend ready (mode=%s)", mode)
             yield
 
-    app = FastAPI(title="EduGame Agent API", version="0.1.0", lifespan=lifespan,
-                  responses={code: {"model": APIError} for code in (400, 404, 409, 413, 415, 422, 500, 503)})
+    app = FastAPI(title="Learning2Game API", version="1.0.0", lifespan=lifespan,
+                  responses={code: {"model": APIError} for code in (400, 403, 404, 409, 413, 415, 422, 500, 503)})
     app.state.data_dir = root
     app.state.db_path = root / "edugame.sqlite3"
     app.state.upload_dir = root / "uploads"
     app.state.mode = mode
     app.state.services = services
     app.state.service_slots = BoundedSemaphore(4)
-    app.state.service_timeout = float(os.getenv("EDUGAME_SERVICE_TIMEOUT", "60"))
+    app.state.service_timeout = float(os.getenv("EDUGAME_SERVICE_TIMEOUT", "400" if mode == "live" else "60"))
     if not 0 < app.state.service_timeout <= 600:
         raise ValueError("EDUGAME_SERVICE_TIMEOUT must be positive and at most 600 seconds.")
     if max_upload_bytes is None:
@@ -118,7 +131,7 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
     app.state.max_upload_bytes = max_upload_bytes
     origins = os.getenv("EDUGAME_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in origins.split(",") if x.strip()],
-                       allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
+                       allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-Material-Token"])
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):
@@ -140,7 +153,8 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
     def health():
         with connection(app) as conn:
             conn.execute("SELECT 1")
-        return {"status": "ok", "mode": mode, "max_upload_bytes": max_upload_bytes}
+        return {"service": "learning2game", "status": "ok", "mode": mode, "external_models": mode in {"live", "integrated"},
+                "max_upload_bytes": max_upload_bytes, "supported_extensions": list(materials.MEDIA)}
 
     @app.get("/demo/material", response_class=PlainTextResponse, tags=["demo"])
     def sample_material():
@@ -158,6 +172,8 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
     app.include_router(materials.router)
     app.include_router(pipeline.router)
     app.include_router(sessions.router)
+    app.mount("/", StaticFiles(directory=Path(__file__).resolve().parents[1] / "public", html=True),
+              name="studio")
     return app
 
 

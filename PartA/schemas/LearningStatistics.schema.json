@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "KnowledgePerformance": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "minLength": 1,
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "first_attempt_correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Attempt Correct"
+        },
+        "attempts": {
+          "minimum": 0,
+          "title": "Attempts",
+          "type": "integer"
+        },
+        "errors": {
+          "minimum": 0,
+          "title": "Errors",
+          "type": "integer"
+        },
+        "hints": {
+          "minimum": 0,
+          "title": "Hints",
+          "type": "integer"
+        },
+        "completed": {
+          "title": "Completed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "attempts",
+        "errors",
+        "hints",
+        "completed"
+      ],
+      "title": "KnowledgePerformance",
+      "type": "object"
+    },
+    "LearningMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "first_attempt_accuracy": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Attempt Accuracy"
+        },
+        "total_attempt_accuracy": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Attempt Accuracy"
+        },
+        "completion_rate": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Completion Rate",
+          "type": "number"
+        },
+        "total_attempts": {
+          "minimum": 0,
+          "title": "Total Attempts",
+          "type": "integer"
+        },
+        "total_errors": {
+          "minimum": 0,
+          "title": "Total Errors",
+          "type": "integer"
+        },
+        "hints_used": {
+          "minimum": 0,
+          "title": "Hints Used",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "completion_rate",
+        "total_attempts",
+        "total_errors",
+        "hints_used"
+      ],
+      "title": "LearningMetrics",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "session_id": {
+      "minLength": 1,
+      "title": "Session Id",
+      "type": "string"
+    },
+    "game_id": {
+      "minLength": 1,
+      "title": "Game Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "completed",
+        "exited"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "metrics": {
+      "$ref": "#/$defs/LearningMetrics"
+    },
+    "by_knowledge": {
+      "items": {
+        "$ref": "#/$defs/KnowledgePerformance"
+      },
+      "title": "By Knowledge",
+      "type": "array"
+    },
+    "weak_knowledge_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Weak Knowledge Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "session_id",
+    "game_id",
+    "status",
+    "metrics",
+    "by_knowledge",
+    "weak_knowledge_ids"
+  ],
+  "title": "LearningStatistics",
+  "type": "object"
+}

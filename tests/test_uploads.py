@@ -79,7 +79,8 @@ def test_invalid_bytes_size_and_multipart_do_not_create_files(tmp_path):
         assert not list((tmp_path / "uploads").iterdir())
 
 
-def test_unconfigured_mode_and_browser_cors(tmp_path):
+def test_unconfigured_mode_and_browser_cors(tmp_path, monkeypatch):
+    monkeypatch.setenv("EDUGAME_MODE", "unconfigured")
     with TestClient(create_app(data_dir=tmp_path, demo=False)) as client:
         assert client.get("/health").json()["mode"] == "unconfigured"
         assert client.get("/demo/game").status_code == 404

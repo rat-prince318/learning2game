@@ -49,6 +49,12 @@ def initialize(app):
         db.execute("PRAGMA journal_mode = WAL")
         schema = Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
         db.executescript(schema)
+        # Preserve uploads and sessions from earlier D checkouts.
+        columns = {row[1] for row in db.execute("PRAGMA table_info(materials)")}
+        if "options_json" not in columns:
+            db.execute("ALTER TABLE materials ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'")
+        if "delete_token_hash" not in columns:
+            db.execute("ALTER TABLE materials ADD COLUMN delete_token_hash TEXT")
         db.execute(
             """UPDATE jobs SET status='failed', error='Server restarted. Retry this operation.',
                       updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')

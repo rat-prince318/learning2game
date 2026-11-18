@@ -2,7 +2,8 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS materials (
     id TEXT PRIMARY KEY, original_name TEXT NOT NULL, path TEXT NOT NULL UNIQUE,
-    media_type TEXT NOT NULL, result_json TEXT,
+    media_type TEXT NOT NULL, result_json TEXT, options_json TEXT NOT NULL DEFAULT '{}',
+    delete_token_hash TEXT,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 

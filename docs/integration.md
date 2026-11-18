@@ -1,73 +1,84 @@
-# D 后端对接说明
+# 系统对接与验收
 
-## 一轮游戏怎样跑通
+启动器在同一地址提供游戏、静态资源和 FastAPI。启动后可用 `/docs` 试接口，或用 `/openapi.json` 获取结构定义。开发时先查 `GET /health`，它会返回运行模式、上传上限和允许的扩展名。
 
-生产者和使用者共用同一套 [Python 模型](../backend/models.py)。C 可以在启动后的 `/docs` 查看请求样例和响应字段，通过 `/openapi.json` 获取机器可读的接口说明。开发时用 `GET /health` 区分 `demo`、`integrated` 和还没有适配器的 `unconfigured`。
+## 从资料到下一轮练习
 
-| 用户动作 | 接口 | 前端接下来做什么 |
+| 动作 | 调用 | 下一步 |
 | --- | --- | --- |
-| 上传课件 | `POST /materials`，multipart 的文件字段名为 `file` | 保存 `material_id`、`job_id`，轮询 `GET /jobs/{job_id}`。失败后可 `POST /materials/{material_id}/retry`。 |
-| 看提取结果 | `GET /materials/{material_id}/knowledge` | 处理完成后展示 `knowledge[]` 中的术语、解释、来源。图片也通过相同上传接口交给 B。 |
-| 选学习偏好 | `POST /matching-plans` | 提交材料 ID 和偏好；任务到达 `awaiting_confirmation` 后，取 `result.plan_id`、`result.plan`，展示知识点和推荐理由。 |
-| 确认或调整方案 | `POST /games` | 提交 `plan_id`、`confirmed: true`，修改过方案时附完整的 `plan`。生成任务完成后取 `result.game_id`。 |
-| 开始或重玩 | `GET /games/{game_id}`、`POST /games/{game_id}/sessions` | 显示两组公开卡片；保存新返回的 `session_id`。同一个游戏每次重玩会使用独立会话。 |
-| 配对、用提示 | `POST /sessions/{session_id}/attempts`、`POST /sessions/{session_id}/hints` | 根据服务端结果更新界面。配对成功会返回本对解释与出处。 |
-| 刷新 | `GET /sessions/{session_id}` | 按 `game_id` 重载关卡，恢复已配对的公开卡片、错误数和提示次数。 |
-| 结束或提前交卷 | `POST /sessions/{session_id}/finish` | 返回并保存统计；之后可 `GET /sessions/{session_id}/report` 重读。 |
-| 获取学习建议 | `POST /sessions/{session_id}/feedback` | 轮询，完成后展示 `result.feedback`；建议生成失败时仍可查看统计。 |
-| 重点再练 | `POST /sessions/{session_id}/practice`，可选 `preferences` | 等待新的待确认方案，继续走确认、建局流程。只有一个薄弱点时加一个已完成的概念作对照。 |
+| 上传 | `POST /materials`，multipart 字段 `file`，可选 `pages`（PDF 页码，如 `1,3`）、`include_images` | 保存材料 ID、任务 ID 和仅在上传时返回的 `delete_token`。用 `GET /jobs/{id}` 轮询。 |
+| 看提取结果 | `GET /materials/{id}/knowledge` | 展示术语、定义、证据、页码或段落，以及材料处理提示。提取失败可 `POST /materials/{id}/retry`。 |
+| 推荐方案 | `POST /matching-plans`，传 `material_id`、`preferences` | 任务停在 `awaiting_confirmation` 时展示 `result.plan` 与 `result.plan_id`。 |
+| 修改和确认 | `POST /games`，传 `plan_id`、`confirmed: true`；有修改则附完整 `plan` | 生成完成后读取 `result.game_id`。不同资料的知识点不能混入同一方案。 |
+| 建局 | `GET /games/{id}`、`POST /games/{id}/sessions` | 返回分别打乱的左右卡片与新的匿名会话。重玩使用新的会话 ID。 |
+| 配对与提示 | `POST /sessions/{id}/attempts`、`POST /sessions/{id}/hints` | 依据服务端结果锁定卡片、记录用过的提示并展示配对成功后的出处。 |
+| 恢复进度 | `GET /sessions/{id}` | 取得已配对的公开 ID、错误数与提示计数。浏览器持有的未确认事件可按原事件 ID 重试。 |
+| 交卷与建议 | `POST /sessions/{id}/finish`、`GET /sessions/{id}/report`、`POST /sessions/{id}/feedback` | 前两者返回逐项统计，反馈任务返回来源关联的复习建议。 |
+| 重点再练 | `POST /sessions/{id}/practice` | 从薄弱或尚未完成的知识点开始，等待新的方案确认。只剩一个目标时加入一个已学知识点作对照。 |
+| 删除 | `DELETE /materials/{id}`，请求头 `X-Material-Token` | 任务结束后，资料、游戏、会话和报告一起清理。 |
 
-请求个性化方案的示例。学习水平支持 `beginner / familiar`，目标支持 `recognize / distinguish / preview / review / classroom`，难度支持 `easy / medium / hard`，题量为 2–12 对。
+请求学习方案时可提交下面的偏好。题量支持 2–12 对，材料可用项少于请求数量时会返回实际题量及提示。
 
 ```json
-{"material_id":"<上传所得 ID>","preferences":{"learner_level":"beginner","goal":"recognize","difficulty":"easy","pair_count":6}}
+{"material_id":"<材料 ID>","preferences":{"learner_level":"beginner","goal":"recognize","difficulty":"easy","pair_count":6}}
 ```
 
-配对时使用公开卡片的 `id`。每次新动作生成新 `event_id`，例如浏览器的 `crypto.randomUUID()`；同一次网络重试复用原 ID 和原请求体。提示只提交 `event_id` 和 `left_id`。
+配对的请求体如下。提示只需左卡片 ID 和事件 ID。同一动作通过原 ID 重试，返回第一次的判定；复用 ID 提交另一动作返回 409。
 
 ```json
 {"event_id":"<本次点击的 UUID>","left_id":"<左卡片 ID>","right_id":"<右卡片 ID>"}
 ```
 
-耗时请求先返回 HTTP 202。建议每 0.5–1 秒查询一次任务；`completed`、`failed`、`awaiting_confirmation` 都是该请求的轮询终点。确认阶段重复发送同一方案会返回已有任务，生成失败可用同一入口显式重试。服务重启会把中断的工作标成失败，已保存的游戏和会话可继续使用。
+耗时接口先返回 202。轮询遇到 `completed`、`failed` 或 `awaiting_confirmation` 时应停止。任务还会返回各阶段的 `stages_ms` 和实际工具记录 `tool_calls`。已完成的会话与报告保存在 SQLite，进程重启会把中断的任务标为可重试的失败。
 
-HTTP 错误形如 `{"error":{"code":409,"message":"Session has finished"}}`。找不到对象返回 404，状态冲突或复用事件 ID 提交不同动作返回 409，不支持的格式返回 415，超限返回 413，非法输入一般返回 422，未配真实服务返回 503。异步任务已受理后的失败记录在 `job.status` 和 `job.error`。
+## 学习统计与实验
 
-## A、B 如何接入
+- 首次正确率 = 首次答对的知识点数 ÷ 至少尝试过一次的知识点数。总尝试正确率 = 正确配对次数 ÷ 有效尝试次数。分母为零时率值为 `null`。
+- 完成率 = 已配对数量 ÷ 本轮总数。例：四对中第一对先错后对、第二对首次正确，其余两对未动，三项指标依次为 1/2、2/3 和 2/4。
+- `concepts[]` 给出每个知识点的尝试数、错误数、首次结果、提示数、出处和解释。答错、用过提示或尚未完成的知识点进入复习名单。
+- 使用 `python -m backend.metrics --data-dir .local/offline` 可汇总当前目录的任务成功率和各阶段耗时。换成 `.local/live` 可查看模型模式的记录。生成成功率按结束的生成任务计算，重试是另一次任务。知识点质量与图示理解需要配套人工核查。
 
-[Services 协议](../backend/services.py) 有四个同步方法，适配器可以把它们分别转给 A、B 的模块。无参工厂返回这个适配器，在本机的 `.env` 里把 `EDUGAME_SERVICE_FACTORY` 设为实际可导入的 `包.模块:工厂函数`，并设 `EDUGAME_DEMO=0`。也可以在集成测试中通过 `create_app(data_dir=..., services=...)` 注入对象。
+## A、B、C、D 怎样连接
 
-| 方法 | 提供方 | 输入与返回 |
-| --- | --- | --- |
-| `extract(path)` | B，或 A 调用 B 工具的入口 | 本地已校验的文件路径 → `MaterialResult`；各知识点需有稳定 ID、定义与页码、图号或段落出处。 |
-| `plan(knowledge, preferences)` | A | 当前可用的知识点和偏好 → `MatchingPlan`。此时用户尚未确认。 |
-| `generate(knowledge, plan, previous=None)` | A | 已确认范围 → 经 A 语义校验的 `GameConfigInternal`。再练时会传上一局内部配置，供改写例子。D 再核对 ID、覆盖范围和来源，并生成公开卡片。 |
-| `feedback(report, knowledge)` | A | D 计算的逐项表现和本轮带出处的知识点 → 可给学生阅读的建议。 |
+- B 将原文段落、表格或图示关系转换为 `MaterialResult`，保留知识点 ID、来源 ID 和证据。真实模型输入受页数、图片数和文本块数限制。
+- A 的 `MatchingAgent` 调用方案、生成、校验及反馈工具。适配器处理选定范围、学习偏好、已确认的设置和上一轮卡片。生成和反馈均可单独失败或重试。
+- C 负责浏览器交互与恢复，D 负责上传、持久化和权威判定。浏览器从公开配置获取卡片。答案映射只存于服务端。
+- 团队组合入口为 [CourseServices](../backend/integration.py)，共享模型在 [backend/models.py](../backend/models.py)，A 自身的协议在 [PartA/src/matching_agent](../PartA/src/matching_agent/)。已有外部适配器仍可用 `EDUGAME_SERVICE_FACTORY=包.模块:工厂函数` 注入。
 
-A、B 可用 `backend.provider.trace_tool` 包住真正执行工具的代码。任务响应 `tool_calls` 会留下静态工具名、成功或失败以及毫秒耗时。演示模式的工具记录为空。答案、提示词和课件正文均不进入这份记录。适配器须将材料作为待分析的数据，用供应商客户端设置请求超时；如实现内部重试，应限制次数并计入服务总时限。
+## 运行环境与清理
 
-```python
-from backend.provider import trace_tool
+- 默认在本机运行。每个数据目录运行一个服务进程。若对外提供服务，需要为部署环境配置访问控制、HTTPS 和模型调用配额。匿名会话适用于个人演示、教师投屏或受控课堂环境。
+- 每份上传默认 10 MiB，PDF 最多 80 页，显式选页单次最多 10 页，单图最多 1600 万像素。Office 文件会校验容器类型、宏和展开大小。数据目录内的 `uploads/` 保存文件，`edugame.sqlite3` 保存业务记录。
+- 默认使用 `.local/offline` 或 `.local/live`。设置 `EDUGAME_DATA_DIR` 可更换目录。每个后台服务阶段默认限时为本地 60 秒、模型模式 400 秒，可通过 `EDUGAME_SERVICE_TIMEOUT` 调整。生成阶段包含多次工具调用、校验和必要的修复，浏览器可轮询进度。超时结果会被丢弃。
+- B 的服务设置为 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_TEXT_MODEL`、`LLM_VISION_MODEL`。A 使用 `DEEPSEEK_BASE_URL`、`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`，所选服务需支持工具调用与 JSON 输出。组内分发代码时使用配置示例，真实密钥留在本机。
+- 管理员需要清理较早上传、缺少浏览器删除凭证的资料时，可停服后运行 `python -m backend.cleanup --data-dir <数据目录> --material <材料ID>`。
 
-with trace_tool("read_pdf"):
-    pages = read_pdf(path)  # B 实现的真实工具
+## 开发验证
+
+在项目根目录使用同一 Python 环境运行：
+
+```shell
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+npm ci
+npm test
+npm run test:e2e
 ```
 
-## 判分和实验统计
+Node.js 用于运行网页测试，日常启动只需 Python。Playwright 需要本机有可用的浏览器。常规测试使用临时资料和本地运行模式。带 `live` 标记的 A 端测试需另行启用，运行会产生外部调用。
 
-- **首次正确率**是首次配对正确的知识点数除以至少尝试过一次的知识点数。**总尝试正确率**是正确配对次数除以有效尝试次数。分母为零返回 `null`，C 可显示“尚未尝试”。
-- **完成率**是已配对数量除以本轮总数。报告用 `concepts[]` 给出每个知识点的尝试数、错误数、首次结果、提示数、解释和来源。首次错误、使用提示或尚未完成都会进入待复习名单。
-- 举例而言，四对卡片中，第一对先错后对，第二对首次正确，其余两对没有尝试。首次正确率为 1/2，总尝试正确率为 2/3，完成率为 2/4。这三个数均以 0–1 返回。
-- [汇总命令](../backend/metrics.py) 只读指定实验库。它按模式和任务类型给出成功、失败、待处理数量，以及各阶段样本数和平均耗时。生成成功率的分母是已结束的生成任务，重试属于另一次任务。真实实验应从新的集成模式数据目录开始，用小组准备的材料运行，再结合 A/B 的人工语义与来源核验、C 的可用性记录撰写课程报告。
+本次图文验收使用 OpenLux 兼容接口与 GPT-4.1 mini。若使用同一服务，请先在系统环境中设置自己的 `OPENLUX_API_KEY`，再在本机 `.env` 中加入下面的配置。供应商按实际调用计费。
 
-## 部署、隐私和清理
-
-- 课堂原型使用匿名会话，默认绑定本机。每个数据目录运行一个服务进程，SQLite 负责并发写入。开发前端默认可从 `localhost:5173` 和 `127.0.0.1:5173` 跨域访问；端口变化时修改 `EDUGAME_CORS_ORIGINS`。课堂投屏可直接在教师电脑运行。多人公网部署需要另行提供访问控制与 HTTPS。
-- 每份上传默认最多 10 MiB；`EDUGAME_MAX_UPLOAD_BYTES` 可在 1 字节至 32 MiB 之间设置。目前接受 UTF-8 TXT、单张 PNG/JPEG（最多 1600 万像素）和未加密 PDF（最多 80 页）。文件使用服务端生成的名称，保存在数据目录的 `uploads/` 中，统计与会话保存在 `edugame.sqlite3` 中。
-- 演示模式全程本地处理，默认目录为 `.local/demo`。接入真实模型后默认使用 `.local/live`；资料是否发送给外部服务及发送范围取决于 A/B 的实现。C 在上传界面应说明实际服务和范围，请使用获得授权的课程资料。密钥仅在后端环境配置。
-- 每个适配器方法默认限时 60 秒，可通过 `EDUGAME_SERVICE_TIMEOUT` 调整。超时后任务失败，晚到的结果不会写入游戏。底层请求可能继续到供应商超时，后台同时保留最多四个调用，重试由用户发起。
-- 如需删除一份上传材料，先停止使用该目录的服务，再执行下面的命令，把目录和 ID 换成相应上传记录。它会清理文件、知识点、关联游戏、会话、报告与任务。内置演示讲义会在下次演示启动时重新建立。
-
-```powershell
-.\.venv\Scripts\python.exe -m backend.cleanup --data-dir .local/demo --material <material_id>
+```dotenv
+EDUGAME_MODE=live
+LLM_BASE_URL=https://api.openlux.ai/v1
+LLM_API_KEY=${OPENLUX_API_KEY}
+LLM_TEXT_MODEL=gpt-4.1-mini
+LLM_VISION_MODEL=gpt-4.1-mini
+DEEPSEEK_BASE_URL=https://api.openlux.ai/v1
+DEEPSEEK_API_KEY=${OPENLUX_API_KEY}
+DEEPSEEK_MODEL=gpt-4.1-mini
+LLM_TIMEOUT=75
+AGENT_TIMEOUT_SECONDS=75
+EDUGAME_SERVICE_TIMEOUT=400
 ```
