@@ -1,0 +1,15 @@
+# Install from the repository root with Python 3.11+.
+-e ./PartA
+openai==2.54.0
+pymupdf==1.28.2
+python-docx==1.2.0
+python-pptx==1.0.2
+fastapi==0.163.2
+starlette==1.10.0
+pydantic==2.14.3
+python-multipart==0.0.34
+python-dotenv==1.2.4
+uvicorn==0.54.0
+pypdf==6.21.4
+pillow==12.3.0
+filelock==3.32.7

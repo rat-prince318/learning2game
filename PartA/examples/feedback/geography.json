@@ -1,0 +1,105 @@
+{
+  "summary": "本轮表现提示可继续复习以下概念，并结合资料比较它们的区别。",
+  "reviews": [
+    {
+      "knowledge_id": "geography_01",
+      "explanation": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+      "source_refs": [
+        "source_geography_01"
+      ]
+    },
+    {
+      "knowledge_id": "geography_02",
+      "explanation": "纬线: 地球表面上与赤道平行的圆圈。",
+      "source_refs": [
+        "source_geography_02"
+      ]
+    }
+  ],
+  "statistics": {
+    "session_id": "fixture_session_geography",
+    "game_id": "fixture_game_geography",
+    "status": "completed",
+    "metrics": {
+      "first_attempt_accuracy": 0.8333333333333334,
+      "total_attempt_accuracy": 0.8571428571428571,
+      "completion_rate": 1.0,
+      "total_attempts": 7,
+      "total_errors": 1,
+      "hints_used": 1
+    },
+    "by_knowledge": [
+      {
+        "knowledge_id": "geography_01",
+        "first_attempt_correct": false,
+        "attempts": 2,
+        "errors": 1,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "geography_02",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 1,
+        "completed": true
+      },
+      {
+        "knowledge_id": "geography_03",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "geography_04",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "geography_05",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      },
+      {
+        "knowledge_id": "geography_06",
+        "first_attempt_correct": true,
+        "attempts": 1,
+        "errors": 0,
+        "hints": 0,
+        "completed": true
+      }
+    ],
+    "weak_knowledge_ids": [
+      "geography_01",
+      "geography_02"
+    ]
+  },
+  "completion_note": "本轮已完成，可结合下一次练习观察学习进展。",
+  "practice": {
+    "material_id": "geography",
+    "preferences": {
+      "level": "beginner",
+      "learning_goal": "recognize",
+      "pair_count": 6,
+      "difficulty": null,
+      "selected_knowledge_ids": null,
+      "excluded_knowledge_ids": [],
+      "weak_knowledge_ids": [
+        "geography_01",
+        "geography_02"
+      ]
+    },
+    "previous_game_id": "fixture_game_geography",
+    "requires_confirmation": true
+  },
+  "warnings": []
+}

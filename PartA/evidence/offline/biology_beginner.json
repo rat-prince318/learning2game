@@ -1,0 +1,504 @@
+{
+  "mode": "offline",
+  "subject": "biology",
+  "level": "beginner",
+  "model_validation_is_simulated": true,
+  "plan": {
+    "selected_knowledge_ids": [
+      "biology_01",
+      "biology_02",
+      "biology_03",
+      "biology_04",
+      "biology_05",
+      "biology_06"
+    ],
+    "relation_type": "organ_function",
+    "difficulty": "easy",
+    "language": "en",
+    "rationale": "Offline fixture: prioritize review needs and select concepts for this learning level.",
+    "schema_version": "1.0",
+    "plan_id": "plan_d6f79be3b3694e8e878778c9c1d8eadc",
+    "material_id": "biology",
+    "knowledge_digest": "94d179dba9c106cdb92d689b7f828bc13c4552190e1ef444674df6612efeffe4",
+    "actual_pair_count": 6,
+    "preferences": {
+      "level": "beginner",
+      "learning_goal": "recognize",
+      "pair_count": 6,
+      "selected_knowledge_ids": null,
+      "excluded_knowledge_ids": [],
+      "weak_knowledge_ids": []
+    },
+    "warnings": [
+      "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+    ]
+  },
+  "generation": {
+    "status": "completed",
+    "game": {
+      "title": "Offline matching demonstration",
+      "instructions": "Match each concept to its description.",
+      "pairs": [
+        {
+          "pair_id": "pair_biology_01",
+          "knowledge_id": "biology_01",
+          "left": "Heart",
+          "right": "Pumps blood through the circulatory system.",
+          "explanation": "Heart: Pumps blood through the circulatory system.",
+          "source_refs": [
+            "source_biology_01"
+          ]
+        },
+        {
+          "pair_id": "pair_biology_02",
+          "knowledge_id": "biology_02",
+          "left": "Lungs",
+          "right": "Exchange oxygen and carbon dioxide between air and blood.",
+          "explanation": "Lungs: Exchange oxygen and carbon dioxide between air and blood.",
+          "source_refs": [
+            "source_biology_02"
+          ]
+        },
+        {
+          "pair_id": "pair_biology_03",
+          "knowledge_id": "biology_03",
+          "left": "Stomach",
+          "right": "Mixes food with acid and enzymes to begin substantial protein digestion.",
+          "explanation": "Stomach: Mixes food with acid and enzymes to begin substantial protein digestion.",
+          "source_refs": [
+            "source_biology_03"
+          ]
+        },
+        {
+          "pair_id": "pair_biology_04",
+          "knowledge_id": "biology_04",
+          "left": "Kidneys",
+          "right": "Filter blood and regulate water and salts by producing urine.",
+          "explanation": "Kidneys: Filter blood and regulate water and salts by producing urine.",
+          "source_refs": [
+            "source_biology_04"
+          ]
+        },
+        {
+          "pair_id": "pair_biology_05",
+          "knowledge_id": "biology_05",
+          "left": "Liver",
+          "right": "Produces bile, which helps disperse fats during digestion.",
+          "explanation": "Liver: Produces bile, which helps disperse fats during digestion.",
+          "source_refs": [
+            "source_biology_05"
+          ]
+        },
+        {
+          "pair_id": "pair_biology_06",
+          "knowledge_id": "biology_06",
+          "left": "Pancreas",
+          "right": "Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+          "explanation": "Pancreas: Secretes digestive enzymes into the small intestine and releases insulin into blood.",
+          "source_refs": [
+            "source_biology_06"
+          ]
+        }
+      ],
+      "schema_version": "1.0",
+      "game_id": "game_a17ac426af504c32a736da330d8c2830",
+      "plan_id": "plan_d6f79be3b3694e8e878778c9c1d8eadc",
+      "material_id": "biology",
+      "language": "en",
+      "relation_type": "organ_function",
+      "warnings": []
+    },
+    "validation": {
+      "passed": true,
+      "issues": [],
+      "semantic_checked": true
+    },
+    "repair_count": 0,
+    "warnings": []
+  },
+  "feedback": {
+    "summary": "Review the concepts below and compare their evidence.",
+    "reviews": [
+      {
+        "knowledge_id": "biology_01",
+        "explanation": "Heart: Pumps blood through the circulatory system.",
+        "source_refs": [
+          "source_biology_01"
+        ]
+      },
+      {
+        "knowledge_id": "biology_02",
+        "explanation": "Lungs: Exchange oxygen and carbon dioxide between air and blood.",
+        "source_refs": [
+          "source_biology_02"
+        ]
+      }
+    ],
+    "statistics": {
+      "session_id": "demo_fixture_a410cbc935f04ba39036e08e8a6368da",
+      "game_id": "game_a17ac426af504c32a736da330d8c2830",
+      "status": "completed",
+      "metrics": {
+        "first_attempt_accuracy": 0.8333333333333334,
+        "total_attempt_accuracy": 0.8571428571428571,
+        "completion_rate": 1.0,
+        "total_attempts": 7,
+        "total_errors": 1,
+        "hints_used": 1
+      },
+      "by_knowledge": [
+        {
+          "knowledge_id": "biology_01",
+          "first_attempt_correct": false,
+          "attempts": 2,
+          "errors": 1,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "biology_02",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 1,
+          "completed": true
+        },
+        {
+          "knowledge_id": "biology_03",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "biology_04",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "biology_05",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        },
+        {
+          "knowledge_id": "biology_06",
+          "first_attempt_correct": true,
+          "attempts": 1,
+          "errors": 0,
+          "hints": 0,
+          "completed": true
+        }
+      ],
+      "weak_knowledge_ids": [
+        "biology_01",
+        "biology_02"
+      ]
+    },
+    "completion_note": "This session is complete; its performance does not establish mastery.",
+    "practice": {
+      "material_id": "biology",
+      "preferences": {
+        "level": "beginner",
+        "learning_goal": "recognize",
+        "pair_count": 6,
+        "selected_knowledge_ids": null,
+        "excluded_knowledge_ids": [],
+        "weak_knowledge_ids": [
+          "biology_01",
+          "biology_02"
+        ]
+      },
+      "previous_game_id": "game_a17ac426af504c32a736da330d8c2830",
+      "requires_confirmation": true
+    },
+    "warnings": []
+  },
+  "events": [
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "design_matching_plan",
+      "call_id": "offline_bfc759e7210b49c0b3093720555a2845",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "design_matching_plan",
+      "call_id": "offline_bfc759e7210b49c0b3093720555a2845",
+      "fields": [],
+      "argument_bytes": 2
+    },
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "design_matching_plan",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "awaiting_confirmation",
+      "pair_count": 6
+    },
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "design_matching_plan",
+      "call_id": "offline_bfc759e7210b49c0b3093720555a2845",
+      "ok": true,
+      "result_fields": [
+        "actual_pair_count",
+        "difficulty",
+        "knowledge_digest",
+        "language",
+        "material_id",
+        "plan_id",
+        "preferences",
+        "rationale",
+        "relation_type",
+        "schema_version",
+        "selected_knowledge_ids",
+        "warnings"
+      ],
+      "result_summary": {
+        "actual_pair_count": 6,
+        "warnings_count": 1
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_cf0abe275abe452c9b9702c74787e9ea",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_matching_config",
+      "call_id": "offline_c9632430d885465b8693ffbd2aedc23e",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_matching_config",
+      "call_id": "offline_c9632430d885465b8693ffbd2aedc23e",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_matching_config",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "generating",
+      "candidate_ready": true
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_matching_config",
+      "call_id": "offline_c9632430d885465b8693ffbd2aedc23e",
+      "ok": true,
+      "result_fields": [
+        "candidate",
+        "next_action"
+      ],
+      "result_summary": {
+        "next_action": "validate_matching_config",
+        "candidate_pair_count": 6
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "validate_matching_config",
+      "call_id": "offline_4c591161330248fe828f18134019e253",
+      "tool_number": 2
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "validate_matching_config",
+      "call_id": "offline_4c591161330248fe828f18134019e253",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validating",
+      "deterministic_issues": 0
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "validate_matching_config",
+      "request_number": 4
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validation_result",
+      "passed": true,
+      "semantic_checked": true,
+      "issue_codes": []
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "validate_matching_config",
+      "call_id": "offline_4c591161330248fe828f18134019e253",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_count",
+        "validation"
+      ],
+      "result_summary": {
+        "repair_count": 0,
+        "passed": true,
+        "semantic_checked": true,
+        "issue_count": 0,
+        "next_action": "complete"
+      },
+      "elapsed_ms": 1
+    },
+    {
+      "run_id": "run_f3cef622af214c89a8361254b5795529",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 4,
+      "tool_calls": 2
+    },
+    {
+      "run_id": "run_5200c5b397fd44459a963ebccd2c65e4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_5200c5b397fd44459a963ebccd2c65e4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_c5e6c4d311a74df6ac337ae87b0f3406",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_5200c5b397fd44459a963ebccd2c65e4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_c5e6c4d311a74df6ac337ae87b0f3406",
+      "fields": [
+        "session_id"
+      ],
+      "argument_bytes": 63
+    },
+    {
+      "run_id": "run_5200c5b397fd44459a963ebccd2c65e4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_learning_feedback",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_5200c5b397fd44459a963ebccd2c65e4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_learning_feedback",
+      "call_id": "offline_c5e6c4d311a74df6ac337ae87b0f3406",
+      "ok": true,
+      "result_fields": [
+        "completion_note",
+        "practice",
+        "reviews",
+        "statistics",
+        "summary",
+        "warnings"
+      ],
+      "result_summary": {
+        "reviews_count": 2,
+        "warnings_count": 0
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_5200c5b397fd44459a963ebccd2c65e4",
+      "stage": "feedback",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    }
+  ]
+}

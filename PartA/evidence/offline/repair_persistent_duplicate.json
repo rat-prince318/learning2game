@@ -1,0 +1,1563 @@
+{
+  "mode": "offline",
+  "fault_injection": "persistent_duplicate",
+  "steps": [
+    {
+      "task": "design_matching_plan",
+      "input": {
+        "eligible": [
+          {
+            "knowledge_id": "computing_01",
+            "concept": "CPU",
+            "definition": "执行程序指令并完成算术和逻辑运算。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_01"
+            ],
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_02",
+            "concept": "RAM",
+            "definition": "临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_02"
+            ],
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_03",
+            "concept": "固态硬盘",
+            "definition": "使用闪存保存数据，断电后仍能保留内容。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_03"
+            ],
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_04",
+            "concept": "操作系统",
+            "definition": "管理计算机硬件资源，并为应用程序提供运行服务。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_04"
+            ],
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_05",
+            "concept": "路由器",
+            "definition": "根据网络地址在不同网络之间转发数据包。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_05"
+            ],
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_06",
+            "concept": "交换机",
+            "definition": "依据设备的 MAC 地址在局域网内转发数据帧。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_06"
+            ],
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_07",
+            "concept": "编译器",
+            "definition": "将源程序翻译成目标程序。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_07"
+            ],
+            "evidence": "编译器: 将源程序翻译成目标程序。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_08",
+            "concept": "递归",
+            "definition": "函数直接或间接调用自身，并通过终止条件结束调用。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_08"
+            ],
+            "evidence": "递归: 函数直接或间接调用自身，并通过终止条件结束调用。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          }
+        ],
+        "sources": [
+          {
+            "source_id": "source_computing_01",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 1",
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_02",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 2",
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_03",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 3",
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_04",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 4",
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_05",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 5",
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_06",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 6",
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_07",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 7",
+            "evidence": "编译器: 将源程序翻译成目标程序。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_08",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 8",
+            "evidence": "递归: 函数直接或间接调用自身，并通过终止条件结束调用。",
+            "modality": "text"
+          }
+        ],
+        "preferences": {
+          "level": "beginner",
+          "learning_goal": "recognize",
+          "pair_count": 6,
+          "selected_knowledge_ids": null,
+          "excluded_knowledge_ids": [],
+          "weak_knowledge_ids": []
+        },
+        "relation_type": "component_function",
+        "target_count": 6,
+        "required_weak_ids": [],
+        "output_language": "zh",
+        "warnings": [
+          "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+        ]
+      },
+      "output": {
+        "selected_knowledge_ids": [
+          "computing_01",
+          "computing_02",
+          "computing_03",
+          "computing_04",
+          "computing_05",
+          "computing_06"
+        ],
+        "relation_type": "component_function",
+        "difficulty": "easy",
+        "language": "zh",
+        "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。"
+      }
+    },
+    {
+      "task": "generate_matching_config",
+      "input": {
+        "selected_knowledge": [
+          {
+            "knowledge_id": "computing_01",
+            "concept": "CPU",
+            "definition": "执行程序指令并完成算术和逻辑运算。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_01"
+            ],
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_02",
+            "concept": "RAM",
+            "definition": "临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_02"
+            ],
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_03",
+            "concept": "固态硬盘",
+            "definition": "使用闪存保存数据，断电后仍能保留内容。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_03"
+            ],
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_04",
+            "concept": "操作系统",
+            "definition": "管理计算机硬件资源，并为应用程序提供运行服务。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_04"
+            ],
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_05",
+            "concept": "路由器",
+            "definition": "根据网络地址在不同网络之间转发数据包。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_05"
+            ],
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_06",
+            "concept": "交换机",
+            "definition": "依据设备的 MAC 地址在局域网内转发数据帧。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_06"
+            ],
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          }
+        ],
+        "sources": [
+          {
+            "source_id": "source_computing_01",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 1",
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_02",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 2",
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_03",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 3",
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_04",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 4",
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_05",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 5",
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_06",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 6",
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text"
+          }
+        ],
+        "confirmed_plan": {
+          "selected_knowledge_ids": [
+            "computing_01",
+            "computing_02",
+            "computing_03",
+            "computing_04",
+            "computing_05",
+            "computing_06"
+          ],
+          "relation_type": "component_function",
+          "difficulty": "easy",
+          "language": "zh",
+          "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。",
+          "schema_version": "1.0",
+          "plan_id": "plan_2fbdb01b7b884af5bcc8bf90f8201d69",
+          "material_id": "computing",
+          "knowledge_digest": "64bb9adbad94f86889069fe1cfa3cca7b5feca9db2c4ed19d1e0997894ff01f7",
+          "actual_pair_count": 6,
+          "preferences": {
+            "level": "beginner",
+            "learning_goal": "recognize",
+            "pair_count": 6,
+            "selected_knowledge_ids": null,
+            "excluded_knowledge_ids": [],
+            "weak_knowledge_ids": []
+          },
+          "warnings": [
+            "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+          ]
+        },
+        "output_language": "zh",
+        "previous_pairs": []
+      },
+      "output": {
+        "title": "离线配对演示",
+        "instructions": "选择概念对应的描述。",
+        "pairs": [
+          {
+            "pair_id": "pair_computing_01",
+            "knowledge_id": "computing_01",
+            "left": "CPU",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "source_refs": [
+              "source_computing_01"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_02",
+            "knowledge_id": "computing_02",
+            "left": "RAM",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "source_refs": [
+              "source_computing_02"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_03",
+            "knowledge_id": "computing_03",
+            "left": "固态硬盘",
+            "right": "使用闪存保存数据，断电后仍能保留内容。",
+            "explanation": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "source_refs": [
+              "source_computing_03"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_04",
+            "knowledge_id": "computing_04",
+            "left": "操作系统",
+            "right": "管理计算机硬件资源，并为应用程序提供运行服务。",
+            "explanation": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "source_refs": [
+              "source_computing_04"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_05",
+            "knowledge_id": "computing_05",
+            "left": "路由器",
+            "right": "根据网络地址在不同网络之间转发数据包。",
+            "explanation": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "source_refs": [
+              "source_computing_05"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_06",
+            "knowledge_id": "computing_06",
+            "left": "交换机",
+            "right": "依据设备的 MAC 地址在局域网内转发数据帧。",
+            "explanation": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "source_refs": [
+              "source_computing_06"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "task": "repair_matching_config",
+      "input": {
+        "selected_knowledge": [
+          {
+            "knowledge_id": "computing_01",
+            "concept": "CPU",
+            "definition": "执行程序指令并完成算术和逻辑运算。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_01"
+            ],
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_02",
+            "concept": "RAM",
+            "definition": "临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_02"
+            ],
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_03",
+            "concept": "固态硬盘",
+            "definition": "使用闪存保存数据，断电后仍能保留内容。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_03"
+            ],
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_04",
+            "concept": "操作系统",
+            "definition": "管理计算机硬件资源，并为应用程序提供运行服务。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_04"
+            ],
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_05",
+            "concept": "路由器",
+            "definition": "根据网络地址在不同网络之间转发数据包。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_05"
+            ],
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_06",
+            "concept": "交换机",
+            "definition": "依据设备的 MAC 地址在局域网内转发数据帧。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_06"
+            ],
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          }
+        ],
+        "sources": [
+          {
+            "source_id": "source_computing_01",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 1",
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_02",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 2",
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_03",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 3",
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_04",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 4",
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_05",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 5",
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_06",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 6",
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text"
+          }
+        ],
+        "confirmed_plan": {
+          "selected_knowledge_ids": [
+            "computing_01",
+            "computing_02",
+            "computing_03",
+            "computing_04",
+            "computing_05",
+            "computing_06"
+          ],
+          "relation_type": "component_function",
+          "difficulty": "easy",
+          "language": "zh",
+          "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。",
+          "schema_version": "1.0",
+          "plan_id": "plan_2fbdb01b7b884af5bcc8bf90f8201d69",
+          "material_id": "computing",
+          "knowledge_digest": "64bb9adbad94f86889069fe1cfa3cca7b5feca9db2c4ed19d1e0997894ff01f7",
+          "actual_pair_count": 6,
+          "preferences": {
+            "level": "beginner",
+            "learning_goal": "recognize",
+            "pair_count": 6,
+            "selected_knowledge_ids": null,
+            "excluded_knowledge_ids": [],
+            "weak_knowledge_ids": []
+          },
+          "warnings": [
+            "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+          ]
+        },
+        "output_language": "zh",
+        "previous_pairs": [],
+        "candidate": {
+          "title": "离线配对演示",
+          "instructions": "选择概念对应的描述。",
+          "pairs": [
+            {
+              "pair_id": "pair_computing_01",
+              "knowledge_id": "computing_01",
+              "left": "CPU",
+              "right": "执行程序指令并完成算术和逻辑运算。",
+              "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+              "source_refs": [
+                "source_computing_01"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_02",
+              "knowledge_id": "computing_02",
+              "left": "RAM",
+              "right": "执行程序指令并完成算术和逻辑运算。",
+              "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+              "source_refs": [
+                "source_computing_02"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_03",
+              "knowledge_id": "computing_03",
+              "left": "固态硬盘",
+              "right": "使用闪存保存数据，断电后仍能保留内容。",
+              "explanation": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+              "source_refs": [
+                "source_computing_03"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_04",
+              "knowledge_id": "computing_04",
+              "left": "操作系统",
+              "right": "管理计算机硬件资源，并为应用程序提供运行服务。",
+              "explanation": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+              "source_refs": [
+                "source_computing_04"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_05",
+              "knowledge_id": "computing_05",
+              "left": "路由器",
+              "right": "根据网络地址在不同网络之间转发数据包。",
+              "explanation": "路由器: 根据网络地址在不同网络之间转发数据包。",
+              "source_refs": [
+                "source_computing_05"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_06",
+              "knowledge_id": "computing_06",
+              "left": "交换机",
+              "right": "依据设备的 MAC 地址在局域网内转发数据帧。",
+              "explanation": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+              "source_refs": [
+                "source_computing_06"
+              ]
+            }
+          ],
+          "schema_version": "1.0",
+          "game_id": "game_fa1c07b06eb244d9b4216464381dd0a3",
+          "plan_id": "plan_2fbdb01b7b884af5bcc8bf90f8201d69",
+          "material_id": "computing",
+          "language": "zh",
+          "relation_type": "component_function",
+          "warnings": []
+        },
+        "issues": {
+          "passed": false,
+          "issues": [
+            {
+              "pair_id": "pair_computing_01",
+              "knowledge_id": "computing_01",
+              "code": "duplicate_card",
+              "reason": "right 卡片内容重复。",
+              "suggestion": "恢复来源支持且可区分的文字。"
+            },
+            {
+              "pair_id": "pair_computing_02",
+              "knowledge_id": "computing_02",
+              "code": "duplicate_card",
+              "reason": "right 卡片内容重复。",
+              "suggestion": "恢复来源支持且可区分的文字。"
+            }
+          ],
+          "semantic_checked": false
+        },
+        "repairable_pairs": [
+          {
+            "pair_id": "pair_computing_01",
+            "knowledge_id": "computing_01",
+            "left": "CPU",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "source_refs": [
+              "source_computing_01"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_02",
+            "knowledge_id": "computing_02",
+            "left": "RAM",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "source_refs": [
+              "source_computing_02"
+            ]
+          }
+        ],
+        "allow_header_repair": false
+      },
+      "output": {
+        "replacements": [
+          {
+            "pair_id": "pair_computing_01",
+            "knowledge_id": "computing_01",
+            "left": "CPU",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "source_refs": [
+              "source_computing_01"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_02",
+            "knowledge_id": "computing_02",
+            "left": "RAM",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "source_refs": [
+              "source_computing_02"
+            ]
+          }
+        ],
+        "title": null,
+        "instructions": null,
+        "warnings": []
+      }
+    },
+    {
+      "task": "repair_matching_config",
+      "input": {
+        "selected_knowledge": [
+          {
+            "knowledge_id": "computing_01",
+            "concept": "CPU",
+            "definition": "执行程序指令并完成算术和逻辑运算。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_01"
+            ],
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_02",
+            "concept": "RAM",
+            "definition": "临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_02"
+            ],
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_03",
+            "concept": "固态硬盘",
+            "definition": "使用闪存保存数据，断电后仍能保留内容。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_03"
+            ],
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_04",
+            "concept": "操作系统",
+            "definition": "管理计算机硬件资源，并为应用程序提供运行服务。",
+            "relation_type": "component_function",
+            "difficulty": "basic",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_04"
+            ],
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_05",
+            "concept": "路由器",
+            "definition": "根据网络地址在不同网络之间转发数据包。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_05"
+            ],
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          },
+          {
+            "knowledge_id": "computing_06",
+            "concept": "交换机",
+            "definition": "依据设备的 MAC 地址在局域网内转发数据帧。",
+            "relation_type": "component_function",
+            "difficulty": "advanced",
+            "learning_objective": "Match the concept to its evidenced description.",
+            "source_refs": [
+              "source_computing_06"
+            ],
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text",
+            "quality": "reliable",
+            "warnings": []
+          }
+        ],
+        "sources": [
+          {
+            "source_id": "source_computing_01",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 1",
+            "evidence": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_02",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 2",
+            "evidence": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_03",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 3",
+            "evidence": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_04",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 4",
+            "evidence": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_05",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 5",
+            "evidence": "路由器: 根据网络地址在不同网络之间转发数据包。",
+            "modality": "text"
+          },
+          {
+            "source_id": "source_computing_06",
+            "material_id": "computing",
+            "locator": "materials/computing.md — item 6",
+            "evidence": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+            "modality": "text"
+          }
+        ],
+        "confirmed_plan": {
+          "selected_knowledge_ids": [
+            "computing_01",
+            "computing_02",
+            "computing_03",
+            "computing_04",
+            "computing_05",
+            "computing_06"
+          ],
+          "relation_type": "component_function",
+          "difficulty": "easy",
+          "language": "zh",
+          "rationale": "离线样例：优先薄弱点，并按学习水平选择可区分的概念。",
+          "schema_version": "1.0",
+          "plan_id": "plan_2fbdb01b7b884af5bcc8bf90f8201d69",
+          "material_id": "computing",
+          "knowledge_digest": "64bb9adbad94f86889069fe1cfa3cca7b5feca9db2c4ed19d1e0997894ff01f7",
+          "actual_pair_count": 6,
+          "preferences": {
+            "level": "beginner",
+            "learning_goal": "recognize",
+            "pair_count": 6,
+            "selected_knowledge_ids": null,
+            "excluded_knowledge_ids": [],
+            "weak_knowledge_ids": []
+          },
+          "warnings": [
+            "人工编写的接口测试样例；未运行 B 的真实资料提取。"
+          ]
+        },
+        "output_language": "zh",
+        "previous_pairs": [],
+        "candidate": {
+          "title": "离线配对演示",
+          "instructions": "选择概念对应的描述。",
+          "pairs": [
+            {
+              "pair_id": "pair_computing_01",
+              "knowledge_id": "computing_01",
+              "left": "CPU",
+              "right": "执行程序指令并完成算术和逻辑运算。",
+              "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+              "source_refs": [
+                "source_computing_01"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_02",
+              "knowledge_id": "computing_02",
+              "left": "RAM",
+              "right": "执行程序指令并完成算术和逻辑运算。",
+              "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+              "source_refs": [
+                "source_computing_02"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_03",
+              "knowledge_id": "computing_03",
+              "left": "固态硬盘",
+              "right": "使用闪存保存数据，断电后仍能保留内容。",
+              "explanation": "固态硬盘: 使用闪存保存数据，断电后仍能保留内容。",
+              "source_refs": [
+                "source_computing_03"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_04",
+              "knowledge_id": "computing_04",
+              "left": "操作系统",
+              "right": "管理计算机硬件资源，并为应用程序提供运行服务。",
+              "explanation": "操作系统: 管理计算机硬件资源，并为应用程序提供运行服务。",
+              "source_refs": [
+                "source_computing_04"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_05",
+              "knowledge_id": "computing_05",
+              "left": "路由器",
+              "right": "根据网络地址在不同网络之间转发数据包。",
+              "explanation": "路由器: 根据网络地址在不同网络之间转发数据包。",
+              "source_refs": [
+                "source_computing_05"
+              ]
+            },
+            {
+              "pair_id": "pair_computing_06",
+              "knowledge_id": "computing_06",
+              "left": "交换机",
+              "right": "依据设备的 MAC 地址在局域网内转发数据帧。",
+              "explanation": "交换机: 依据设备的 MAC 地址在局域网内转发数据帧。",
+              "source_refs": [
+                "source_computing_06"
+              ]
+            }
+          ],
+          "schema_version": "1.0",
+          "game_id": "game_fa1c07b06eb244d9b4216464381dd0a3",
+          "plan_id": "plan_2fbdb01b7b884af5bcc8bf90f8201d69",
+          "material_id": "computing",
+          "language": "zh",
+          "relation_type": "component_function",
+          "warnings": []
+        },
+        "issues": {
+          "passed": false,
+          "issues": [
+            {
+              "pair_id": "pair_computing_01",
+              "knowledge_id": "computing_01",
+              "code": "duplicate_card",
+              "reason": "right 卡片内容重复。",
+              "suggestion": "恢复来源支持且可区分的文字。"
+            },
+            {
+              "pair_id": "pair_computing_02",
+              "knowledge_id": "computing_02",
+              "code": "duplicate_card",
+              "reason": "right 卡片内容重复。",
+              "suggestion": "恢复来源支持且可区分的文字。"
+            }
+          ],
+          "semantic_checked": false
+        },
+        "repairable_pairs": [
+          {
+            "pair_id": "pair_computing_01",
+            "knowledge_id": "computing_01",
+            "left": "CPU",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "source_refs": [
+              "source_computing_01"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_02",
+            "knowledge_id": "computing_02",
+            "left": "RAM",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "source_refs": [
+              "source_computing_02"
+            ]
+          }
+        ],
+        "allow_header_repair": false
+      },
+      "output": {
+        "replacements": [
+          {
+            "pair_id": "pair_computing_01",
+            "knowledge_id": "computing_01",
+            "left": "CPU",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "CPU: 执行程序指令并完成算术和逻辑运算。",
+            "source_refs": [
+              "source_computing_01"
+            ]
+          },
+          {
+            "pair_id": "pair_computing_02",
+            "knowledge_id": "computing_02",
+            "left": "RAM",
+            "right": "执行程序指令并完成算术和逻辑运算。",
+            "explanation": "RAM: 临时保存正在使用的数据和程序，断电后内容通常丢失。",
+            "source_refs": [
+              "source_computing_02"
+            ]
+          }
+        ],
+        "title": null,
+        "instructions": null,
+        "warnings": []
+      }
+    }
+  ],
+  "events": [
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "design_matching_plan",
+      "call_id": "offline_24aed92b67f84311bb03b0be6c11ae7f",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "design_matching_plan",
+      "call_id": "offline_24aed92b67f84311bb03b0be6c11ae7f",
+      "fields": [],
+      "argument_bytes": 2
+    },
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "design_matching_plan",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "awaiting_confirmation",
+      "pair_count": 6
+    },
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "design_matching_plan",
+      "call_id": "offline_24aed92b67f84311bb03b0be6c11ae7f",
+      "ok": true,
+      "result_fields": [
+        "actual_pair_count",
+        "difficulty",
+        "knowledge_digest",
+        "language",
+        "material_id",
+        "plan_id",
+        "preferences",
+        "rationale",
+        "relation_type",
+        "schema_version",
+        "selected_knowledge_ids",
+        "warnings"
+      ],
+      "result_summary": {
+        "actual_pair_count": 6,
+        "warnings_count": 1
+      },
+      "elapsed_ms": 1
+    },
+    {
+      "run_id": "run_7ea99f33c19246a2890068e0b3b40043",
+      "stage": "planning",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "completed",
+      "model_calls": 2,
+      "tool_calls": 1
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_started"
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "generate_matching_config",
+      "call_id": "offline_689cfae1523e4e3eae2b19441e831c57",
+      "tool_number": 1
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "generate_matching_config",
+      "call_id": "offline_689cfae1523e4e3eae2b19441e831c57",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "generate_matching_config",
+      "request_number": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "generating",
+      "candidate_ready": true
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "generate_matching_config",
+      "call_id": "offline_689cfae1523e4e3eae2b19441e831c57",
+      "ok": true,
+      "result_fields": [
+        "candidate",
+        "next_action"
+      ],
+      "result_summary": {
+        "next_action": "validate_matching_config",
+        "candidate_pair_count": 6
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "validate_matching_config",
+      "call_id": "offline_a6f50f92e05f45179b5d13a6da783d18",
+      "tool_number": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "validate_matching_config",
+      "call_id": "offline_a6f50f92e05f45179b5d13a6da783d18",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validating",
+      "deterministic_issues": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validation_result",
+      "passed": false,
+      "semantic_checked": false,
+      "issue_codes": [
+        "duplicate_card",
+        "duplicate_card"
+      ]
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "validate_matching_config",
+      "call_id": "offline_a6f50f92e05f45179b5d13a6da783d18",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_count",
+        "validation"
+      ],
+      "result_summary": {
+        "repair_count": 0,
+        "passed": false,
+        "semantic_checked": false,
+        "issue_count": 2,
+        "next_action": "repair_matching_config"
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "repair_matching_config",
+      "call_id": "offline_252f62172bbb47858d27201284a537d2",
+      "tool_number": 3
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "repair_matching_config",
+      "call_id": "offline_252f62172bbb47858d27201284a537d2",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "repairing",
+      "repair_number": 1,
+      "affected_pair_count": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "repair_matching_config",
+      "request_number": 5
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "repair_matching_config",
+      "call_id": "offline_252f62172bbb47858d27201284a537d2",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_applied"
+      ],
+      "result_summary": {
+        "repair_applied": true,
+        "next_action": "validate_matching_config"
+      },
+      "elapsed_ms": 1
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "validate_matching_config",
+      "call_id": "offline_1eca8323eba94d079bbab529739d3863",
+      "tool_number": 4
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "validate_matching_config",
+      "call_id": "offline_1eca8323eba94d079bbab529739d3863",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validating",
+      "deterministic_issues": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validation_result",
+      "passed": false,
+      "semantic_checked": false,
+      "issue_codes": [
+        "duplicate_card",
+        "duplicate_card"
+      ]
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "validate_matching_config",
+      "call_id": "offline_1eca8323eba94d079bbab529739d3863",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_count",
+        "validation"
+      ],
+      "result_summary": {
+        "repair_count": 1,
+        "passed": false,
+        "semantic_checked": false,
+        "issue_count": 2,
+        "next_action": "repair_matching_config"
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "repair_matching_config",
+      "call_id": "offline_c47cd3b390d8426db5e67b8c2cef6946",
+      "tool_number": 5
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "repair_matching_config",
+      "call_id": "offline_c47cd3b390d8426db5e67b8c2cef6946",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "repairing",
+      "repair_number": 2,
+      "affected_pair_count": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "model_request",
+      "task": "repair_matching_config",
+      "request_number": 8
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "repair_matching_config",
+      "call_id": "offline_c47cd3b390d8426db5e67b8c2cef6946",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_applied"
+      ],
+      "result_summary": {
+        "repair_applied": true,
+        "next_action": "validate_matching_config"
+      },
+      "elapsed_ms": 1
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_started",
+      "tool": "validate_matching_config",
+      "call_id": "offline_9382d12def924293b936869e35e7d3bb",
+      "tool_number": 6
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_arguments",
+      "tool": "validate_matching_config",
+      "call_id": "offline_9382d12def924293b936869e35e7d3bb",
+      "fields": [
+        "plan_id"
+      ],
+      "argument_bytes": 52
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validating",
+      "deterministic_issues": 2
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "validation_result",
+      "passed": false,
+      "semantic_checked": false,
+      "issue_codes": [
+        "duplicate_card",
+        "duplicate_card"
+      ]
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "tool_finished",
+      "tool": "validate_matching_config",
+      "call_id": "offline_9382d12def924293b936869e35e7d3bb",
+      "ok": true,
+      "result_fields": [
+        "next_action",
+        "repair_count",
+        "validation"
+      ],
+      "result_summary": {
+        "repair_count": 2,
+        "passed": false,
+        "semantic_checked": false,
+        "issue_count": 2,
+        "next_action": "complete"
+      },
+      "elapsed_ms": 0
+    },
+    {
+      "run_id": "run_74f14631886c42d39a4093f98af6ab63",
+      "stage": "generation",
+      "mode": "offline",
+      "event": "stage_finished",
+      "status": "failed",
+      "model_calls": 9,
+      "tool_calls": 6
+    }
+  ],
+  "result": {
+    "status": "failed",
+    "game": null,
+    "validation": {
+      "passed": false,
+      "issues": [
+        {
+          "pair_id": "pair_computing_01",
+          "knowledge_id": "computing_01",
+          "code": "duplicate_card",
+          "reason": "right 卡片内容重复。",
+          "suggestion": "恢复来源支持且可区分的文字。"
+        },
+        {
+          "pair_id": "pair_computing_02",
+          "knowledge_id": "computing_02",
+          "code": "duplicate_card",
+          "reason": "right 卡片内容重复。",
+          "suggestion": "恢复来源支持且可区分的文字。"
+        }
+      ],
+      "semantic_checked": false
+    },
+    "repair_count": 2,
+    "warnings": [
+      "已达到修复上限，未交付游戏。调整范围需重新生成并确认方案。"
+    ]
+  }
+}
