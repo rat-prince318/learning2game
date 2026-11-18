@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#203256">
+  <meta name="description" content="把学习资料变成有来源、可复习的配对练习。">
+  <title>Learning2Game · 学习配对工作室</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="site-header">
+    <a class="brand" href="#create" aria-label="Learning2Game 创建练习"><span class="brand-mark" aria-hidden="true">L<span>↔</span>G</span><span>Learning<span class="brand-two">2</span>Game<small>学习配对工作室</small></span></a>
+    <nav aria-label="学习流程" class="steps">
+      <a href="#create" data-route="create"><span>1</span>创建练习</a>
+      <a href="#play" data-route="play"><span>2</span>开始配对</a>
+      <a href="#report" data-route="report"><span>3</span>学习报告</a>
+    </nav>
+    <button id="mode-button" class="mode-button" type="button" aria-haspopup="dialog">正在连接…</button>
+  </header>
+  <div id="mode-notice" class="mode-notice" role="status"></div>
+  <main id="main" tabindex="-1">
+    <div id="global-error" class="error-banner" role="alert" hidden><div><strong>操作未完成</strong><p id="error-message"></p></div><button id="retry-global" type="button" class="button small">重试</button><button id="dismiss-error" type="button" class="icon-button" aria-label="关闭错误提示">×</button></div>
+    <section id="page-create" class="page" aria-labelledby="create-title">
+      <div class="page-heading"><div><p class="eyebrow">LEARNING STUDIO</p><h1 id="create-title" tabindex="-1">把知识，<span>配成一对。</span></h1><p class="lede">选择学习资料，确认练习方案，再用一次次配对检验理解。</p></div><div class="pair-art" aria-hidden="true"><span>概念</span><i>↔</i><span>理解</span></div></div>
+      <div class="create-grid">
+        <div class="create-inputs">
+          <section class="panel" aria-labelledby="material-title">
+            <div class="panel-heading"><h2 id="material-title">学习资料</h2><span class="tag">PDF · 图片 · 文档</span></div>
+            <div id="drop-zone" class="drop-zone">
+              <span class="upload-symbol" aria-hidden="true">↥</span><strong>选择或拖入一份学习资料</strong><p>PDF、TXT、DOCX、PPTX、PNG、JPG、WebP · 最大 20 MB</p>
+              <label class="button secondary file-label" for="material-file">选择文件</label><input id="material-file" class="visually-hidden" type="file" accept=".pdf,.txt,.docx,.pptx,.png,.jpg,.jpeg,.webp" aria-describedby="file-description">
+              <p id="file-description" class="muted">建议从一小段课件或一张清晰的知识图示开始。</p>
+            </div>
+            <div id="selected-file" class="selected-file" hidden><div><strong id="file-name"></strong><small id="file-size"></small></div><button id="remove-file" class="text-button" type="button">移除</button></div>
+            <div id="pdf-options" class="field" hidden><label for="pdf-pages">选择 PDF 页码</label><input id="pdf-pages" type="text" inputmode="text" autocomplete="off" placeholder="例如 1,3-5；留空由后端按上限处理" aria-describedby="page-help"><small id="page-help">页码从 1 开始，每次最多选 10 页。预览不会替代服务端解析。</small></div>
+            <div id="image-options" hidden><label class="checkbox-label"><input id="include-image" type="checkbox" checked>使用这张图片中的关系信息</label></div>
+            <details id="file-preview" class="preview-details" hidden><summary>预览所选资料</summary><div id="preview-content"></div></details>
+            <button id="sample-button" type="button" class="sample-button"><span aria-hidden="true">▤</span><span>试用细胞结构教学样例<small>8 个概念 · 含知识图示</small></span><span aria-hidden="true">↗</span></button>
+            <p class="privacy-note">请勿上传个人敏感资料。真实模式下，材料可能由团队后端发送至外部模型服务；请先确认团队的数据处理约定。</p>
+          </section>
+          <section class="panel" aria-labelledby="preferences-title">
+            <div class="panel-heading"><h2 id="preferences-title">这次想练什么？</h2><span class="tag">个性化设置</span></div>
+            <form id="preferences-form">
+              <div class="field-grid"><div class="field"><label for="learner-level">学习水平</label><select id="learner-level" name="level"><option value="beginner">入门 · 简明表达</option><option value="intermediate">巩固 · 理解关系</option><option value="advanced">进阶 · 更完整的表达</option></select></div><div class="field"><label for="learning-goal">练习目标</label><select id="learning-goal" name="goal"><option value="definitions">概念与定义</option><option value="functions">结构与功能</option><option value="english">双语术语复习</option></select></div></div>
+              <fieldset class="pair-count"><legend>配对数量</legend><div class="segmented"><label><input type="radio" name="pair_count" value="4"><span>4 对</span></label><label><input type="radio" name="pair_count" value="6" checked><span>6 对</span></label><label><input type="radio" name="pair_count" value="8"><span>8 对</span></label></div></fieldset>
+              <label class="checkbox-label"><input id="timer-enabled" type="checkbox">开启时间限制</label><div id="timer-options" class="field" hidden><label for="time-limit">本轮时间</label><select id="time-limit"><option value="120">2 分钟</option><option value="180" selected>3 分钟</option><option value="300">5 分钟</option></select></div>
+              <button id="analyze-button" class="button primary full-width" type="submit">分析资料并推荐方案 <span aria-hidden="true">→</span></button>
+            </form>
+          </section>
+        </div>
+        <div class="create-output">
+          <section class="panel workflow-panel" aria-labelledby="workflow-title"><div class="panel-heading"><h2 id="workflow-title">从资料到练习</h2><span id="state-tag" class="tag">未上传</span></div><ol id="workflow-steps" class="workflow-steps"><li data-step="material"><span>1</span><div><strong>理解学习资料</strong><small>解析文字与图像，提取有来源的知识</small></div></li><li data-step="plan"><span>2</span><div><strong>由你确认方案</strong><small>查看知识点，调整学习偏好</small></div></li><li data-step="generate"><span>3</span><div><strong>生成与验证</strong><small>检查配对内容、数量和来源</small></div></li><li data-step="ready"><span>4</span><div><strong>开始配对练习</strong><small>完成后查看反馈，再练薄弱点</small></div></li></ol><p id="job-status" role="status" aria-live="polite">先选择一份资料，或试用教学样例。</p><progress id="job-progress" max="1" value="0" aria-label="资料与游戏处理进度" hidden></progress></section>
+          <section id="knowledge-panel" class="panel" aria-labelledby="knowledge-title" hidden><div class="panel-heading"><h2 id="knowledge-title">知识预览</h2><span id="knowledge-count" class="tag"></span></div><p id="knowledge-topic" class="muted"></p><div id="knowledge-warnings" class="notice-list"></div><div id="knowledge-list" class="knowledge-list"></div></section>
+          <section id="plan-panel" class="panel plan-panel" aria-labelledby="plan-title" hidden><p class="eyebrow">YOUR MATCHING PLAN</p><h2 id="plan-title">推荐练习方案</h2><p id="plan-rationale"></p><div id="plan-summary" class="plan-summary"></div><p id="plan-change-note" class="muted" hidden>设置已修改。确认时会先更新方案，再生成游戏。</p><label class="checkbox-label"><input id="confirm-plan" type="checkbox">我已查看知识点与来源，并确认当前练习设置。</label><button id="generate-button" type="button" class="button primary full-width" disabled>确认方案并生成游戏 <span aria-hidden="true">→</span></button></section>
+          <section id="ready-panel" class="panel ready-panel" hidden><span class="ready-check" aria-hidden="true">✓</span><div><h2>练习已准备好</h2><p id="ready-description"></p><button id="start-button" type="button" class="button primary">开始配对 →</button></div></section>
+          <details class="panel tool-details"><summary>查看处理与工具调用记录</summary><p id="trace-note" class="muted">真实模式中显示后端返回的实际工具记录。</p><ol id="tool-log" class="tool-log"></ol></details>
+        </div>
+      </div>
+    </section>
+    <section id="page-play" class="page" aria-labelledby="play-title" hidden>
+      <div class="page-heading compact"><div><p class="eyebrow">MATCHING PLAYGROUND</p><h1 id="play-title" tabindex="-1">配对练习</h1><p id="play-rules" class="lede"></p></div><button id="restart-button" type="button" class="button secondary">↻ 重新开始</button></div>
+      <div class="game-stats"><div><small>配对进度</small><strong id="play-progress">0 / 6</strong></div><div><small>本轮错误</small><strong id="play-errors">0</strong></div><div><small>使用提示</small><strong id="play-hints">0</strong></div><div><small id="time-label">已用时间</small><strong id="play-time">00:00</strong></div><progress id="play-progress-bar" max="6" value="0" aria-label="配对完成进度"></progress></div>
+      <div class="play-grid"><section class="panel board-panel" aria-label="配对卡片"><div id="selection-status" class="selection-status" role="status" aria-live="polite">先选择左侧概念，再选择右侧释义。</div><div class="matching-board"><div class="card-column"><h2 id="left-heading">概念 / 结构</h2><div id="left-cards" role="group" aria-labelledby="left-heading"></div></div><div class="board-link" aria-hidden="true">↔</div><div class="card-column"><h2 id="right-heading">释义 / 功能</h2><div id="right-cards" role="group" aria-labelledby="right-heading"></div></div></div></section><aside class="play-sidebar"><section class="panel feedback-panel"><p class="eyebrow">LEARNING FEEDBACK</p><h2>每一次配对，都有依据。</h2><div id="attempt-feedback" class="feedback-content" aria-live="polite"><p class="muted">完成一次配对后，这里会显示反馈和解释。</p></div><div id="attempt-retry" hidden><p class="warning-text">本次结果未确认。重试会使用同一事件，不会重复计分。</p><button id="retry-attempt-button" type="button" class="button primary full-width">重试本次配对</button><button id="sync-session-button" type="button" class="text-button">重新同步会话状态</button></div></section><section class="panel hint-panel"><h2>需要一点线索？</h2><p>先选中左侧概念，再查看辅助提示。提示使用情况会保留在报告里。</p><button id="hint-button" class="button secondary full-width" type="button" disabled>查看当前概念的提示</button><div id="hint-content" class="hint-content" aria-live="polite" hidden></div></section><button id="finish-button" type="button" class="button primary full-width">结束本轮并查看报告 →</button><p class="muted sidebar-note">可以提前结束。尚未尝试的知识点会单独列出。</p></aside></div>
+    </section>
+    <section id="page-report" class="page" aria-labelledby="report-title" hidden>
+      <div class="page-heading compact"><div><p class="eyebrow">YOUR LEARNING REPORT</p><h1 id="report-title" tabindex="-1">看见进步，<span>找到下一步。</span></h1><p id="report-subtitle" class="lede"></p></div><button id="export-report" class="button secondary" type="button">下载本轮记录 ↓</button></div>
+      <div id="report-content"></div>
+      <div class="report-actions"><button id="practice-button" type="button" class="button primary">再练薄弱知识点 →</button><button id="report-restart" type="button" class="button secondary">重新练习本组</button><button id="new-material" type="button" class="text-button">换一份资料</button></div>
+    </section>
+    <section id="empty-page" class="panel empty-page" hidden><h1 id="empty-title" tabindex="-1">练习尚未创建</h1><p id="empty-message">先上传资料并确认方案，即可开始配对。</p><a class="button primary" href="#create">去创建练习 →</a></section>
+  </main>
+  <footer class="site-footer"><span>Learning2Game <span aria-hidden="true">↔</span> 从理解到练习</span><div><button id="privacy-button" class="text-button" type="button">资料与隐私</button><button id="clear-data-button" class="text-button" type="button">删除本次资料与记录</button></div></footer>
+  <dialog id="mode-dialog"><div class="dialog-heading"><h2>选择运行模式</h2><button class="icon-button" data-close-dialog type="button" aria-label="关闭模式设置">×</button></div><p>切换后会清除当前浏览器的练习引用。已有记录仍保留在原服务中。</p><div class="mode-options"><label><input type="radio" name="run-mode" value="demo"><span><strong>教学演示</strong><small>固定细胞样例，服务端判分；不调用资料理解模型。</small></span></label><label><input type="radio" name="run-mode" value="real"><span><strong>真实后端</strong><small>使用成员 D 的 API，并接收 A/B 的真实结果。</small></span></label></div><p id="backend-address" class="muted"></p><button id="save-mode" type="button" class="button primary full-width">应用模式</button></dialog>
+  <dialog id="confirm-dialog"><div class="dialog-heading"><h2 id="dialog-title"></h2><button class="icon-button" data-close-dialog type="button" aria-label="关闭确认框">×</button></div><p id="dialog-message"></p><div class="dialog-actions"><button id="cancel-dialog" class="button secondary" type="button">取消</button><button id="confirm-dialog-action" class="button primary" type="button">确认</button></div></dialog>
+  <dialog id="privacy-dialog"><div class="dialog-heading"><h2>资料与隐私</h2><button class="icon-button" data-close-dialog type="button" aria-label="关闭隐私说明">×</button></div><p>演示模式：上传内容不落盘、不发送给外部模型，只保留文件名和演示练习记录；展示的是预先编写的教学样例。</p><p>真实模式：上传资料交给团队后端处理，可能会使用外部模型服务。请向团队确认保存期限、服务供应商与删除方式，并避免上传个人敏感信息。</p><p>浏览器仅保存练习引用、参数和未确认事件。可以使用页脚“删除本次资料与记录”调用后端删除接口；若真实后端尚未提供该接口，页面会明确提示。</p></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
