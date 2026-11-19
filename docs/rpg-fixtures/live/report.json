@@ -1,0 +1,81 @@
+{
+  "game_type": "rpg_quest",
+  "session_id": "861f2e0f213644e6913c30afb3d14740",
+  "game_id": "g_cf62770025dc44f3a94ceeed83ff03d2",
+  "finish_reason": "completed",
+  "total_challenges": 3,
+  "resolved_challenges": 3,
+  "correct_challenges": 3,
+  "remediated_challenges": 0,
+  "total_quests": 2,
+  "completed_quests": 2,
+  "xp": 66,
+  "inventory": [
+    {
+      "id": "it_a87591fd22664cc391491bd2ade87dce",
+      "name": "样本接收台档案章"
+    },
+    {
+      "id": "it_efc8d3defb2348218d9248d8cf86a05f",
+      "name": "观察室档案章"
+    }
+  ],
+  "valid_attempts": 3,
+  "correct_attempts": 3,
+  "mistakes": 0,
+  "attempted_concepts": 3,
+  "untouched_concepts": [],
+  "first_attempt_accuracy": 1.0,
+  "overall_attempt_accuracy": 1.0,
+  "completion_rate": 1.0,
+  "hints_by_concept": {
+    "kp_ed66a11ae52a62f7": 1,
+    "kp_a99ed0ded44457bf": 0,
+    "kp_4cec78131293821f": 0
+  },
+  "weak_knowledge_ids": [
+    "kp_ed66a11ae52a62f7"
+  ],
+  "concepts": [
+    {
+      "knowledge_id": "kp_ed66a11ae52a62f7",
+      "term": "Screen",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 1,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "第一栏「Sand bed」对应「traps fine grit」（water-stations.png / 图 1）。第二栏「Screen」对应「catches leaves」（water-stations.png / 图 1）。",
+      "source_ref": "water-stations.png / 图 1"
+    },
+    {
+      "knowledge_id": "kp_a99ed0ded44457bf",
+      "term": "Sand bed",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "第一栏「Screen」对应「catches leaves」（water-stations.png / 图 1）。第二栏「Sand bed」对应「traps fine grit」（water-stations.png / 图 1）。",
+      "source_ref": "water-stations.png / 图 1"
+    },
+    {
+      "knowledge_id": "kp_4cec78131293821f",
+      "term": "Carbon bed",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "第一栏「Screen」对应「catches leaves」（water-stations.png / 图 1）。第二栏「Carbon bed」对应「reduces odors」（water-stations.png / 图 1）。",
+      "source_ref": "water-stations.png / 图 1"
+    }
+  ],
+  "elapsed_seconds": 0
+}

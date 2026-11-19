@@ -1,0 +1,39 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室：开放日倒计时",
+  "goal": "distinguish",
+  "learner_level": "familiar",
+  "difficulty": "hard",
+  "theme": "laboratory",
+  "knowledge_ids": [
+    "kp_ed66a11ae52a62f7",
+    "kp_a99ed0ded44457bf",
+    "kp_4cec78131293821f"
+  ],
+  "challenge_count": 3,
+  "scene_count": 2,
+  "learning_objectives": [
+    "区分相近概念的用途，说明Screen、Sand bed在讲义中的含义。",
+    "区分相近概念的用途，说明Carbon bed在讲义中的含义。"
+  ],
+  "scene_outlines": [
+    {
+      "name": "样本接收台",
+      "objective": "复核两份有争议的登记，留下可追溯的处理记录。",
+      "knowledge_ids": [
+        "kp_ed66a11ae52a62f7",
+        "kp_a99ed0ded44457bf"
+      ]
+    },
+    {
+      "name": "观察室",
+      "objective": "分派刚送来的工单，将它们交给合适的负责人。",
+      "knowledge_ids": [
+        "kp_4cec78131293821f"
+      ]
+    }
+  ],
+  "rationale": "玩家将从几个相近的候选项中说明选择依据，在各站完成登记与交接。本轮练习针对区分相近概念的用途。",
+  "warnings": []
+}

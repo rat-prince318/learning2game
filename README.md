@@ -43,5 +43,6 @@ python run.py
 | B 资料理解 | [文档和图像读取](backend/material_processing.py)、[知识点、证据与质量检查](backend/material_adapter.py) |
 | C 网页与游戏交互 | [网页源码](public/)、[浏览器验收](tests/browser/) |
 | D 集成与学习记录 | [FastAPI 入口](backend/main.py)、[任务流程](backend/pipeline.py)、[判分和报告](backend/sessions.py) |
+| RPG 答题战役后端 | [八卷远征、战术首领与进阶周目](docs/rpg-expedition.md)、[单卷战役](docs/rpg-battles.md)、[资料生成和会话对接](docs/rpg-backend-handoff.md) |
 
 运行后的 `/docs` 提供交互式 API 文档，`/health` 显示当前模式。[真实模型与浏览器验收记录](docs/acceptance.md)包括遗漏项、修正和实测耗时。API 调用顺序、配置、统计口径和数据清理方法见[对接与测试说明](docs/integration.md)。

@@ -1,0 +1,296 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室",
+  "rules": "接受所在场景的任务，按序完成挑战。每题可尝试两次并查看一次提示，完成任务获得经验与物品。",
+  "theme": "laboratory",
+  "start_scene_id": "sc_2e26f1b368c34bf4a2f52d70d5334035",
+  "scenes": [
+    {
+      "scene_id": "sc_2e26f1b368c34bf4a2f52d70d5334035",
+      "name": "样本接收台",
+      "description": "交班实验室的第 1 份记录刚送到样本接收台。交接前，你要为交班手册整理缺页。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "我是样本接收台的值班研究员。请独立复核有争议的记录，签入核对结果。",
+          "给入库样本登记标签，将核对结果记入交班手册。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_ccaceb9ebf7a40858ec45b940996b13d",
+        "title": "找回交班手册第 1 页",
+        "objective": "给入库样本登记标签，将核对结果记入交班手册。",
+        "challenge_ids": [
+          "ch_f491cf91d3b04389830b0fcc7917dcea",
+          "ch_17be541bfebf44e995ff9d97327739af"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_d7c03672dfb1451ea74b66eed02a0196",
+            "name": "样本接收台签章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_f491cf91d3b04389830b0fcc7917dcea",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「连接南北两极、与赤道垂直的半圆弧」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_be2b69047f344fc28bd63ddfd6be310b",
+              "text": "经线"
+            },
+            {
+              "id": "op_4a5551897ea048d39896a79876f06cc4",
+              "text": "等高线"
+            },
+            {
+              "id": "op_ae778407512246c7a05c4d84a389c7cf",
+              "text": "板块边界"
+            },
+            {
+              "id": "op_3519c3a049d141bc80c25ddab1fc81e7",
+              "text": "纬线"
+            }
+          ],
+          "knowledge_id": "kp_77b9b98aeabdc2ad",
+          "correct_option_id": "op_be2b69047f344fc28bd63ddfd6be310b",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "连接南北两极、与赤道垂直的半圆弧",
+          "source_ref": "geography.md / 第 7 行",
+          "evidence": "经线: 连接南北两极、与赤道垂直的半圆弧。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        },
+        {
+          "challenge_id": "ch_17be541bfebf44e995ff9d97327739af",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「地球表面上与赤道平行的圆圈」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_15e9899e9862447d9e6e07f26fc1605c",
+              "text": "流水侵蚀"
+            },
+            {
+              "id": "op_fbade71f171742b68d019b85047fe3fb",
+              "text": "纬线"
+            },
+            {
+              "id": "op_7d5345e5d4a74b6fb38f799813485dd4",
+              "text": "海拔"
+            },
+            {
+              "id": "op_dd69b2fd62de484ba0d4cf041bdbbce8",
+              "text": "经线"
+            }
+          ],
+          "knowledge_id": "kp_b6ff3c437cd21dd7",
+          "correct_option_id": "op_fbade71f171742b68d019b85047fe3fb",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "地球表面上与赤道平行的圆圈",
+          "source_ref": "geography.md / 第 11 行",
+          "evidence": "纬线: 地球表面上与赤道平行的圆圈。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        }
+      ],
+      "next_scene_id": "sc_9699fc02b350401e9a39ba08ce393c96"
+    },
+    {
+      "scene_id": "sc_9699fc02b350401e9a39ba08ce393c96",
+      "name": "观察室",
+      "description": "交班实验室的第 2 份记录刚送到观察室。交接前，你要为交班手册整理缺页。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "我是观察室的值班研究员。请独立复核有争议的记录，签入核对结果。",
+          "核对观察记录的归属，将核对结果记入交班手册。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_d0fbd68c071f4dc3a38bb4ccf91004cb",
+        "title": "找回交班手册第 2 页",
+        "objective": "核对观察记录的归属，将核对结果记入交班手册。",
+        "challenge_ids": [
+          "ch_734343fe2bb64f92b9dcee954c6ca027",
+          "ch_f17b7336fb8749cca25d6761a22632c5"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_93f464bb180947e08a28ca43070df315",
+            "name": "观察室签章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_734343fe2bb64f92b9dcee954c6ca027",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「地图上连接海拔高度相同各点的曲线」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_f95d0ee6b7564f2c83879aa44fbc96ce",
+              "text": "等高线"
+            },
+            {
+              "id": "op_31c65b9595c04541a362453df854685d",
+              "text": "海拔"
+            },
+            {
+              "id": "op_512ef957ded440d58c542c24bf4ce655",
+              "text": "经线"
+            },
+            {
+              "id": "op_5130b580056a40a0b7cb0dc7506d0686",
+              "text": "纬线"
+            }
+          ],
+          "knowledge_id": "kp_ac0f7fad80434325",
+          "correct_option_id": "op_f95d0ee6b7564f2c83879aa44fbc96ce",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "地图上连接海拔高度相同各点的曲线",
+          "source_ref": "geography.md / 第 15 行",
+          "evidence": "等高线: 地图上连接海拔高度相同各点的曲线。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        },
+        {
+          "challenge_id": "ch_f17b7336fb8749cca25d6761a22632c5",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「地面某点相对于平均海平面的垂直高度」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_ffd4e727720c477681ebe28ce4d7a9c4",
+              "text": "海拔"
+            },
+            {
+              "id": "op_bd3cf22291994e96a22e9dde474a7e31",
+              "text": "纬线"
+            },
+            {
+              "id": "op_6eaffc7f0f9849ac99e267e144792ce2",
+              "text": "经线"
+            },
+            {
+              "id": "op_084700ca514f46ed8939f3fa51455546",
+              "text": "等高线"
+            }
+          ],
+          "knowledge_id": "kp_e27f87e77621e079",
+          "correct_option_id": "op_ffd4e727720c477681ebe28ce4d7a9c4",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "地面某点相对于平均海平面的垂直高度",
+          "source_ref": "geography.md / 第 19 行",
+          "evidence": "海拔: 地面某点相对于平均海平面的垂直高度。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        }
+      ],
+      "next_scene_id": "sc_67773c6836624f87be45306d266fa177"
+    },
+    {
+      "scene_id": "sc_67773c6836624f87be45306d266fa177",
+      "name": "复核工作台",
+      "description": "交班实验室的第 3 份记录刚送到复核工作台。交接前，你要为交班手册整理缺页。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "我是复核工作台的值班研究员。请独立复核有争议的记录，签入核对结果。",
+          "裁定两份登记表的争议，将核对结果记入交班手册。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_bad31a599b094ff5bffc9cf3b3e53659",
+        "title": "找回交班手册第 3 页",
+        "objective": "裁定两份登记表的争议，将核对结果记入交班手册。",
+        "challenge_ids": [
+          "ch_cbfe39cb24ab4f7d8f846f830976eba3",
+          "ch_15f07bfb51cd467eb9eb99b36e365289"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_e5aee79a926a42ad8723a3761037adda",
+            "name": "复核工作台签章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_cbfe39cb24ab4f7d8f846f830976eba3",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「由海陆昼夜受热差异引起、风向昼夜转换的局地风」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_7933bdeb561240c8ad0a048a0a572c1b",
+              "text": "海陆风"
+            },
+            {
+              "id": "op_a556eff2a77a48248a88c0664fe7df0c",
+              "text": "等高线"
+            },
+            {
+              "id": "op_8b857470f524425bb36637322c2c8fa8",
+              "text": "经线"
+            },
+            {
+              "id": "op_fdb3efcdc35f4f7f8cdc0450d35016c0",
+              "text": "板块边界"
+            }
+          ],
+          "knowledge_id": "kp_caa61e9c642f4c8f",
+          "correct_option_id": "op_7933bdeb561240c8ad0a048a0a572c1b",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "由海陆昼夜受热差异引起、风向昼夜转换的局地风",
+          "source_ref": "geography.md / 第 23 行",
+          "evidence": "海陆风: 由海陆昼夜受热差异引起、风向昼夜转换的局地风。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        },
+        {
+          "challenge_id": "ch_15f07bfb51cd467eb9eb99b36e365289",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「相邻岩石圈板块相互接触的地带」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_68eff832058942019c697baebf67f7e8",
+              "text": "等高线"
+            },
+            {
+              "id": "op_4723fbd008534183a06fb0441325cdbb",
+              "text": "经线"
+            },
+            {
+              "id": "op_f67cde49ea9f43bc917162fd4aa1b396",
+              "text": "流水侵蚀"
+            },
+            {
+              "id": "op_8f664e67af734903978b78533815ae9a",
+              "text": "板块边界"
+            }
+          ],
+          "knowledge_id": "kp_c7ca5305e3e919f2",
+          "correct_option_id": "op_8f664e67af734903978b78533815ae9a",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "相邻岩石圈板块相互接触的地带",
+          "source_ref": "geography.md / 第 27 行",
+          "evidence": "板块边界: 相邻岩石圈板块相互接触的地带。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        }
+      ],
+      "next_scene_id": null
+    }
+  ],
+  "warnings": [
+    "本地规则生成。",
+    "资料主要提供定义，本轮以辨认和比较资料中的描述为主。"
+  ]
+}

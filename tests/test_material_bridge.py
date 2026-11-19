@@ -16,6 +16,32 @@ from backend.material_adapter import MaterialError, extract_material, validate_o
 from backend.material_processing import MAX_IMAGE_SIDE
 
 
+def test_handout_intro_is_not_a_glossary_entry(tmp_path):
+    src = tmp_path / "map-notes.md"
+    src.write_text("This is an authored educational test material.\n"
+                   "this: A JavaScript keyword referring to the current receiver.\n"
+                   "Latitude: Distance north or south of the equator.\n", encoding="utf-8")
+    assert [k.term for k in extract_material(src).knowledge] == ["this", "Latitude"]
+
+
+def test_diagram_keeps_labelled_functions_and_rejects_conflicting_functions(tmp_path, monkeypatch):
+    image = tmp_path / "stations.png"
+    Image.new("RGB", (80, 80), "white").save(image)
+    monkeypatch.setenv("LLM_API_KEY", "fixture")
+    records = [
+        ("Screen", "Catches leaves", "part_function"), ("Screen", "Feeds sand", "diagram_relation"),
+        ("Bed", "Traps grit", "part_function"), ("Bed", "Holds fuel", "part_function"),
+        ("Pipe", "Connects the stations", "diagram_relation"),
+    ]
+    monkeypatch.setattr("backend.material_adapter.MaterialProvider.complete",
+                        lambda *args, **kwargs: [{"term": term, "definition": meaning, "relation": kind,
+                            "evidence": meaning, "confidence": .95} for term, meaning, kind in records])
+    result = extract_material(image, live=True)
+    assert [(p.term, p.definition) for p in result.knowledge] == [
+        ("Screen", "Catches leaves"), ("Pipe", "Connects the stations")]
+    assert result.warnings
+
+
 def test_custom_offline_text_is_source_based_and_keeps_true_line_numbers(tmp_path, monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "test-only")
     def no_network(*args, **kwargs):

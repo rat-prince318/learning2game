@@ -1,0 +1,55 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室",
+  "goal": "review",
+  "learner_level": "beginner",
+  "difficulty": "easy",
+  "theme": "laboratory",
+  "knowledge_ids": [
+    "kp_81870d8df8f37cb5",
+    "kp_d714521ae7b41ddc",
+    "kp_fefd06c48a6bf3b0",
+    "kp_a78ea667b8f21682",
+    "kp_4cfb66861165ddbc",
+    "kp_6ef3277342090396"
+  ],
+  "challenge_count": 6,
+  "scene_count": 3,
+  "learning_objectives": [
+    "回顾资料里的关键判断，说明细胞核、线粒体在讲义中的含义。",
+    "回顾资料里的关键判断，说明细胞膜、核糖体在讲义中的含义。",
+    "回顾资料里的关键判断，说明叶绿体、细胞壁在讲义中的含义。"
+  ],
+  "scene_outlines": [
+    {
+      "name": "样本接收台",
+      "objective": "给入库样本登记标签，将核对结果记入交班手册。",
+      "knowledge_ids": [
+        "kp_81870d8df8f37cb5",
+        "kp_d714521ae7b41ddc"
+      ]
+    },
+    {
+      "name": "观察室",
+      "objective": "核对观察记录的归属，将核对结果记入交班手册。",
+      "knowledge_ids": [
+        "kp_fefd06c48a6bf3b0",
+        "kp_a78ea667b8f21682"
+      ]
+    },
+    {
+      "name": "复核工作台",
+      "objective": "裁定两份登记表的争议，将核对结果记入交班手册。",
+      "knowledge_ids": [
+        "kp_4cfb66861165ddbc",
+        "kp_6ef3277342090396"
+      ]
+    }
+  ],
+  "rationale": "每到一站都要为交班手册补齐一页。你将用资料线索完成判断，再把已核对的记录交给下一站。",
+  "warnings": [
+    "本地规则生成。",
+    "资料主要提供定义，本轮以辨认和比较资料中的描述为主。"
+  ]
+}

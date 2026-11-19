@@ -20,6 +20,7 @@ from .models import (
     MaterialResult, StrictModel, UserPreferences,
 )
 from .provider import ToolCall, call_service
+from .rpg.models import GameRecommendation, RPGPlan
 
 router = APIRouter(tags=["Generation workflow"])
 log = logging.getLogger("uvicorn.error")
@@ -60,7 +61,9 @@ class JobResult(StrictModel):
     material_id: str | None = None
     knowledge_count: int | None = None
     plan_id: str | None = None
-    plan: MatchingPlan | None = None
+    plan: MatchingPlan | RPGPlan | None = None
+    recommendation: GameRecommendation | None = None
+    game_type: Literal["matching", "rpg_quest"] | None = None
     game_id: str | None = None
     session_id: str | None = None
     feedback: str | None = None
@@ -72,6 +75,7 @@ class JobStatus(StrictModel):
     status: Literal["queued", "extracting", "planning", "awaiting_confirmation", "generating",
                     "validating", "writing_feedback", "completed", "failed"]
     mode: str
+    game_type: Literal["matching", "rpg_quest"] | None = None
     resource_id: str
     result: JobResult | None
     error: str | None
@@ -81,10 +85,11 @@ class JobStatus(StrictModel):
     updated_at: str
 
 
-def insert_job(conn: sqlite3.Connection, kind: str, resource_id: str, mode: str) -> str:
+def insert_job(conn: sqlite3.Connection, kind: str, resource_id: str, mode: str,
+               game_type: str | None = None) -> str:
     job_id = uuid4().hex
-    conn.execute("INSERT INTO jobs(id,kind,resource_id,mode,status) VALUES(?,?,?,?,'queued')",
-                 (job_id, kind, resource_id, mode))
+    conn.execute("INSERT INTO jobs(id,kind,resource_id,mode,game_type,status) VALUES(?,?,?,?,?,'queued')",
+                 (job_id, kind, resource_id, mode, game_type))
     return job_id
 
 
@@ -205,7 +210,7 @@ def get_job(job_id: str, request: Request):
     if row is None:
         raise HTTPException(404, "Job not found")
     return {"job_id": job_id, "kind": row["kind"], "status": row["status"], "mode": row["mode"],
-            "resource_id": row["resource_id"],
+            "game_type": row["game_type"], "resource_id": row["resource_id"],
             "result": json.loads(row["result_json"]) if row["result_json"] else None, "error": row["error"],
             "stages_ms": json.loads(row["stages_json"]), "tool_calls": json.loads(row["tools_json"]),
             "created_at": row["created_at"], "updated_at": row["updated_at"]}
@@ -260,7 +265,7 @@ def _queue_plan(app, tasks, conn, kind, resource_id, material_id, knowledge, pre
     _services(app)
     if len(knowledge) < 2:
         raise HTTPException(422, "At least two extracted concepts are required to build a matching game")
-    job_id = insert_job(conn, kind, resource_id, app.state.mode)
+    job_id = insert_job(conn, kind, resource_id, app.state.mode, "matching")
     tasks.add_task(_execute, app, job_id, _make_plan, material_id, knowledge, prefs,
                    resource_id if kind == "practice" else None, single_weak)
     return {"material_id": material_id, "job_id": job_id}
@@ -301,6 +306,8 @@ def confirm_plan(body: ConfirmRequest, request: Request, tasks: BackgroundTasks)
                            "LEFT JOIN jobs j ON j.id=p.game_job_id WHERE p.id=?", (body.plan_id,)).fetchone()
         if row is None:
             raise HTTPException(404, "Plan not found")
+        if row["game_type"] != "matching":
+            raise HTTPException(409, "请从 RPG 生成入口确认这份方案。")
         saved = MatchingPlan.model_validate_json(row["config_json"])
         selected = body.plan or saved
         if row["game_job_id"] and row["game_status"] != "failed":
@@ -319,7 +326,7 @@ def confirm_plan(body: ConfirmRequest, request: Request, tasks: BackgroundTasks)
             original = conn.execute("SELECT g.internal_json FROM games g JOIN sessions s ON s.game_id=g.id "
                                     "WHERE s.id=?", (row["practice_session_id"],)).fetchone()
             previous = GameConfigInternal.model_validate_json(original["internal_json"])
-        job_id = insert_job(conn, "generation", body.plan_id, request.app.state.mode)
+        job_id = insert_job(conn, "generation", body.plan_id, request.app.state.mode, "matching")
         conn.execute("UPDATE plans SET game_job_id=?,config_json=? WHERE id=?",
                      (job_id, selected.model_dump_json(), body.plan_id))
     tasks.add_task(_execute, request.app, job_id, _generate, body.plan_id, knowledge, selected, previous)
@@ -328,12 +335,14 @@ def confirm_plan(body: ConfirmRequest, request: Request, tasks: BackgroundTasks)
 
 def _finished_round(conn, session_id):
     row = conn.execute(
-        "SELECT s.status,r.stats_json,g.internal_json,p.material_id,p.config_json FROM sessions s "
+        "SELECT s.status,r.stats_json,g.game_type,g.internal_json,p.material_id,p.config_json FROM sessions s "
         "JOIN games g ON g.id=s.game_id LEFT JOIN plans p ON p.id=g.plan_id "
         "LEFT JOIN reports r ON r.session_id=s.id WHERE s.id=?", (session_id,),
     ).fetchone()
     if row is None:
         raise HTTPException(404, "Session not found")
+    if row["game_type"] != "matching":
+        raise HTTPException(409, "请从 RPG 会话入口打开这一局。")
     if row["status"] != "finished":
         raise HTTPException(409, "Finish the session first")
     if not row["material_id"]:
@@ -382,6 +391,6 @@ def request_feedback(session_id: str, request: Request, tasks: BackgroundTasks):
         if latest and latest["status"] != "failed":
             return {"session_id": session_id, "job_id": latest["id"]}
         _services(request.app)
-        job_id = insert_job(conn, "feedback", session_id, request.app.state.mode)
+        job_id = insert_job(conn, "feedback", session_id, request.app.state.mode, "matching")
     tasks.add_task(_execute, request.app, job_id, _write_feedback, session_id, report, knowledge)
     return {"session_id": session_id, "job_id": job_id}

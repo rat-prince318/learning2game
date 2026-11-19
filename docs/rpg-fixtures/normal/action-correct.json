@@ -1,0 +1,68 @@
+{
+  "event_id": "98e45c448abf491ca600586c36f34a0d",
+  "action": "attempt",
+  "feedback": {
+    "message": "你在交班手册上留下了核对印记。",
+    "correct": true,
+    "challenge_id": "ch_41b7bc13d5bf4ee58727237b6799d660",
+    "explanation": "进行有氧呼吸，为细胞活动提供 ATP",
+    "source_ref": "cell-notes.txt / 第 2 行",
+    "revealed_option_id": "op_88c1496920024630ad45e7b81179ebb2",
+    "reward_delta": 30,
+    "remediated": false
+  },
+  "progress": {
+    "game_type": "rpg_quest",
+    "session_id": "fd8595f5915947519b3659e2f29ed6ae",
+    "game_id": "g_71d9c444b3284be0b9f5fdcbe3208331",
+    "status": "active",
+    "revision": 5,
+    "current_scene_id": "sc_be475c23fc3149c3b7b89683bd5b9db3",
+    "unlocked_scene_ids": [
+      "sc_be475c23fc3149c3b7b89683bd5b9db3",
+      "sc_54c41ab7b38c4f3b9b66d1185fba5b71"
+    ],
+    "accepted_quest_ids": [
+      "qu_61d001e1449642058a01469e053b23d4"
+    ],
+    "completed_quest_ids": [
+      "qu_61d001e1449642058a01469e053b23d4"
+    ],
+    "resolved_challenge_ids": [
+      "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd",
+      "ch_41b7bc13d5bf4ee58727237b6799d660"
+    ],
+    "passed_challenge_ids": [
+      "ch_41b7bc13d5bf4ee58727237b6799d660"
+    ],
+    "remediated_challenge_ids": [
+      "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd"
+    ],
+    "challenge_attempts": {
+      "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd": 2,
+      "ch_41b7bc13d5bf4ee58727237b6799d660": 1
+    },
+    "hints_by_challenge": {},
+    "revealed_hints": {},
+    "xp": 30,
+    "inventory": [
+      {
+        "id": "it_8951c0a6575341159b1dff84b400adaa",
+        "name": "样本接收台签章"
+      }
+    ],
+    "all_quests_completed": false,
+    "last_feedback": {
+      "message": "你在交班手册上留下了核对印记。",
+      "correct": true,
+      "challenge_id": "ch_41b7bc13d5bf4ee58727237b6799d660",
+      "explanation": "进行有氧呼吸，为细胞活动提供 ATP",
+      "source_ref": "cell-notes.txt / 第 2 行",
+      "revealed_option_id": "op_88c1496920024630ad45e7b81179ebb2",
+      "reward_delta": 30,
+      "remediated": false
+    },
+    "started_at": "2026-11-19T09:50:47.572Z",
+    "elapsed_seconds": 0
+  }
+}

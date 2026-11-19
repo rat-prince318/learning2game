@@ -1,0 +1,127 @@
+{
+  "game_type": "rpg_quest",
+  "session_id": "fd8595f5915947519b3659e2f29ed6ae",
+  "game_id": "g_71d9c444b3284be0b9f5fdcbe3208331",
+  "finish_reason": "completed",
+  "total_challenges": 6,
+  "resolved_challenges": 6,
+  "correct_challenges": 5,
+  "remediated_challenges": 1,
+  "total_quests": 3,
+  "completed_quests": 3,
+  "xp": 110,
+  "inventory": [
+    {
+      "id": "it_8951c0a6575341159b1dff84b400adaa",
+      "name": "样本接收台签章"
+    },
+    {
+      "id": "it_bfdf7cfccbd9496c9d115a2d0401aff7",
+      "name": "观察室签章"
+    },
+    {
+      "id": "it_b483ee67ed0241198a40df7e96d9d9aa",
+      "name": "复核工作台签章"
+    }
+  ],
+  "valid_attempts": 7,
+  "correct_attempts": 5,
+  "mistakes": 2,
+  "attempted_concepts": 6,
+  "untouched_concepts": [],
+  "first_attempt_accuracy": 0.8333333333333334,
+  "overall_attempt_accuracy": 0.7142857142857143,
+  "completion_rate": 1.0,
+  "hints_by_concept": {
+    "kp_81870d8df8f37cb5": 0,
+    "kp_d714521ae7b41ddc": 0,
+    "kp_fefd06c48a6bf3b0": 0,
+    "kp_a78ea667b8f21682": 0,
+    "kp_4cfb66861165ddbc": 0,
+    "kp_6ef3277342090396": 0
+  },
+  "weak_knowledge_ids": [
+    "kp_81870d8df8f37cb5"
+  ],
+  "concepts": [
+    {
+      "knowledge_id": "kp_81870d8df8f37cb5",
+      "term": "细胞核",
+      "attempts": 2,
+      "mistakes": 2,
+      "first_attempt_correct": false,
+      "hints": 0,
+      "passed": false,
+      "resolved": true,
+      "remediated": true,
+      "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+      "source_ref": "cell-notes.txt / 第 1 行"
+    },
+    {
+      "knowledge_id": "kp_d714521ae7b41ddc",
+      "term": "线粒体",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "进行有氧呼吸，为细胞活动提供 ATP",
+      "source_ref": "cell-notes.txt / 第 2 行"
+    },
+    {
+      "knowledge_id": "kp_fefd06c48a6bf3b0",
+      "term": "细胞膜",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "选择性地控制物质进入和离开细胞",
+      "source_ref": "cell-notes.txt / 第 3 行"
+    },
+    {
+      "knowledge_id": "kp_a78ea667b8f21682",
+      "term": "核糖体",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "读取信使 RNA 的信息，合成蛋白质",
+      "source_ref": "cell-notes.txt / 第 4 行"
+    },
+    {
+      "knowledge_id": "kp_4cfb66861165ddbc",
+      "term": "叶绿体",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "在植物细胞中进行光合作用，将光能转为化学能",
+      "source_ref": "cell-notes.txt / 第 5 行"
+    },
+    {
+      "knowledge_id": "kp_6ef3277342090396",
+      "term": "细胞壁",
+      "attempts": 1,
+      "mistakes": 0,
+      "first_attempt_correct": true,
+      "hints": 0,
+      "passed": true,
+      "resolved": true,
+      "remediated": false,
+      "explanation": "位于细胞膜外，提供结构支撑与保护",
+      "source_ref": "cell-notes.txt / 第 6 行"
+    }
+  ],
+  "elapsed_seconds": 0
+}

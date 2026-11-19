@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "game_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Game Ids",
+      "type": "array"
+    },
+    "hero_class": {
+      "default": "arcanist",
+      "enum": [
+        "arcanist",
+        "vanguard",
+        "ranger"
+      ],
+      "title": "Hero Class",
+      "type": "string"
+    },
+    "kit": {
+      "default": "trail",
+      "enum": [
+        "trail",
+        "ward"
+      ],
+      "title": "Kit",
+      "type": "string"
+    },
+    "request_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Request Id"
+    }
+  },
+  "required": [
+    "game_ids"
+  ],
+  "title": "ExpeditionStart",
+  "type": "object"
+}

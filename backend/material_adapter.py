@@ -23,7 +23,7 @@ from .provider import trace_tool
 
 __all__ = ["MaterialError", "extract_material", "validate_office_archive"]
 
-MAX_POINTS = 48
+MAX_POINTS = 64
 MAX_CHUNKS = 8
 _CHUNK_SIZE = 3500
 _BULLET = re.compile(r"^\s*(?:[-*+]\s+|\d+[.、)]\s*)")
@@ -33,6 +33,7 @@ _IS = re.compile(r"^([A-Za-z][\w '\-()]{0,75}?)\s+(?:is|are|refers to|means)\s+(
 _CHINESE = re.compile(r"^([\w（）()\-]{1,20}?)(?:指的是|是指|指|是)\s*(.{4,180})$")
 _NONTERMS = {"例如", "注意", "说明", "提示", "小结", "备注", "资料来源", "参考文献", "示例",
              "example", "note", "source", "tip", "term", "concept", "概念", "术语"}
+_PRONOUN_SUBJECTS = {"this", "that", "it", "these", "those", "they", "we", "i", "he", "she", "you"}
 _PUNCT = re.compile(r"[\W_]+", re.UNICODE)
 
 
@@ -88,6 +89,8 @@ def _rules(block: TextBlock) -> list[Point]:
             if not match:
                 continue
             term, definition = match.groups()
+            if match.re is _IS and term.casefold() in _PRONOUN_SUBJECTS:
+                continue
         if term.startswith(("本文件", "本章", "本节", "这份讲义")) or re.search(
             r"(?:\.(?:svg|png|jpe?g|pdf)|https?://\S+)[。.]?$", definition, flags=re.I
         ):
@@ -111,6 +114,7 @@ _TEXT = (
 _VISION = (
     "观察这幅图中的标签、箭头、结构和连接，提取能从图中观察到的关系。"
     "term 是部件或标签，definition 描述它与另一元素的关系或图中明确标示的功能。"
+    "每个标签只返回一条记录。有明示功能时选该功能；仅有连线时选一个有方向的关系。"
     "evidence 要说明支持该关系的具体视觉线索。对清晰可读的术语表，也可提取表内的明确对应关系。"
     "关系类型使用 part_function、diagram_relation 或 concept_definition。仅使用画面支持的关系。"
     "跳过遮挡和推测，最多返回 10 对。"
@@ -215,7 +219,13 @@ def _from_image(provider, asset) -> list[Point]:
                 relation = "diagram_relation"
             candidates.append(Point(_quoted(item, "term"), _quoted(item, "definition"), quote,
                                     [asset.source_id], asset.label, asset.page, "image", relation))
-    return candidates
+    # A labelled part can have both a printed function and an outgoing arrow.
+    # Preserve its explicit function in this figure. Conflicting functions still
+    # reach _dedupe together, as do competing relationships in arrow-only figures.
+    functions = {_key(point.term) for point in candidates if point.relation == "part_function"
+                 and _qualifies(point)}
+    return [point for point in candidates
+            if point.relation != "diagram_relation" or _key(point.term) not in functions]
 
 
 def _qualifies(point: Point) -> bool:
@@ -259,7 +269,7 @@ def _dedupe(candidates: list[Point]) -> tuple[list[Point], int]:
         key = _key(point.definition)
         definitions[key] = definitions.get(key, 0) + 1
     playable = [p for p in merged if definitions[_key(p.definition)] == 1]
-    return playable[:MAX_POINTS], rejected + len(merged) - len(playable)
+    return playable, rejected + len(merged) - len(playable)
 
 
 def extract_material(path: Path, *, live=False, pages=None, include_images=True, original_name=None) -> MaterialResult:
@@ -287,6 +297,9 @@ def extract_material(path: Path, *, live=False, pages=None, include_images=True,
             candidates.extend(_from_image(provider, image))
     with trace_tool("verify_sources_and_deduplicate"):
         playable, conflicts = _dedupe(candidates)
+        if len(playable) > MAX_POINTS:
+            playable = playable[:MAX_POINTS]
+            material.warn(f"本次已收录前 {MAX_POINTS} 个知识点，其余内容可分章上传。")
         if conflicts:
             material.warn("部分候选包含重复或冲突的配对关系，已留待资料修订。")
         if not playable:

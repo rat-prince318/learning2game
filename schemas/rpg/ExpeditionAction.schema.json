@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ChooseReward": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "choose_reward",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "reward_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Reward Id",
+          "type": "string"
+        },
+        "replace_relic_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replace Relic Id"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision",
+        "reward_id"
+      ],
+      "title": "ChooseReward",
+      "type": "object"
+    },
+    "ChooseRoute": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "choose_route",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "route_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Route Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision",
+        "route_id"
+      ],
+      "title": "ChooseRoute",
+      "type": "object"
+    },
+    "Equip": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "equip",
+          "title": "Action",
+          "type": "string"
+        },
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Item Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "item_id"
+      ],
+      "title": "Equip",
+      "type": "object"
+    },
+    "ExpeditionAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "answer",
+          "title": "Action",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "option_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "skill": {
+          "default": "strike",
+          "enum": [
+            "strike",
+            "burst",
+            "guard"
+          ],
+          "title": "Skill",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "prompt_id",
+        "option_id"
+      ],
+      "title": "ExpeditionAnswer",
+      "type": "object"
+    },
+    "Hint": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "hint",
+          "title": "Action",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "prompt_id"
+      ],
+      "title": "Hint",
+      "type": "object"
+    },
+    "Retreat": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "retreat",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action"
+      ],
+      "title": "Retreat",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "answer": "#/$defs/ExpeditionAnswer",
+      "choose_reward": "#/$defs/ChooseReward",
+      "choose_route": "#/$defs/ChooseRoute",
+      "equip": "#/$defs/Equip",
+      "hint": "#/$defs/Hint",
+      "retreat": "#/$defs/Retreat"
+    },
+    "propertyName": "action"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/ChooseRoute"
+    },
+    {
+      "$ref": "#/$defs/ExpeditionAnswer"
+    },
+    {
+      "$ref": "#/$defs/Hint"
+    },
+    {
+      "$ref": "#/$defs/Equip"
+    },
+    {
+      "$ref": "#/$defs/ChooseReward"
+    },
+    {
+      "$ref": "#/$defs/Retreat"
+    }
+  ],
+  "title": "ExpeditionAction"
+}

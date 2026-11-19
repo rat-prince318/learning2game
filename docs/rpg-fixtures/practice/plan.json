@@ -1,0 +1,32 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室",
+  "goal": "review",
+  "learner_level": "beginner",
+  "difficulty": "easy",
+  "theme": "laboratory",
+  "knowledge_ids": [
+    "kp_81870d8df8f37cb5"
+  ],
+  "challenge_count": 1,
+  "scene_count": 1,
+  "learning_objectives": [
+    "回顾资料里的关键判断，说明细胞核在讲义中的含义。"
+  ],
+  "scene_outlines": [
+    {
+      "name": "样本接收台",
+      "objective": "给入库样本登记标签，将核对结果记入交班手册。",
+      "knowledge_ids": [
+        "kp_81870d8df8f37cb5"
+      ]
+    }
+  ],
+  "rationale": "每到一站都要为交班手册补齐一页。你将用资料线索完成判断，再把已核对的记录交给下一站。",
+  "warnings": [
+    "本地规则生成。",
+    "场景数已随题量调整为 1。",
+    "资料主要提供定义，本轮以辨认和比较资料中的描述为主。"
+  ]
+}

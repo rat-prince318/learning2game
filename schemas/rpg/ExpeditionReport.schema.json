@@ -1,0 +1,913 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "BattleConcept": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "term": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_ref": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "combat_attempts": {
+          "minimum": 0,
+          "title": "Combat Attempts",
+          "type": "integer"
+        },
+        "combat_correct": {
+          "minimum": 0,
+          "title": "Combat Correct",
+          "type": "integer"
+        },
+        "combat_mistakes": {
+          "minimum": 0,
+          "title": "Combat Mistakes",
+          "type": "integer"
+        },
+        "first_attempt_correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Attempt Correct"
+        },
+        "hints": {
+          "minimum": 0,
+          "title": "Hints",
+          "type": "integer"
+        },
+        "review_attempts": {
+          "minimum": 0,
+          "title": "Review Attempts",
+          "type": "integer"
+        },
+        "review_correct": {
+          "minimum": 0,
+          "title": "Review Correct",
+          "type": "integer"
+        },
+        "review_hints": {
+          "minimum": 0,
+          "title": "Review Hints",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "scene_id",
+        "term",
+        "explanation",
+        "source_ref",
+        "combat_attempts",
+        "combat_correct",
+        "combat_mistakes",
+        "first_attempt_correct",
+        "hints",
+        "review_attempts",
+        "review_correct",
+        "review_hints"
+      ],
+      "title": "BattleConcept",
+      "type": "object"
+    },
+    "BountySeal": {
+      "additionalProperties": false,
+      "properties": {
+        "region_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Region Id",
+          "type": "string"
+        },
+        "region_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Region Name",
+          "type": "string"
+        },
+        "boss_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Boss Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "region_id",
+        "region_name",
+        "boss_id"
+      ],
+      "title": "BountySeal",
+      "type": "object"
+    },
+    "Gear": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "tier": {
+          "minimum": 0,
+          "title": "Tier",
+          "type": "integer"
+        },
+        "attack_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Attack Bonus",
+          "type": "integer"
+        },
+        "slot": {
+          "default": "weapon",
+          "enum": [
+            "weapon",
+            "armor",
+            "accessory"
+          ],
+          "title": "Slot",
+          "type": "string"
+        },
+        "class_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "arcanist",
+                "vanguard",
+                "ranger"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "arcanist",
+          "title": "Class Id"
+        },
+        "hp_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Hp Bonus",
+          "type": "integer"
+        },
+        "defense_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Defense Bonus",
+          "type": "integer"
+        },
+        "critical_interval_reduction": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Critical Interval Reduction",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tier"
+      ],
+      "title": "Gear",
+      "type": "object"
+    },
+    "HeldRelic": {
+      "additionalProperties": false,
+      "properties": {
+        "relic": {
+          "$ref": "#/$defs/RelicSpec"
+        },
+        "stacks": {
+          "minimum": 0,
+          "title": "Stacks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "relic",
+        "stacks"
+      ],
+      "title": "HeldRelic",
+      "type": "object"
+    },
+    "HeroStats": {
+      "additionalProperties": false,
+      "properties": {
+        "max_hp": {
+          "minimum": 0,
+          "title": "Max Hp",
+          "type": "integer"
+        },
+        "attack": {
+          "minimum": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "defense": {
+          "minimum": 0,
+          "title": "Defense",
+          "type": "integer"
+        },
+        "crit_every": {
+          "minimum": 0,
+          "title": "Crit Every",
+          "type": "integer"
+        },
+        "focus_max": {
+          "minimum": 0,
+          "title": "Focus Max",
+          "type": "integer"
+        },
+        "burst_percent": {
+          "minimum": 0,
+          "title": "Burst Percent",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_hp",
+        "attack",
+        "defense",
+        "crit_every",
+        "focus_max",
+        "burst_percent"
+      ],
+      "title": "HeroStats",
+      "type": "object"
+    },
+    "Loadout": {
+      "additionalProperties": false,
+      "properties": {
+        "weapon": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Weapon",
+          "type": "string"
+        },
+        "armor": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Armor"
+        },
+        "accessory": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accessory"
+        }
+      },
+      "required": [
+        "weapon"
+      ],
+      "title": "Loadout",
+      "type": "object"
+    },
+    "PlayerView": {
+      "additionalProperties": false,
+      "properties": {
+        "hp": {
+          "minimum": 0,
+          "title": "Hp",
+          "type": "integer"
+        },
+        "max_hp": {
+          "minimum": 0,
+          "title": "Max Hp",
+          "type": "integer"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "xp": {
+          "minimum": 0,
+          "title": "Xp",
+          "type": "integer"
+        },
+        "xp_to_next_level": {
+          "minimum": 0,
+          "title": "Xp To Next Level",
+          "type": "integer"
+        },
+        "attack": {
+          "minimum": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "equipped_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Equipped Id",
+          "type": "string"
+        },
+        "inventory": {
+          "items": {
+            "$ref": "#/$defs/Gear"
+          },
+          "title": "Inventory",
+          "type": "array"
+        },
+        "combo": {
+          "minimum": 0,
+          "title": "Combo",
+          "type": "integer"
+        },
+        "focus": {
+          "minimum": 0,
+          "title": "Focus",
+          "type": "integer"
+        },
+        "focus_max": {
+          "minimum": 0,
+          "title": "Focus Max",
+          "type": "integer"
+        },
+        "burst_ready": {
+          "title": "Burst Ready",
+          "type": "boolean"
+        },
+        "hero_class": {
+          "default": "arcanist",
+          "enum": [
+            "arcanist",
+            "vanguard",
+            "ranger"
+          ],
+          "title": "Hero Class",
+          "type": "string"
+        },
+        "kit": {
+          "anyOf": [
+            {
+              "enum": [
+                "trail",
+                "ward"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kit"
+        },
+        "loadout": {
+          "$ref": "#/$defs/Loadout"
+        },
+        "stats": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HeroStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "hp",
+        "max_hp",
+        "level",
+        "xp",
+        "xp_to_next_level",
+        "attack",
+        "equipped_id",
+        "inventory",
+        "combo",
+        "focus",
+        "focus_max",
+        "burst_ready",
+        "loadout"
+      ],
+      "title": "PlayerView",
+      "type": "object"
+    },
+    "RelicBonuses": {
+      "additionalProperties": false,
+      "properties": {
+        "attack": {
+          "default": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "defense": {
+          "default": 0,
+          "title": "Defense",
+          "type": "integer"
+        },
+        "guard": {
+          "default": 0,
+          "title": "Guard",
+          "type": "integer"
+        },
+        "break_power": {
+          "default": 0,
+          "title": "Break Power",
+          "type": "integer"
+        },
+        "burst_percent": {
+          "default": 0,
+          "title": "Burst Percent",
+          "type": "integer"
+        },
+        "counter": {
+          "default": 0,
+          "title": "Counter",
+          "type": "integer"
+        },
+        "opening_focus": {
+          "default": 0,
+          "title": "Opening Focus",
+          "type": "integer"
+        },
+        "heal_on_win": {
+          "default": 0,
+          "title": "Heal On Win",
+          "type": "integer"
+        }
+      },
+      "title": "RelicBonuses",
+      "type": "object"
+    },
+    "RelicSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "max_stacks": {
+          "maximum": 2,
+          "minimum": 1,
+          "title": "Max Stacks",
+          "type": "integer"
+        },
+        "bonuses": {
+          "$ref": "#/$defs/RelicBonuses"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "max_stacks",
+        "bonuses"
+      ],
+      "title": "RelicSpec",
+      "type": "object"
+    },
+    "Visit": {
+      "additionalProperties": false,
+      "properties": {
+        "game_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Game Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "route_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Route Id",
+          "type": "string"
+        },
+        "encounter_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Encounter Id",
+          "type": "string"
+        },
+        "coins_earned": {
+          "minimum": 0,
+          "title": "Coins Earned",
+          "type": "integer"
+        },
+        "reward_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward Id"
+        },
+        "replaced_relic_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replaced Relic Id"
+        },
+        "replaced_stacks": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Replaced Stacks",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "game_id",
+        "scene_id",
+        "route_id",
+        "encounter_id",
+        "coins_earned"
+      ],
+      "title": "Visit",
+      "type": "object"
+    },
+    "VolumeStudy": {
+      "additionalProperties": false,
+      "properties": {
+        "game_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Game Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "region_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Region Id",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "victory",
+            "retreated",
+            "unvisited"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "chapters": {
+          "minimum": 0,
+          "title": "Chapters",
+          "type": "integer"
+        },
+        "cleared_chapters": {
+          "minimum": 0,
+          "title": "Cleared Chapters",
+          "type": "integer"
+        },
+        "defeats": {
+          "minimum": 0,
+          "title": "Defeats",
+          "type": "integer"
+        },
+        "sidequests_completed": {
+          "minimum": 0,
+          "title": "Sidequests Completed",
+          "type": "integer"
+        },
+        "concepts": {
+          "items": {
+            "$ref": "#/$defs/BattleConcept"
+          },
+          "title": "Concepts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "game_id",
+        "title",
+        "region_id",
+        "outcome",
+        "chapters",
+        "cleared_chapters",
+        "defeats",
+        "sidequests_completed",
+        "concepts"
+      ],
+      "title": "VolumeStudy",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "session_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "veteran": {
+      "title": "Veteran",
+      "type": "boolean"
+    },
+    "inherited_relic_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Inherited Relic Id"
+    },
+    "bounty_seals": {
+      "items": {
+        "$ref": "#/$defs/BountySeal"
+      },
+      "title": "Bounty Seals",
+      "type": "array"
+    },
+    "outcome": {
+      "enum": [
+        "victory",
+        "retreated"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "chapter_count": {
+      "minimum": 0,
+      "title": "Chapter Count",
+      "type": "integer"
+    },
+    "cleared_chapters": {
+      "minimum": 0,
+      "title": "Cleared Chapters",
+      "type": "integer"
+    },
+    "completed_volumes": {
+      "minimum": 0,
+      "title": "Completed Volumes",
+      "type": "integer"
+    },
+    "completion_rate": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Completion Rate",
+      "type": "number"
+    },
+    "defeats": {
+      "minimum": 0,
+      "title": "Defeats",
+      "type": "integer"
+    },
+    "sidequests_completed": {
+      "minimum": 0,
+      "title": "Sidequests Completed",
+      "type": "integer"
+    },
+    "combat_attempts": {
+      "minimum": 0,
+      "title": "Combat Attempts",
+      "type": "integer"
+    },
+    "combat_correct": {
+      "minimum": 0,
+      "title": "Combat Correct",
+      "type": "integer"
+    },
+    "combat_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Combat Accuracy"
+    },
+    "first_attempt_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "First Attempt Accuracy"
+    },
+    "review_attempts": {
+      "minimum": 0,
+      "title": "Review Attempts",
+      "type": "integer"
+    },
+    "review_correct": {
+      "minimum": 0,
+      "title": "Review Correct",
+      "type": "integer"
+    },
+    "review_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Review Accuracy"
+    },
+    "volumes": {
+      "items": {
+        "$ref": "#/$defs/VolumeStudy"
+      },
+      "title": "Volumes",
+      "type": "array"
+    },
+    "player": {
+      "$ref": "#/$defs/PlayerView"
+    },
+    "coins": {
+      "minimum": 0,
+      "title": "Coins",
+      "type": "integer"
+    },
+    "edge_ranks": {
+      "minimum": 0,
+      "title": "Edge Ranks",
+      "type": "integer"
+    },
+    "plating_ranks": {
+      "minimum": 0,
+      "title": "Plating Ranks",
+      "type": "integer"
+    },
+    "forge_rank_limit": {
+      "minimum": 0,
+      "title": "Forge Rank Limit",
+      "type": "integer"
+    },
+    "relics": {
+      "items": {
+        "$ref": "#/$defs/HeldRelic"
+      },
+      "title": "Relics",
+      "type": "array"
+    },
+    "relic_slot_limit": {
+      "minimum": 0,
+      "title": "Relic Slot Limit",
+      "type": "integer"
+    },
+    "journal": {
+      "items": {
+        "$ref": "#/$defs/Visit"
+      },
+      "title": "Journal",
+      "type": "array"
+    }
+  },
+  "required": [
+    "session_id",
+    "veteran",
+    "inherited_relic_id",
+    "bounty_seals",
+    "outcome",
+    "chapter_count",
+    "cleared_chapters",
+    "completed_volumes",
+    "completion_rate",
+    "defeats",
+    "sidequests_completed",
+    "combat_attempts",
+    "combat_correct",
+    "combat_accuracy",
+    "first_attempt_accuracy",
+    "review_attempts",
+    "review_correct",
+    "review_accuracy",
+    "volumes",
+    "player",
+    "coins",
+    "edge_ranks",
+    "plating_ranks",
+    "forge_rank_limit",
+    "relics",
+    "relic_slot_limit",
+    "journal"
+  ],
+  "title": "ExpeditionReport",
+  "type": "object"
+}

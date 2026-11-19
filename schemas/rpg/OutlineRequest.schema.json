@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "OutlineSource": {
+      "additionalProperties": false,
+      "properties": {
+        "material_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Material Id",
+          "type": "string"
+        },
+        "selected_knowledge_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+                "type": "string"
+              },
+              "maxItems": 64,
+              "minItems": 3,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Knowledge Ids"
+        }
+      },
+      "required": [
+        "material_id"
+      ],
+      "title": "OutlineSource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/OutlineSource"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "concepts_per_volume": {
+      "default": 8,
+      "maximum": 8,
+      "minimum": 3,
+      "title": "Concepts Per Volume",
+      "type": "integer"
+    },
+    "scenes_per_volume": {
+      "default": 4,
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Scenes Per Volume",
+      "type": "integer"
+    },
+    "goal": {
+      "default": "review",
+      "enum": [
+        "preview",
+        "review",
+        "classroom",
+        "recognize",
+        "distinguish"
+      ],
+      "title": "Goal",
+      "type": "string"
+    },
+    "learner_level": {
+      "default": "beginner",
+      "enum": [
+        "beginner",
+        "familiar"
+      ],
+      "title": "Learner Level",
+      "type": "string"
+    },
+    "difficulty": {
+      "default": "medium",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "theme": {
+      "default": "fantasy",
+      "enum": [
+        "campus",
+        "laboratory",
+        "fantasy"
+      ],
+      "title": "Theme",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sources"
+  ],
+  "title": "OutlineRequest",
+  "type": "object"
+}

@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RPGSceneOutline": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "objective": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "knowledge_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Knowledge Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "objective",
+        "knowledge_ids"
+      ],
+      "title": "RPGSceneOutline",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "game_type": {
+      "const": "rpg_quest",
+      "default": "rpg_quest",
+      "title": "Game Type",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "goal": {
+      "enum": [
+        "preview",
+        "review",
+        "classroom",
+        "recognize",
+        "distinguish"
+      ],
+      "title": "Goal",
+      "type": "string"
+    },
+    "learner_level": {
+      "enum": [
+        "beginner",
+        "familiar"
+      ],
+      "title": "Learner Level",
+      "type": "string"
+    },
+    "difficulty": {
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "theme": {
+      "enum": [
+        "campus",
+        "laboratory",
+        "fantasy"
+      ],
+      "title": "Theme",
+      "type": "string"
+    },
+    "knowledge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Knowledge Ids",
+      "type": "array"
+    },
+    "challenge_count": {
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Challenge Count",
+      "type": "integer"
+    },
+    "scene_count": {
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Scene Count",
+      "type": "integer"
+    },
+    "learning_objectives": {
+      "items": {
+        "maxLength": 600,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Learning Objectives",
+      "type": "array"
+    },
+    "scene_outlines": {
+      "items": {
+        "$ref": "#/$defs/RPGSceneOutline"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "title": "Scene Outlines",
+      "type": "array"
+    },
+    "rationale": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "maxLength": 600,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 24,
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "title",
+    "goal",
+    "learner_level",
+    "difficulty",
+    "theme",
+    "knowledge_ids",
+    "challenge_count",
+    "scene_count",
+    "learning_objectives",
+    "scene_outlines",
+    "rationale"
+  ],
+  "title": "RPGPlan",
+  "type": "object"
+}

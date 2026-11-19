@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RPGIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "challenge_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Challenge Id"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "RPGIssue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "valid": {
+      "title": "Valid",
+      "type": "boolean"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/RPGIssue"
+      },
+      "maxItems": 32,
+      "title": "Issues",
+      "type": "array"
+    },
+    "repair_attempts": {
+      "default": 0,
+      "maximum": 2,
+      "minimum": 0,
+      "title": "Repair Attempts",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "valid"
+  ],
+  "title": "RPGValidationReport",
+  "type": "object"
+}

@@ -1,0 +1,144 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室：开放日倒计时",
+  "rules": "接受所在场景的任务，按序完成挑战。每题可尝试两次并查看一次提示，完成任务获得经验与物品。",
+  "theme": "laboratory",
+  "start_scene_id": "sc_60d5f0a69fa946268785a42c32f0835f",
+  "scenes": [
+    {
+      "scene_id": "sc_60d5f0a69fa946268785a42c32f0835f",
+      "name": "样本接收台",
+      "description": "交班实验室的第 1 批记录抵达样本接收台。复核两份有争议的登记，留下可追溯的处理记录。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "交接台已经备好，请独立复核这一批记录。",
+          "复核两份有争议的登记，留下可追溯的处理记录。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_3101ec192d564727901844edce3820a9",
+        "title": "交班手册第 1 次交接",
+        "objective": "复核两份有争议的登记，留下可追溯的处理记录。",
+        "challenge_ids": [
+          "ch_e3a73d1c11c348e5a463195ca5fa1521",
+          "ch_4ea0a3d7fe4c4dac83bd3165cae6252e"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_a87591fd22664cc391491bd2ade87dce",
+            "name": "样本接收台档案章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_e3a73d1c11c348e5a463195ca5fa1521",
+          "type": "single_choice",
+          "prompt": "两名同伴交来的登记各缺一栏，你负责签发复核结果。图示记录的第一栏是「traps fine grit」，第二栏是「catches leaves」。两栏标签要按顺序送出，你签发哪一组？",
+          "options": [
+            {
+              "id": "op_b2f664dd7737435cbd6ad89d8d804562",
+              "text": "Sand bed → Screen"
+            },
+            {
+              "id": "op_dc1d4327eb904fbdb9509d3edfd94d8a",
+              "text": "Screen → Sand bed"
+            },
+            {
+              "id": "op_5a82a8549ac742529f0cf76dbd4fc9eb",
+              "text": "Carbon bed → Screen"
+            },
+            {
+              "id": "op_b923c4a9dcf04b1893626c80bebea464",
+              "text": "Sand bed → Carbon bed"
+            }
+          ]
+        },
+        {
+          "challenge_id": "ch_4ea0a3d7fe4c4dac83bd3165cae6252e",
+          "type": "single_choice",
+          "prompt": "值班台收到紧急工单，你负责安排交接。图示记录的第一栏是「catches leaves」，第二栏是「traps fine grit」。两栏标签要按顺序送出，你签发哪一组？",
+          "options": [
+            {
+              "id": "op_414c5055b45a4a7dabbeec85fcb581de",
+              "text": "Tank → Sand bed"
+            },
+            {
+              "id": "op_871fc4e406d3493d89bf8c88b4854f39",
+              "text": "Screen → Sand bed"
+            },
+            {
+              "id": "op_d683881a2baf4c15a66222d9187d6af9",
+              "text": "Screen → Tank"
+            },
+            {
+              "id": "op_fefae943191149bf9694760823331cc4",
+              "text": "Sand bed → Screen"
+            }
+          ]
+        }
+      ],
+      "next_scene_id": "sc_a6e8dacd004848dbb2e703c0102da3d4"
+    },
+    {
+      "scene_id": "sc_a6e8dacd004848dbb2e703c0102da3d4",
+      "name": "观察室",
+      "description": "交班实验室的第 2 批记录抵达观察室。分派刚送来的工单，将它们交给合适的负责人。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "交接台已经备好，请独立复核这一批记录。",
+          "分派刚送来的工单，将它们交给合适的负责人。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_e00709dfca2a4379a873c65f5c8ff315",
+        "title": "交班手册第 2 次交接",
+        "objective": "分派刚送来的工单，将它们交给合适的负责人。",
+        "challenge_ids": [
+          "ch_cc1dcd839b5a4da28bfd8e1e9aa5aadd"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_efc8d3defb2348218d9248d8cf86a05f",
+            "name": "观察室档案章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_cc1dcd839b5a4da28bfd8e1e9aa5aadd",
+          "type": "single_choice",
+          "prompt": "展台马上开放，你需要选好展签，交给正在布展的同伴。图示记录的第一栏是「catches leaves」，第二栏是「reduces odors」。两栏标签要按顺序送出，你签发哪一组？",
+          "options": [
+            {
+              "id": "op_f0aea998a00a47f7801f707b229aa6d7",
+              "text": "Sand bed → Carbon bed"
+            },
+            {
+              "id": "op_c048d171801b4c57a7c74466fc7e512a",
+              "text": "Screen → Sand bed"
+            },
+            {
+              "id": "op_d70b4d8d50d6462fa49d0204a399dc3b",
+              "text": "Carbon bed → Screen"
+            },
+            {
+              "id": "op_f301746354c14f86b18891c3f575e7bc",
+              "text": "Screen → Carbon bed"
+            }
+          ]
+        }
+      ],
+      "next_scene_id": null
+    }
+  ],
+  "warnings": [],
+  "game_id": "g_cf62770025dc44f3a94ceeed83ff03d2"
+}

@@ -1,0 +1,56 @@
+{
+  "event_id": "a118e8aa75cc43dd882ae5564c438b7a",
+  "action": "attempt",
+  "feedback": {
+    "message": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。",
+    "correct": false,
+    "challenge_id": "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd",
+    "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+    "source_ref": "cell-notes.txt / 第 1 行",
+    "revealed_option_id": "op_c756bd9ad9464315b2fac367fe8d69be",
+    "reward_delta": 0,
+    "remediated": true
+  },
+  "progress": {
+    "game_type": "rpg_quest",
+    "session_id": "fd8595f5915947519b3659e2f29ed6ae",
+    "game_id": "g_71d9c444b3284be0b9f5fdcbe3208331",
+    "status": "active",
+    "revision": 4,
+    "current_scene_id": "sc_be475c23fc3149c3b7b89683bd5b9db3",
+    "unlocked_scene_ids": [
+      "sc_be475c23fc3149c3b7b89683bd5b9db3"
+    ],
+    "accepted_quest_ids": [
+      "qu_61d001e1449642058a01469e053b23d4"
+    ],
+    "completed_quest_ids": [],
+    "resolved_challenge_ids": [
+      "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd"
+    ],
+    "passed_challenge_ids": [],
+    "remediated_challenge_ids": [
+      "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd"
+    ],
+    "challenge_attempts": {
+      "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd": 2
+    },
+    "hints_by_challenge": {},
+    "revealed_hints": {},
+    "xp": 0,
+    "inventory": [],
+    "all_quests_completed": false,
+    "last_feedback": {
+      "message": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。",
+      "correct": false,
+      "challenge_id": "ch_fc0f8fe0aeda4f9b9bb3be3661ed40fd",
+      "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+      "source_ref": "cell-notes.txt / 第 1 行",
+      "revealed_option_id": "op_c756bd9ad9464315b2fac367fe8d69be",
+      "reward_delta": 0,
+      "remediated": true
+    },
+    "started_at": "2026-11-19T09:50:47.572Z",
+    "elapsed_seconds": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "controlled_repair_probe",
+  "mode": "live",
+  "model": "gpt-5.1",
+  "input": "团队自制净水站图示，已确认的 3 题方案",
+  "fault": "测试驱动在首次真实工具返回后，将第一题的事件改为已知无效的枚举值。",
+  "result": "后续由真实模型重新选取事件与线索，通过程序校验与独立审核。",
+  "tool_calls": [
+    {
+      "name": "generate_rpg_config",
+      "status": "failed",
+      "duration_ms": 4989.039
+    },
+    {
+      "name": "repair_rpg_config",
+      "status": "ok",
+      "duration_ms": 6135.205
+    },
+    {
+      "name": "check_rpg_config",
+      "status": "ok",
+      "duration_ms": 1.457
+    },
+    {
+      "name": "validate_rpg_config",
+      "status": "ok",
+      "duration_ms": 4018.802
+    }
+  ]
+}
