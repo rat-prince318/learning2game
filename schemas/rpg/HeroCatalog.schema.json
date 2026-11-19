@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Gear": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "tier": {
+          "minimum": 0,
+          "title": "Tier",
+          "type": "integer"
+        },
+        "attack_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Attack Bonus",
+          "type": "integer"
+        },
+        "slot": {
+          "default": "weapon",
+          "enum": [
+            "weapon",
+            "armor",
+            "accessory"
+          ],
+          "title": "Slot",
+          "type": "string"
+        },
+        "class_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "arcanist",
+                "vanguard",
+                "ranger"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "arcanist",
+          "title": "Class Id"
+        },
+        "hp_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Hp Bonus",
+          "type": "integer"
+        },
+        "defense_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Defense Bonus",
+          "type": "integer"
+        },
+        "critical_interval_reduction": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Critical Interval Reduction",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tier"
+      ],
+      "title": "Gear",
+      "type": "object"
+    },
+    "HeroClass": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "arcanist",
+            "vanguard",
+            "ranger"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "burst_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Burst Name",
+          "type": "string"
+        },
+        "base_hp": {
+          "minimum": 0,
+          "title": "Base Hp",
+          "type": "integer"
+        },
+        "base_attack": {
+          "minimum": 0,
+          "title": "Base Attack",
+          "type": "integer"
+        },
+        "base_defense": {
+          "minimum": 0,
+          "title": "Base Defense",
+          "type": "integer"
+        },
+        "hp_growth": {
+          "minimum": 0,
+          "title": "Hp Growth",
+          "type": "integer"
+        },
+        "attack_growth": {
+          "minimum": 0,
+          "title": "Attack Growth",
+          "type": "integer"
+        },
+        "defense_growth": {
+          "minimum": 0,
+          "title": "Defense Growth",
+          "type": "integer"
+        },
+        "crit_every": {
+          "minimum": 0,
+          "title": "Crit Every",
+          "type": "integer"
+        },
+        "focus_max": {
+          "minimum": 0,
+          "title": "Focus Max",
+          "type": "integer"
+        },
+        "burst_percent": {
+          "minimum": 0,
+          "title": "Burst Percent",
+          "type": "integer"
+        },
+        "weapon_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "title": "Weapon Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "burst_name",
+        "base_hp",
+        "base_attack",
+        "base_defense",
+        "hp_growth",
+        "attack_growth",
+        "defense_growth",
+        "crit_every",
+        "focus_max",
+        "burst_percent",
+        "weapon_ids"
+      ],
+      "title": "HeroClass",
+      "type": "object"
+    },
+    "StarterKit": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "trail",
+            "ward"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "armor": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Armor",
+          "type": "string"
+        },
+        "accessory": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Accessory",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "armor",
+        "accessory"
+      ],
+      "title": "StarterKit",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "classes": {
+      "items": {
+        "$ref": "#/$defs/HeroClass"
+      },
+      "title": "Classes",
+      "type": "array"
+    },
+    "kits": {
+      "items": {
+        "$ref": "#/$defs/StarterKit"
+      },
+      "title": "Kits",
+      "type": "array"
+    },
+    "equipment": {
+      "items": {
+        "$ref": "#/$defs/Gear"
+      },
+      "title": "Equipment",
+      "type": "array"
+    },
+    "level_thresholds": {
+      "items": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "title": "Level Thresholds",
+      "type": "array"
+    }
+  },
+  "required": [
+    "classes",
+    "kits",
+    "equipment",
+    "level_thresholds"
+  ],
+  "title": "HeroCatalog",
+  "type": "object"
+}

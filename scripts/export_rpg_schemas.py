@@ -6,6 +6,9 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from backend.rpg import models
+from backend.rpg.battle_models import BattleAction, BattleView
+from backend.rpg.battle_reports import BattleReport
+from backend.rpg.hero_catalog import HeroCatalog
 
 
 SCHEMA_TYPES = {
@@ -15,6 +18,8 @@ SCHEMA_TYPES = {
         "RPGValidationReport", "RPGGenerationResult",
     )
 }
+SCHEMA_TYPES.update({"BattleAction": BattleAction, "BattleView": BattleView, "BattleReport": BattleReport,
+                     "HeroCatalog": HeroCatalog})
 OUTPUT = Path(__file__).resolve().parents[1] / "schemas" / "rpg"
 
 

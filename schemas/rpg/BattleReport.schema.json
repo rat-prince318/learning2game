@@ -1,0 +1,527 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "BattleConcept": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "term": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_ref": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "combat_attempts": {
+          "minimum": 0,
+          "title": "Combat Attempts",
+          "type": "integer"
+        },
+        "combat_correct": {
+          "minimum": 0,
+          "title": "Combat Correct",
+          "type": "integer"
+        },
+        "combat_mistakes": {
+          "minimum": 0,
+          "title": "Combat Mistakes",
+          "type": "integer"
+        },
+        "first_attempt_correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Attempt Correct"
+        },
+        "hints": {
+          "minimum": 0,
+          "title": "Hints",
+          "type": "integer"
+        },
+        "review_attempts": {
+          "minimum": 0,
+          "title": "Review Attempts",
+          "type": "integer"
+        },
+        "review_correct": {
+          "minimum": 0,
+          "title": "Review Correct",
+          "type": "integer"
+        },
+        "review_hints": {
+          "minimum": 0,
+          "title": "Review Hints",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "scene_id",
+        "term",
+        "explanation",
+        "source_ref",
+        "combat_attempts",
+        "combat_correct",
+        "combat_mistakes",
+        "first_attempt_correct",
+        "hints",
+        "review_attempts",
+        "review_correct",
+        "review_hints"
+      ],
+      "title": "BattleConcept",
+      "type": "object"
+    },
+    "Gear": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "tier": {
+          "minimum": 0,
+          "title": "Tier",
+          "type": "integer"
+        },
+        "attack_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Attack Bonus",
+          "type": "integer"
+        },
+        "slot": {
+          "default": "weapon",
+          "enum": [
+            "weapon",
+            "armor",
+            "accessory"
+          ],
+          "title": "Slot",
+          "type": "string"
+        },
+        "class_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "arcanist",
+                "vanguard",
+                "ranger"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "arcanist",
+          "title": "Class Id"
+        },
+        "hp_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Hp Bonus",
+          "type": "integer"
+        },
+        "defense_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Defense Bonus",
+          "type": "integer"
+        },
+        "critical_interval_reduction": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Critical Interval Reduction",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tier"
+      ],
+      "title": "Gear",
+      "type": "object"
+    },
+    "HeroStats": {
+      "additionalProperties": false,
+      "properties": {
+        "max_hp": {
+          "minimum": 0,
+          "title": "Max Hp",
+          "type": "integer"
+        },
+        "attack": {
+          "minimum": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "defense": {
+          "minimum": 0,
+          "title": "Defense",
+          "type": "integer"
+        },
+        "crit_every": {
+          "minimum": 0,
+          "title": "Crit Every",
+          "type": "integer"
+        },
+        "focus_max": {
+          "minimum": 0,
+          "title": "Focus Max",
+          "type": "integer"
+        },
+        "burst_percent": {
+          "minimum": 0,
+          "title": "Burst Percent",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_hp",
+        "attack",
+        "defense",
+        "crit_every",
+        "focus_max",
+        "burst_percent"
+      ],
+      "title": "HeroStats",
+      "type": "object"
+    },
+    "Loadout": {
+      "additionalProperties": false,
+      "properties": {
+        "weapon": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Weapon",
+          "type": "string"
+        },
+        "armor": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Armor"
+        },
+        "accessory": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accessory"
+        }
+      },
+      "required": [
+        "weapon"
+      ],
+      "title": "Loadout",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "session_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "game_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Game Id",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "victory",
+        "retreated"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "total_stages": {
+      "minimum": 0,
+      "title": "Total Stages",
+      "type": "integer"
+    },
+    "cleared_stages": {
+      "minimum": 0,
+      "title": "Cleared Stages",
+      "type": "integer"
+    },
+    "completion_rate": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Completion Rate",
+      "type": "number"
+    },
+    "defeats": {
+      "minimum": 0,
+      "title": "Defeats",
+      "type": "integer"
+    },
+    "sidequests_completed": {
+      "minimum": 0,
+      "title": "Sidequests Completed",
+      "type": "integer"
+    },
+    "xp": {
+      "minimum": 0,
+      "title": "Xp",
+      "type": "integer"
+    },
+    "level": {
+      "minimum": 0,
+      "title": "Level",
+      "type": "integer"
+    },
+    "equipped_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Equipped Id",
+      "type": "string"
+    },
+    "hero_class": {
+      "default": "arcanist",
+      "enum": [
+        "arcanist",
+        "vanguard",
+        "ranger"
+      ],
+      "title": "Hero Class",
+      "type": "string"
+    },
+    "kit": {
+      "anyOf": [
+        {
+          "enum": [
+            "trail",
+            "ward"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Kit"
+    },
+    "loadout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Loadout"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "stats": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HeroStats"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "drops": {
+      "items": {
+        "$ref": "#/$defs/Gear"
+      },
+      "title": "Drops",
+      "type": "array"
+    },
+    "combat_attempts": {
+      "minimum": 0,
+      "title": "Combat Attempts",
+      "type": "integer"
+    },
+    "combat_correct": {
+      "minimum": 0,
+      "title": "Combat Correct",
+      "type": "integer"
+    },
+    "combat_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Combat Accuracy"
+    },
+    "first_attempt_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "First Attempt Accuracy"
+    },
+    "hints": {
+      "minimum": 0,
+      "title": "Hints",
+      "type": "integer"
+    },
+    "review_attempts": {
+      "minimum": 0,
+      "title": "Review Attempts",
+      "type": "integer"
+    },
+    "review_correct": {
+      "minimum": 0,
+      "title": "Review Correct",
+      "type": "integer"
+    },
+    "review_hints": {
+      "minimum": 0,
+      "title": "Review Hints",
+      "type": "integer"
+    },
+    "review_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Review Accuracy"
+    },
+    "weak_knowledge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Weak Knowledge Ids",
+      "type": "array"
+    },
+    "untouched_knowledge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Untouched Knowledge Ids",
+      "type": "array"
+    },
+    "concepts": {
+      "items": {
+        "$ref": "#/$defs/BattleConcept"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Concepts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "session_id",
+    "game_id",
+    "outcome",
+    "total_stages",
+    "cleared_stages",
+    "completion_rate",
+    "defeats",
+    "sidequests_completed",
+    "xp",
+    "level",
+    "equipped_id",
+    "drops",
+    "combat_attempts",
+    "combat_correct",
+    "combat_accuracy",
+    "first_attempt_accuracy",
+    "hints",
+    "review_attempts",
+    "review_correct",
+    "review_hints",
+    "review_accuracy",
+    "weak_knowledge_ids",
+    "untouched_knowledge_ids",
+    "concepts"
+  ],
+  "title": "BattleReport",
+  "type": "object"
+}

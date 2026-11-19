@@ -1,0 +1,822 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "BattleEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "hit",
+            "miss",
+            "defeat",
+            "stage_clear",
+            "victory",
+            "review_correct",
+            "review_wrong",
+            "recovered",
+            "hint",
+            "equip",
+            "next_stage",
+            "retreat"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correct"
+        },
+        "damage_dealt": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Damage Dealt",
+          "type": "integer"
+        },
+        "damage_received": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Damage Received",
+          "type": "integer"
+        },
+        "critical": {
+          "default": false,
+          "title": "Critical",
+          "type": "boolean"
+        },
+        "skill": {
+          "anyOf": [
+            {
+              "enum": [
+                "strike",
+                "burst"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skill"
+        },
+        "xp_gained": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Xp Gained",
+          "type": "integer"
+        },
+        "levels_gained": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Levels Gained",
+          "type": "integer"
+        },
+        "loot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Gear"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "loot_items": {
+          "items": {
+            "$ref": "#/$defs/Gear"
+          },
+          "title": "Loot Items",
+          "type": "array"
+        },
+        "equipped_item": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Gear"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "hero_class": {
+          "default": "arcanist",
+          "enum": [
+            "arcanist",
+            "vanguard",
+            "ranger"
+          ],
+          "title": "Hero Class",
+          "type": "string"
+        },
+        "damage_blocked": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Damage Blocked",
+          "type": "integer"
+        },
+        "explanation": {
+          "anyOf": [
+            {
+              "maxLength": 10000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explanation"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Ref"
+        }
+      },
+      "required": [
+        "kind",
+        "message"
+      ],
+      "title": "BattleEvent",
+      "type": "object"
+    },
+    "BattleOption": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "BattleOption",
+      "type": "object"
+    },
+    "BattlePrompt": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/BattleOption"
+          },
+          "maxItems": 4,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "maxLength": 10000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hint"
+        }
+      },
+      "required": [
+        "prompt_id",
+        "text",
+        "options"
+      ],
+      "title": "BattlePrompt",
+      "type": "object"
+    },
+    "EnemyView": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "hp": {
+          "minimum": 0,
+          "title": "Hp",
+          "type": "integer"
+        },
+        "max_hp": {
+          "minimum": 0,
+          "title": "Max Hp",
+          "type": "integer"
+        },
+        "boss": {
+          "title": "Boss",
+          "type": "boolean"
+        },
+        "sprite": {
+          "enum": [
+            "sprout",
+            "moth",
+            "golem",
+            "warden"
+          ],
+          "title": "Sprite",
+          "type": "string"
+        },
+        "enraged": {
+          "title": "Enraged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "hp",
+        "max_hp",
+        "boss",
+        "sprite",
+        "enraged"
+      ],
+      "title": "EnemyView",
+      "type": "object"
+    },
+    "Gear": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "tier": {
+          "minimum": 0,
+          "title": "Tier",
+          "type": "integer"
+        },
+        "attack_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Attack Bonus",
+          "type": "integer"
+        },
+        "slot": {
+          "default": "weapon",
+          "enum": [
+            "weapon",
+            "armor",
+            "accessory"
+          ],
+          "title": "Slot",
+          "type": "string"
+        },
+        "class_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "arcanist",
+                "vanguard",
+                "ranger"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "arcanist",
+          "title": "Class Id"
+        },
+        "hp_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Hp Bonus",
+          "type": "integer"
+        },
+        "defense_bonus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Defense Bonus",
+          "type": "integer"
+        },
+        "critical_interval_reduction": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Critical Interval Reduction",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tier"
+      ],
+      "title": "Gear",
+      "type": "object"
+    },
+    "HeroStats": {
+      "additionalProperties": false,
+      "properties": {
+        "max_hp": {
+          "minimum": 0,
+          "title": "Max Hp",
+          "type": "integer"
+        },
+        "attack": {
+          "minimum": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "defense": {
+          "minimum": 0,
+          "title": "Defense",
+          "type": "integer"
+        },
+        "crit_every": {
+          "minimum": 0,
+          "title": "Crit Every",
+          "type": "integer"
+        },
+        "focus_max": {
+          "minimum": 0,
+          "title": "Focus Max",
+          "type": "integer"
+        },
+        "burst_percent": {
+          "minimum": 0,
+          "title": "Burst Percent",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_hp",
+        "attack",
+        "defense",
+        "crit_every",
+        "focus_max",
+        "burst_percent"
+      ],
+      "title": "HeroStats",
+      "type": "object"
+    },
+    "Loadout": {
+      "additionalProperties": false,
+      "properties": {
+        "weapon": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Weapon",
+          "type": "string"
+        },
+        "armor": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Armor"
+        },
+        "accessory": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Accessory"
+        }
+      },
+      "required": [
+        "weapon"
+      ],
+      "title": "Loadout",
+      "type": "object"
+    },
+    "PlayerView": {
+      "additionalProperties": false,
+      "properties": {
+        "hp": {
+          "minimum": 0,
+          "title": "Hp",
+          "type": "integer"
+        },
+        "max_hp": {
+          "minimum": 0,
+          "title": "Max Hp",
+          "type": "integer"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "xp": {
+          "minimum": 0,
+          "title": "Xp",
+          "type": "integer"
+        },
+        "xp_to_next_level": {
+          "minimum": 0,
+          "title": "Xp To Next Level",
+          "type": "integer"
+        },
+        "attack": {
+          "minimum": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "equipped_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Equipped Id",
+          "type": "string"
+        },
+        "inventory": {
+          "items": {
+            "$ref": "#/$defs/Gear"
+          },
+          "title": "Inventory",
+          "type": "array"
+        },
+        "combo": {
+          "minimum": 0,
+          "title": "Combo",
+          "type": "integer"
+        },
+        "focus": {
+          "minimum": 0,
+          "title": "Focus",
+          "type": "integer"
+        },
+        "focus_max": {
+          "minimum": 0,
+          "title": "Focus Max",
+          "type": "integer"
+        },
+        "burst_ready": {
+          "title": "Burst Ready",
+          "type": "boolean"
+        },
+        "hero_class": {
+          "default": "arcanist",
+          "enum": [
+            "arcanist",
+            "vanguard",
+            "ranger"
+          ],
+          "title": "Hero Class",
+          "type": "string"
+        },
+        "kit": {
+          "anyOf": [
+            {
+              "enum": [
+                "trail",
+                "ward"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kit"
+        },
+        "loadout": {
+          "$ref": "#/$defs/Loadout"
+        },
+        "stats": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HeroStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "hp",
+        "max_hp",
+        "level",
+        "xp",
+        "xp_to_next_level",
+        "attack",
+        "equipped_id",
+        "inventory",
+        "combo",
+        "focus",
+        "focus_max",
+        "burst_ready",
+        "loadout"
+      ],
+      "title": "PlayerView",
+      "type": "object"
+    },
+    "SideQuestView": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "completed": {
+          "minimum": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        },
+        "lesson": {
+          "$ref": "#/$defs/StudyLesson"
+        }
+      },
+      "required": [
+        "title",
+        "completed",
+        "total",
+        "lesson"
+      ],
+      "title": "SideQuestView",
+      "type": "object"
+    },
+    "StageView": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "number": {
+          "minimum": 0,
+          "title": "Number",
+          "type": "integer"
+        },
+        "total": {
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "objective": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "boss": {
+          "title": "Boss",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "number",
+        "total",
+        "scene_id",
+        "name",
+        "objective",
+        "boss"
+      ],
+      "title": "StageView",
+      "type": "object"
+    },
+    "StudyLesson": {
+      "additionalProperties": false,
+      "properties": {
+        "term": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        },
+        "definition": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Definition",
+          "type": "string"
+        },
+        "source_ref": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Source Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "term",
+        "definition",
+        "source_ref"
+      ],
+      "title": "StudyLesson",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "game_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Game Id",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "combat",
+        "sidequest",
+        "stage_clear",
+        "victory",
+        "retreated"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "stage": {
+      "$ref": "#/$defs/StageView"
+    },
+    "enemy": {
+      "$ref": "#/$defs/EnemyView"
+    },
+    "player": {
+      "$ref": "#/$defs/PlayerView"
+    },
+    "prompt": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BattlePrompt"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sidequest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SideQuestView"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cleared_stages": {
+      "minimum": 0,
+      "title": "Cleared Stages",
+      "type": "integer"
+    },
+    "defeats": {
+      "minimum": 0,
+      "title": "Defeats",
+      "type": "integer"
+    },
+    "sidequests_completed": {
+      "minimum": 0,
+      "title": "Sidequests Completed",
+      "type": "integer"
+    },
+    "last_event": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BattleEvent"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "session_id",
+    "game_id",
+    "title",
+    "phase",
+    "revision",
+    "stage",
+    "enemy",
+    "player",
+    "prompt",
+    "sidequest",
+    "cleared_stages",
+    "defeats",
+    "sidequests_completed",
+    "last_event"
+  ],
+  "title": "BattleView",
+  "type": "object"
+}

@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Answer": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "answer",
+          "title": "Action",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "option_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "skill": {
+          "default": "strike",
+          "enum": [
+            "strike",
+            "burst"
+          ],
+          "title": "Skill",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "prompt_id",
+        "option_id"
+      ],
+      "title": "Answer",
+      "type": "object"
+    },
+    "Equip": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "equip",
+          "title": "Action",
+          "type": "string"
+        },
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Item Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "item_id"
+      ],
+      "title": "Equip",
+      "type": "object"
+    },
+    "Hint": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "hint",
+          "title": "Action",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "prompt_id"
+      ],
+      "title": "Hint",
+      "type": "object"
+    },
+    "NextStage": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "next_stage",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action"
+      ],
+      "title": "NextStage",
+      "type": "object"
+    },
+    "Retreat": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "retreat",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action"
+      ],
+      "title": "Retreat",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "answer": "#/$defs/Answer",
+      "equip": "#/$defs/Equip",
+      "hint": "#/$defs/Hint",
+      "next_stage": "#/$defs/NextStage",
+      "retreat": "#/$defs/Retreat"
+    },
+    "propertyName": "action"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/Answer"
+    },
+    {
+      "$ref": "#/$defs/Hint"
+    },
+    {
+      "$ref": "#/$defs/NextStage"
+    },
+    {
+      "$ref": "#/$defs/Equip"
+    },
+    {
+      "$ref": "#/$defs/Retreat"
+    }
+  ],
+  "title": "BattleAction"
+}

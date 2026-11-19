@@ -70,3 +70,19 @@ CREATE TABLE IF NOT EXISTS reports (
     session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
     stats_json TEXT NOT NULL, feedback TEXT
 );
+
+CREATE TABLE IF NOT EXISTS battle_runs (
+    id TEXT PRIMARY KEY,
+    game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    request_id TEXT,
+    state_json TEXT NOT NULL,
+    report_json TEXT,
+    UNIQUE(game_id, request_id)
+);
+CREATE TABLE IF NOT EXISTS battle_events (
+    run_id TEXT NOT NULL REFERENCES battle_runs(id) ON DELETE CASCADE,
+    event_id TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    result_json TEXT NOT NULL,
+    PRIMARY KEY (run_id, event_id)
+) WITHOUT ROWID;
