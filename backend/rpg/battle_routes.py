@@ -7,11 +7,11 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Request
 
 from ..db import connection
-from ..models import Identifier, MaterialResult, StrictModel
+from ..models import Identifier, StrictModel
 from . import battle_rules
 from .battle_models import BattleAction, BattleState, BattleView
 from .battle_reports import BattleReport, build_report
-from .games import read_rpg_internal
+from .games import read_rpg_course
 from .hero_catalog import ClassId, HeroCatalog, KitId, catalog
 
 router = APIRouter(prefix="/rpg", tags=["RPG battle campaign"])
@@ -21,18 +21,6 @@ class StartBattle(StrictModel):
     request_id: Identifier | None = None
     hero_class: ClassId | None = None
     kit: KitId | None = None
-
-
-def _course(conn: Connection, game_id: str):
-    """The battle plays the exact published game, including previously generated games."""
-    game = read_rpg_internal(conn, game_id)
-    row = conn.execute(
-        "SELECT m.result_json FROM games g JOIN plans p ON p.id=g.plan_id "
-        "JOIN materials m ON m.id=p.material_id WHERE g.id=?", (game_id,),
-    ).fetchone()
-    if row is None or not row["result_json"]:
-        raise HTTPException(409, "请使用已保存来源资料的关卡开始战役。")
-    return game, MaterialResult.model_validate_json(row["result_json"]).knowledge
 
 
 def _run(conn: Connection, battle_id: str):
@@ -55,7 +43,7 @@ def start_battle(game_id: str, request: Request, body: StartBattle | None = None
     settings = body or StartBattle()
     request_id = settings.request_id
     with connection(request.app, write=True) as conn:
-        game, knowledge = _course(conn, game_id)
+        game, knowledge = read_rpg_course(conn, game_id)
         if request_id is not None:
             prior = conn.execute("SELECT state_json FROM battle_runs WHERE game_id=? AND request_id=?",
                                  (game_id, request_id)).fetchone()
@@ -77,7 +65,7 @@ def start_battle(game_id: str, request: Request, body: StartBattle | None = None
 def read_battle(battle_id: str, request: Request):
     with connection(request.app) as conn:
         row = _run(conn, battle_id)
-        return battle_rules.view(BattleState.model_validate_json(row["state_json"]), *_course(conn, row["game_id"]))
+        return battle_rules.view(BattleState.model_validate_json(row["state_json"]), *read_rpg_course(conn, row["game_id"]))
 
 
 @router.post("/battles/{battle_id}/actions", response_model=BattleView)
@@ -91,7 +79,7 @@ def apply_action(battle_id: str, body: BattleAction, request: Request):
                 raise HTTPException(409, "该事件已用于另一回合操作。请读取最新战况。")
             return BattleView.model_validate_json(prior["result_json"])
         state = BattleState.model_validate_json(row["state_json"])
-        game, knowledge = _course(conn, row["game_id"])
+        game, knowledge = read_rpg_course(conn, row["game_id"])
         try:
             updated = battle_rules.advance(state, body, game, knowledge)
         except battle_rules.BattleError as error:

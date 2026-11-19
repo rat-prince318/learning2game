@@ -97,3 +97,33 @@ def read_rpg_game(conn: sqlite3.Connection, game_id: str) -> RPGGamePublic:
 
 def read_rpg_internal(conn: sqlite3.Connection, game_id: str) -> RPGGameInternal:
     return RPGGameInternal.model_validate_json(_read(conn, game_id, public=False))
+
+
+def read_rpg_course(conn: sqlite3.Connection, game_id: str):
+    return read_rpg_courses(conn, [game_id])[game_id]
+
+
+def read_rpg_courses(conn: sqlite3.Connection, game_ids: list[str]):
+    """Read in book order and parse a shared lecture just once per command."""
+    parameters = ",".join("?" for _ in game_ids)
+    rows = conn.execute(
+        f"SELECT g.id,g.game_type,g.internal_json,p.material_id FROM games g "
+        f"LEFT JOIN plans p ON p.id=g.plan_id WHERE g.id IN ({parameters})", game_ids,
+    )
+    indexed = {row["id"]: row for row in rows}
+    materials = {}
+    courses = {}
+    for game_id in game_ids:
+        row = indexed.get(game_id)
+        if row is None:
+            raise HTTPException(404, "找不到这局游戏。")
+        if row["game_type"] != "rpg_quest":
+            raise HTTPException(409, "请使用这局游戏对应的玩法接口。")
+        mid = row["material_id"]
+        if mid not in materials:
+            source = conn.execute("SELECT result_json FROM materials WHERE id=?", (mid,)).fetchone()
+            if source is None or not source[0]:
+                raise HTTPException(409, "请使用已保存来源资料的关卡开始战役。")
+            materials[mid] = MaterialResult.model_validate_json(source[0]).knowledge
+        courses[game_id] = RPGGameInternal.model_validate_json(row["internal_json"]), materials[mid]
+    return courses

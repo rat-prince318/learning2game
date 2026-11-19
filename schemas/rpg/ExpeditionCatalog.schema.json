@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "EncounterSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "tier": {
+          "enum": [
+            "normal",
+            "elite",
+            "boss"
+          ],
+          "title": "Tier",
+          "type": "string"
+        },
+        "sprite": {
+          "enum": [
+            "sprout",
+            "moth",
+            "golem",
+            "warden"
+          ],
+          "title": "Sprite",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intents": {
+          "items": {
+            "enum": [
+              "strike",
+              "heavy",
+              "ward",
+              "charge",
+              "expose"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Intents",
+          "type": "array"
+        },
+        "enraged_intents": {
+          "items": {
+            "enum": [
+              "strike",
+              "heavy",
+              "ward",
+              "charge",
+              "expose"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Enraged Intents",
+          "type": "array"
+        },
+        "shield": {
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Shield",
+          "type": "integer"
+        },
+        "health_percent": {
+          "maximum": 200,
+          "minimum": 80,
+          "title": "Health Percent",
+          "type": "integer"
+        },
+        "trait_id": {
+          "enum": [
+            "ordinary",
+            "root_latch",
+            "tideglass",
+            "copper_seam",
+            "gale_sail",
+            "redline",
+            "thin_ice",
+            "echo_bell",
+            "eclipse"
+          ],
+          "title": "Trait Id",
+          "type": "string"
+        },
+        "trait_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Trait Name",
+          "type": "string"
+        },
+        "trait_description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Trait Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tier",
+        "sprite",
+        "description",
+        "intents",
+        "enraged_intents",
+        "shield",
+        "health_percent",
+        "trait_id",
+        "trait_name",
+        "trait_description"
+      ],
+      "title": "EncounterSpec",
+      "type": "object"
+    },
+    "IntentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "strike",
+            "heavy",
+            "ward",
+            "charge",
+            "expose"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "telegraph": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Telegraph",
+          "type": "string"
+        },
+        "advice": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Advice",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "telegraph",
+        "advice"
+      ],
+      "title": "IntentSpec",
+      "type": "object"
+    },
+    "RegionSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "arrival": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Arrival",
+          "type": "string"
+        },
+        "objective": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "resolution": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Resolution",
+          "type": "string"
+        },
+        "normal_encounters": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "title": "Normal Encounters",
+          "type": "array"
+        },
+        "elite_encounters": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "title": "Elite Encounters",
+          "type": "array"
+        },
+        "boss_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Boss Id",
+          "type": "string"
+        },
+        "relic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "title": "Relic Ids",
+          "type": "array"
+        },
+        "normal_paths": {
+          "items": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Normal Paths",
+          "type": "array"
+        },
+        "elite_path": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Elite Path",
+          "type": "string"
+        },
+        "boss_paths": {
+          "items": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Boss Paths",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "arrival",
+        "objective",
+        "resolution",
+        "normal_encounters",
+        "elite_encounters",
+        "boss_id",
+        "relic_ids",
+        "normal_paths",
+        "elite_path",
+        "boss_paths"
+      ],
+      "title": "RegionSpec",
+      "type": "object"
+    },
+    "RelicBonuses": {
+      "additionalProperties": false,
+      "properties": {
+        "attack": {
+          "default": 0,
+          "title": "Attack",
+          "type": "integer"
+        },
+        "defense": {
+          "default": 0,
+          "title": "Defense",
+          "type": "integer"
+        },
+        "guard": {
+          "default": 0,
+          "title": "Guard",
+          "type": "integer"
+        },
+        "break_power": {
+          "default": 0,
+          "title": "Break Power",
+          "type": "integer"
+        },
+        "burst_percent": {
+          "default": 0,
+          "title": "Burst Percent",
+          "type": "integer"
+        },
+        "counter": {
+          "default": 0,
+          "title": "Counter",
+          "type": "integer"
+        },
+        "opening_focus": {
+          "default": 0,
+          "title": "Opening Focus",
+          "type": "integer"
+        },
+        "heal_on_win": {
+          "default": 0,
+          "title": "Heal On Win",
+          "type": "integer"
+        }
+      },
+      "title": "RelicBonuses",
+      "type": "object"
+    },
+    "RelicSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "max_stacks": {
+          "maximum": 2,
+          "minimum": 1,
+          "title": "Max Stacks",
+          "type": "integer"
+        },
+        "bonuses": {
+          "$ref": "#/$defs/RelicBonuses"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "max_stacks",
+        "bonuses"
+      ],
+      "title": "RelicSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "regions": {
+      "items": {
+        "$ref": "#/$defs/RegionSpec"
+      },
+      "title": "Regions",
+      "type": "array"
+    },
+    "encounters": {
+      "items": {
+        "$ref": "#/$defs/EncounterSpec"
+      },
+      "title": "Encounters",
+      "type": "array"
+    },
+    "relics": {
+      "items": {
+        "$ref": "#/$defs/RelicSpec"
+      },
+      "title": "Relics",
+      "type": "array"
+    },
+    "intents": {
+      "items": {
+        "$ref": "#/$defs/IntentSpec"
+      },
+      "title": "Intents",
+      "type": "array"
+    }
+  },
+  "required": [
+    "regions",
+    "encounters",
+    "relics",
+    "intents"
+  ],
+  "title": "ExpeditionCatalog",
+  "type": "object"
+}

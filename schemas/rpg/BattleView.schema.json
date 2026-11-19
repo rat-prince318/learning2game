@@ -62,7 +62,8 @@
             {
               "enum": [
                 "strike",
-                "burst"
+                "burst",
+                "guard"
               ],
               "type": "string"
             },
@@ -72,6 +73,17 @@
           ],
           "default": null,
           "title": "Skill"
+        },
+        "tactics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TurnResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "xp_gained": {
           "default": 0,
@@ -413,6 +425,48 @@
       "title": "HeroStats",
       "type": "object"
     },
+    "IntentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "strike",
+            "heavy",
+            "ward",
+            "charge",
+            "expose"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "telegraph": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Telegraph",
+          "type": "string"
+        },
+        "advice": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Advice",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "telegraph",
+        "advice"
+      ],
+      "title": "IntentSpec",
+      "type": "object"
+    },
     "Loadout": {
       "additionalProperties": false,
       "properties": {
@@ -700,6 +754,171 @@
       ],
       "title": "StudyLesson",
       "type": "object"
+    },
+    "TacticsView": {
+      "additionalProperties": false,
+      "properties": {
+        "encounter_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Encounter Id",
+          "type": "string"
+        },
+        "tier": {
+          "enum": [
+            "normal",
+            "elite",
+            "boss"
+          ],
+          "title": "Tier",
+          "type": "string"
+        },
+        "veteran": {
+          "title": "Veteran",
+          "type": "boolean"
+        },
+        "edge_ranks": {
+          "default": 0,
+          "maximum": 8,
+          "minimum": 0,
+          "title": "Edge Ranks",
+          "type": "integer"
+        },
+        "plating_ranks": {
+          "default": 0,
+          "maximum": 8,
+          "minimum": 0,
+          "title": "Plating Ranks",
+          "type": "integer"
+        },
+        "trait_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Trait Name",
+          "type": "string"
+        },
+        "trait_description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Trait Description",
+          "type": "string"
+        },
+        "turn": {
+          "minimum": 0,
+          "title": "Turn",
+          "type": "integer"
+        },
+        "phase": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Phase",
+          "type": "integer"
+        },
+        "shield": {
+          "minimum": 0,
+          "title": "Shield",
+          "type": "integer"
+        },
+        "shield_max": {
+          "minimum": 0,
+          "title": "Shield Max",
+          "type": "integer"
+        },
+        "broken": {
+          "title": "Broken",
+          "type": "boolean"
+        },
+        "charged": {
+          "title": "Charged",
+          "type": "boolean"
+        },
+        "intent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IntentSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "strike_exposure": {
+          "minimum": 0,
+          "title": "Strike Exposure",
+          "type": "integer"
+        },
+        "guard_exposure": {
+          "minimum": 0,
+          "title": "Guard Exposure",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "encounter_id",
+        "tier",
+        "veteran",
+        "trait_name",
+        "trait_description",
+        "turn",
+        "phase",
+        "shield",
+        "shield_max",
+        "broken",
+        "charged",
+        "intent",
+        "strike_exposure",
+        "guard_exposure"
+      ],
+      "title": "TacticsView",
+      "type": "object"
+    },
+    "TurnResult": {
+      "additionalProperties": false,
+      "properties": {
+        "encounter_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Encounter Id",
+          "type": "string"
+        },
+        "intent": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Intent",
+          "type": "string"
+        },
+        "broke_shield": {
+          "title": "Broke Shield",
+          "type": "boolean"
+        },
+        "exploited_break": {
+          "title": "Exploited Break",
+          "type": "boolean"
+        },
+        "intercepted_charge": {
+          "title": "Intercepted Charge",
+          "type": "boolean"
+        },
+        "phase_changed": {
+          "default": false,
+          "title": "Phase Changed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "encounter_id",
+        "intent",
+        "broke_shield",
+        "exploited_break",
+        "intercepted_charge"
+      ],
+      "title": "TurnResult",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -799,6 +1018,17 @@
           "type": "null"
         }
       ]
+    },
+    "tactics": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TacticsView"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

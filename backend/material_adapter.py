@@ -23,7 +23,7 @@ from .provider import trace_tool
 
 __all__ = ["MaterialError", "extract_material", "validate_office_archive"]
 
-MAX_POINTS = 48
+MAX_POINTS = 64
 MAX_CHUNKS = 8
 _CHUNK_SIZE = 3500
 _BULLET = re.compile(r"^\s*(?:[-*+]\s+|\d+[.、)]\s*)")
@@ -269,7 +269,7 @@ def _dedupe(candidates: list[Point]) -> tuple[list[Point], int]:
         key = _key(point.definition)
         definitions[key] = definitions.get(key, 0) + 1
     playable = [p for p in merged if definitions[_key(p.definition)] == 1]
-    return playable[:MAX_POINTS], rejected + len(merged) - len(playable)
+    return playable, rejected + len(merged) - len(playable)
 
 
 def extract_material(path: Path, *, live=False, pages=None, include_images=True, original_name=None) -> MaterialResult:
@@ -297,6 +297,9 @@ def extract_material(path: Path, *, live=False, pages=None, include_images=True,
             candidates.extend(_from_image(provider, image))
     with trace_tool("verify_sources_and_deduplicate"):
         playable, conflicts = _dedupe(candidates)
+        if len(playable) > MAX_POINTS:
+            playable = playable[:MAX_POINTS]
+            material.warn(f"本次已收录前 {MAX_POINTS} 个知识点，其余内容可分章上传。")
         if conflicts:
             material.warn("部分候选包含重复或冲突的配对关系，已留待资料修订。")
         if not playable:

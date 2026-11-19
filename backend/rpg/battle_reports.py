@@ -60,17 +60,15 @@ class BattleReport(StrictModel):
     concepts: list[BattleConcept] = Field(min_length=1, max_length=8)
 
 
-def build_report(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeItem]) -> BattleReport:
-    """Read the frozen action tallies. Every chapter retry retains its earlier attempts."""
-    if state.phase not in {"victory", "retreated"}:
-        raise ValueError("Battle reports require a terminal campaign.")
-
+def concept_rows(tallies: dict[str, BattleTally], game: RPGGameInternal,
+                 knowledge: list[KnowledgeItem]) -> list[BattleConcept]:
+    """Bind chapter attempts to their original published evidence and glossary labels."""
     terms = {item.knowledge_id: item.term for item in knowledge}
     concepts = []
     for scene in game.scenes:
         for question in scene.challenges:
             kid = question.knowledge_id
-            tally = state.concepts.get(kid, BattleTally())
+            tally = tallies.get(kid, BattleTally())
             # Material adapters accept richer text than the game's plain-text recap.
             try:
                 term = _term.validate_python(terms.get(kid))
@@ -86,6 +84,14 @@ def build_report(state: BattleState, game: RPGGameInternal, knowledge: list[Know
                 review_hints=tally.review_hints,
             ))
 
+    return concepts
+
+
+def build_report(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeItem]) -> BattleReport:
+    """Read the frozen action tallies. Every chapter retry retains its earlier attempts."""
+    if state.phase not in {"victory", "retreated"}:
+        raise ValueError("Battle reports require a terminal campaign.")
+    concepts = concept_rows(state.concepts, game, knowledge)
     attempted = [concept for concept in concepts if concept.combat_attempts]
     first_correct = sum(concept.first_attempt_correct is True for concept in attempted)
     attacks = sum(c.combat_attempts for c in concepts)

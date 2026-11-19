@@ -86,3 +86,28 @@ CREATE TABLE IF NOT EXISTS battle_events (
     result_json TEXT NOT NULL,
     PRIMARY KEY (run_id, event_id)
 ) WITHOUT ROWID;
+
+CREATE TABLE IF NOT EXISTS expedition_runs (
+    id TEXT PRIMARY KEY,
+    anchor_game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    request_id TEXT, settings_json TEXT NOT NULL, state_json TEXT NOT NULL, report_json TEXT,
+    UNIQUE(anchor_game_id, request_id)
+);
+CREATE TABLE IF NOT EXISTS expedition_books (
+    run_id TEXT NOT NULL REFERENCES expedition_runs(id) ON DELETE CASCADE,
+    book_index INTEGER NOT NULL CHECK(book_index BETWEEN 0 AND 7),
+    game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    PRIMARY KEY (run_id, book_index), UNIQUE(run_id, game_id)
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS expedition_books_by_game ON expedition_books(game_id);
+CREATE TABLE IF NOT EXISTS expedition_events (
+    run_id TEXT NOT NULL REFERENCES expedition_runs(id) ON DELETE CASCADE,
+    event_id TEXT NOT NULL, payload_json TEXT NOT NULL, result_json TEXT NOT NULL,
+    PRIMARY KEY(run_id, event_id)
+) WITHOUT ROWID;
+-- An expedition contains learning records from every book. Removing any source
+-- must also remove combined reports and saved receipts that quote that source.
+CREATE TRIGGER IF NOT EXISTS delete_expeditions_using_game BEFORE DELETE ON games
+BEGIN
+    DELETE FROM expedition_runs WHERE id IN (SELECT run_id FROM expedition_books WHERE game_id=OLD.id);
+END;

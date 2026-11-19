@@ -1,6 +1,6 @@
 # RPG 前后端接口契约 1.0
 
-已发布的 RPG 关卡支持两种游玩方式。本文记录 NPC 任务会话；答题攻击、关底首领、装备和战败复习使用[独立的战役接口](rpg-battles.md)。
+本文记录已发布 RPG 关卡的 NPC 任务会话。同一关卡也可以游玩[单卷答题战役](rpg-battles.md)，或与其他已发布关卡组成[多卷远征](rpg-expedition.md)。
 
 组员二可从 [六题三场景响应](rpg-fixtures/normal/game-public.json) 和 [单题再练响应](rpg-fixtures/practice/game-public.json) 开始接地图、任务和报告。每组的 JSON 来自同一次 API 验收。完整类型以 [Pydantic 导出的 JSON Schema](../schemas/rpg/) 为准。后端启动方式和模型配置见[后端交接](rpg-backend-handoff.md)。
 

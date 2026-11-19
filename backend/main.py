@@ -21,6 +21,7 @@ from .db import connection, exclusive_store, initialize
 from .games import store_game
 from .models import GameConfigPublic, StrictModel, UserPreferences
 from .rpg import battle_routes, router as rpg_workflow, session_routes as rpg_sessions
+from .rpg import expedition_planning, expedition_routes
 from .services import DEMO_MATERIAL_TEXT, DemoServices, Services
 
 log = logging.getLogger("uvicorn.error")
@@ -157,7 +158,7 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
         available = rpg_workflow.supported_games(services)
         return {"service": "learning2game", "status": "ok", "mode": mode, "external_models": mode in {"live", "integrated"},
                 "supported_game_types": available,
-                "rpg_play_modes": ["quest", "battle"] if "rpg_quest" in available else [],
+                "rpg_play_modes": ["quest", "battle", "expedition"] if "rpg_quest" in available else [],
                 "max_upload_bytes": max_upload_bytes, "supported_extensions": list(materials.MEDIA)}
 
     @app.get("/demo/material", response_class=PlainTextResponse, tags=["demo"])
@@ -179,6 +180,8 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
     app.include_router(rpg_workflow.router)
     app.include_router(rpg_sessions.router)
     app.include_router(battle_routes.router)
+    app.include_router(expedition_planning.router)
+    app.include_router(expedition_routes.router)
     app.mount("/", StaticFiles(directory=Path(__file__).resolve().parents[1] / "public", html=True),
               name="studio")
     return app

@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from ..models import Count, Identifier, StrictModel
+from .expedition_combat import EncounterState, Skill, TacticsView, TurnResult
 from .hero_catalog import ClassId, Gear, HeroStats, KitId, Loadout, class_info, stats_for
 from .models import Description, ReferenceText, ShortText, StudyFeedback
 
@@ -21,6 +22,10 @@ class Answer(_Command):
     prompt_id: Identifier
     option_id: Identifier
     skill: Literal["strike", "burst"] = "strike"
+
+
+class ExpeditionAnswer(Answer):
+    skill: Skill = "strike"
 
 
 class Hint(_Command):
@@ -62,7 +67,8 @@ class BattleEvent(StrictModel):
     damage_dealt: Count = 0
     damage_received: Count = 0
     critical: bool = False
-    skill: Literal["strike", "burst"] | None = None
+    skill: Skill | None = None
+    tactics: TurnResult | None = None
     xp_gained: Count = 0
     levels_gained: Count = 0
     loot: Gear | None = None
@@ -114,6 +120,7 @@ class BattleState(StrictModel):
     sidequests_completed: Count = 0
     concepts: dict[Identifier, BattleTally]
     last_event: BattleEvent | None = None
+    expedition: EncounterState | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -219,3 +226,4 @@ class BattleView(StrictModel):
     defeats: Count
     sidequests_completed: Count
     last_event: BattleEvent | None
+    tactics: TacticsView | None = None
