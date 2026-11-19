@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "goal": {
+      "default": "review",
+      "enum": [
+        "preview",
+        "review",
+        "classroom",
+        "recognize",
+        "distinguish"
+      ],
+      "title": "Goal",
+      "type": "string"
+    },
+    "learner_level": {
+      "default": "beginner",
+      "enum": [
+        "beginner",
+        "familiar"
+      ],
+      "title": "Learner Level",
+      "type": "string"
+    },
+    "difficulty": {
+      "default": "medium",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "challenge_count": {
+      "default": 6,
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Challenge Count",
+      "type": "integer"
+    },
+    "scene_count": {
+      "default": 3,
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Scene Count",
+      "type": "integer"
+    },
+    "theme": {
+      "default": "laboratory",
+      "enum": [
+        "campus",
+        "laboratory",
+        "fantasy"
+      ],
+      "title": "Theme",
+      "type": "string"
+    },
+    "selected_knowledge_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Knowledge Ids"
+    }
+  },
+  "title": "RPGPreferences",
+  "type": "object"
+}

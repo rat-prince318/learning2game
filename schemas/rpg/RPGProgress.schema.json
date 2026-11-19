@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RPGActionFeedback": {
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correct"
+        },
+        "challenge_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Challenge Id"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hint"
+        },
+        "explanation": {
+          "anyOf": [
+            {
+              "maxLength": 1200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explanation"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Ref"
+        },
+        "revealed_option_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revealed Option Id"
+        },
+        "reward_delta": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Reward Delta",
+          "type": "integer"
+        },
+        "remediated": {
+          "default": false,
+          "title": "Remediated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "title": "RPGActionFeedback",
+      "type": "object"
+    },
+    "RPGItem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "RPGItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "game_type": {
+      "const": "rpg_quest",
+      "default": "rpg_quest",
+      "title": "Game Type",
+      "type": "string"
+    },
+    "session_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "game_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Game Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "finished"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "revision": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "current_scene_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Current Scene Id",
+      "type": "string"
+    },
+    "unlocked_scene_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Unlocked Scene Ids",
+      "type": "array"
+    },
+    "accepted_quest_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Accepted Quest Ids",
+      "type": "array"
+    },
+    "completed_quest_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Completed Quest Ids",
+      "type": "array"
+    },
+    "resolved_challenge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Resolved Challenge Ids",
+      "type": "array"
+    },
+    "passed_challenge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Passed Challenge Ids",
+      "type": "array"
+    },
+    "remediated_challenge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Remediated Challenge Ids",
+      "type": "array"
+    },
+    "challenge_attempts": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Challenge Attempts",
+      "type": "object"
+    },
+    "hints_by_challenge": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Hints By Challenge",
+      "type": "object"
+    },
+    "revealed_hints": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "maxLength": 300,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Revealed Hints",
+      "type": "object"
+    },
+    "xp": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Xp",
+      "type": "integer"
+    },
+    "inventory": {
+      "items": {
+        "$ref": "#/$defs/RPGItem"
+      },
+      "title": "Inventory",
+      "type": "array"
+    },
+    "all_quests_completed": {
+      "default": false,
+      "title": "All Quests Completed",
+      "type": "boolean"
+    },
+    "last_feedback": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RPGActionFeedback"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "started_at": {
+      "title": "Started At",
+      "type": "string"
+    },
+    "elapsed_seconds": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Elapsed Seconds",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "session_id",
+    "game_id",
+    "status",
+    "current_scene_id",
+    "unlocked_scene_ids",
+    "started_at"
+  ],
+  "title": "RPGProgress",
+  "type": "object"
+}

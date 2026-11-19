@@ -1,0 +1,296 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室",
+  "rules": "接受所在场景的任务，按序完成挑战。每题可尝试两次并查看一次提示，完成任务获得经验与物品。",
+  "theme": "laboratory",
+  "start_scene_id": "sc_1b2d07320ef443ae9df889946254646f",
+  "scenes": [
+    {
+      "scene_id": "sc_1b2d07320ef443ae9df889946254646f",
+      "name": "样本接收台",
+      "description": "交班实验室的第 1 份记录刚送到样本接收台。交接前，你要为交班手册整理缺页。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "我是样本接收台的值班研究员。请独立复核有争议的记录，签入核对结果。",
+          "给入库样本登记标签，将核对结果记入交班手册。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_deff948e60a4472388048886b55bb47b",
+        "title": "找回交班手册第 1 页",
+        "objective": "给入库样本登记标签，将核对结果记入交班手册。",
+        "challenge_ids": [
+          "ch_ceaf66893d8c4b399d95b9931c198950",
+          "ch_7e0c701bd53b4ff19a68be684ea6211f"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_51bd144256c94510bf24c79fba1ecbec",
+            "name": "样本接收台签章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_ceaf66893d8c4b399d95b9931c198950",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「储存遗传信息，参与调控细胞的生长与活动」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_084439fa5d67470e9e9a641e013a7554",
+              "text": "线粒体"
+            },
+            {
+              "id": "op_2ac4a29845b447c581a8962e191b3149",
+              "text": "液泡"
+            },
+            {
+              "id": "op_b8caff835179454b86a3689433c37173",
+              "text": "细胞膜"
+            },
+            {
+              "id": "op_509a12ddd33a49d5a783d2624a32865b",
+              "text": "细胞核"
+            }
+          ],
+          "knowledge_id": "kp_81870d8df8f37cb5",
+          "correct_option_id": "op_509a12ddd33a49d5a783d2624a32865b",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+          "source_ref": "cell-notes.txt / 第 1 行",
+          "evidence": "细胞核：储存遗传信息，参与调控细胞的生长与活动。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        },
+        {
+          "challenge_id": "ch_7e0c701bd53b4ff19a68be684ea6211f",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「进行有氧呼吸，为细胞活动提供 ATP」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_1f89e57b8fe24d0981b6b7c9f091e469",
+              "text": "细胞壁"
+            },
+            {
+              "id": "op_6aa320be56cb4006b99a346145480ca7",
+              "text": "细胞核"
+            },
+            {
+              "id": "op_6814326061f14cdc81b8f373d7e0610d",
+              "text": "线粒体"
+            },
+            {
+              "id": "op_9ebd4473e9a544bdb10e44b022e998cd",
+              "text": "细胞质"
+            }
+          ],
+          "knowledge_id": "kp_d714521ae7b41ddc",
+          "correct_option_id": "op_6814326061f14cdc81b8f373d7e0610d",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "进行有氧呼吸，为细胞活动提供 ATP",
+          "source_ref": "cell-notes.txt / 第 2 行",
+          "evidence": "线粒体：进行有氧呼吸，为细胞活动提供 ATP。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        }
+      ],
+      "next_scene_id": "sc_1f25eb8587fd4935be58a650871c8969"
+    },
+    {
+      "scene_id": "sc_1f25eb8587fd4935be58a650871c8969",
+      "name": "观察室",
+      "description": "交班实验室的第 2 份记录刚送到观察室。交接前，你要为交班手册整理缺页。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "我是观察室的值班研究员。请独立复核有争议的记录，签入核对结果。",
+          "核对观察记录的归属，将核对结果记入交班手册。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_be684dbd7b5d476abd8a278dc7900a7e",
+        "title": "找回交班手册第 2 页",
+        "objective": "核对观察记录的归属，将核对结果记入交班手册。",
+        "challenge_ids": [
+          "ch_7cb6200c24704df5a7219863c5223620",
+          "ch_4efb8d8db2554fa8a0f2e6df0b744072"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_9a08d544902a4eaea0cde4b52dbdf207",
+            "name": "观察室签章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_7cb6200c24704df5a7219863c5223620",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「选择性地控制物质进入和离开细胞」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_bb2755c94a73422eb5d4d422aa1738d3",
+              "text": "线粒体"
+            },
+            {
+              "id": "op_fd5fb1e3e06c4d2da7c465275dd83bad",
+              "text": "细胞膜"
+            },
+            {
+              "id": "op_f2ed08f749e74befa9f51b458ac00172",
+              "text": "细胞核"
+            },
+            {
+              "id": "op_f5a4db0ba16c49c9be49398e5960bfb6",
+              "text": "液泡"
+            }
+          ],
+          "knowledge_id": "kp_fefd06c48a6bf3b0",
+          "correct_option_id": "op_fd5fb1e3e06c4d2da7c465275dd83bad",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "选择性地控制物质进入和离开细胞",
+          "source_ref": "cell-notes.txt / 第 3 行",
+          "evidence": "细胞膜：选择性地控制物质进入和离开细胞。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        },
+        {
+          "challenge_id": "ch_4efb8d8db2554fa8a0f2e6df0b744072",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「读取信使 RNA 的信息，合成蛋白质」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_70083f45aecb4936a0a9d4108025a57d",
+              "text": "线粒体"
+            },
+            {
+              "id": "op_bc62fb77afc84eb6b4f62dd5463e2801",
+              "text": "细胞膜"
+            },
+            {
+              "id": "op_05d8b9181e4e4009a9f95bc4ed7d61e9",
+              "text": "核糖体"
+            },
+            {
+              "id": "op_1226209e528948d8b56633e5035c9634",
+              "text": "细胞核"
+            }
+          ],
+          "knowledge_id": "kp_a78ea667b8f21682",
+          "correct_option_id": "op_05d8b9181e4e4009a9f95bc4ed7d61e9",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "读取信使 RNA 的信息，合成蛋白质",
+          "source_ref": "cell-notes.txt / 第 4 行",
+          "evidence": "核糖体：读取信使 RNA 的信息，合成蛋白质。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        }
+      ],
+      "next_scene_id": "sc_abb408e537f24546a1567d4defde022e"
+    },
+    {
+      "scene_id": "sc_abb408e537f24546a1567d4defde022e",
+      "name": "复核工作台",
+      "description": "交班实验室的第 3 份记录刚送到复核工作台。交接前，你要为交班手册整理缺页。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "我是复核工作台的值班研究员。请独立复核有争议的记录，签入核对结果。",
+          "裁定两份登记表的争议，将核对结果记入交班手册。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_78628adb5b614581a3c85957d9fff5c0",
+        "title": "找回交班手册第 3 页",
+        "objective": "裁定两份登记表的争议，将核对结果记入交班手册。",
+        "challenge_ids": [
+          "ch_90337582c7724a7b8c0ee6954797c606",
+          "ch_a54d6150adf544afa0f49c7356756809"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_91e5ce76544c4605a770b21943e67a73",
+            "name": "复核工作台签章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_90337582c7724a7b8c0ee6954797c606",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「在植物细胞中进行光合作用，将光能转为化学能」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_337ca64a0b7d4415b7b6731520bbb49a",
+              "text": "细胞质"
+            },
+            {
+              "id": "op_898e5a41ddd7498ba53d577968d123c5",
+              "text": "叶绿体"
+            },
+            {
+              "id": "op_5ad6efdb3f8540f3833743e29495bd03",
+              "text": "液泡"
+            },
+            {
+              "id": "op_2fd47f7387ed440ca4fbd279e9d4096f",
+              "text": "细胞膜"
+            }
+          ],
+          "knowledge_id": "kp_4cfb66861165ddbc",
+          "correct_option_id": "op_898e5a41ddd7498ba53d577968d123c5",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "在植物细胞中进行光合作用，将光能转为化学能",
+          "source_ref": "cell-notes.txt / 第 5 行",
+          "evidence": "叶绿体：在植物细胞中进行光合作用，将光能转为化学能。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        },
+        {
+          "challenge_id": "ch_a54d6150adf544afa0f49c7356756809",
+          "type": "single_choice",
+          "prompt": "复核员拿到一条匿名记录：「位于细胞膜外，提供结构支撑与保护」 哪个标签能解释这条线索？",
+          "options": [
+            {
+              "id": "op_52830e150d924cf2b55f4d1cbc690623",
+              "text": "细胞核"
+            },
+            {
+              "id": "op_c7903985edda48e6b08a62b50f8df1db",
+              "text": "细胞壁"
+            },
+            {
+              "id": "op_31ed6ecc822c41b7ba18e830c7ed7be6",
+              "text": "细胞质"
+            },
+            {
+              "id": "op_633c14474ff64400813f48401278e793",
+              "text": "线粒体"
+            }
+          ],
+          "knowledge_id": "kp_6ef3277342090396",
+          "correct_option_id": "op_c7903985edda48e6b08a62b50f8df1db",
+          "hint": "先圈出描述中的动作、对象或位置，再逐项比较选项。",
+          "explanation": "位于细胞膜外，提供结构支撑与保护",
+          "source_ref": "cell-notes.txt / 第 6 行",
+          "evidence": "细胞壁：位于细胞膜外，提供结构支撑与保护。",
+          "success_text": "你在交班手册上留下了核对印记。",
+          "remediation_text": "向导陪你按讲义核对这条记录。交班手册收下了本页讲解。"
+        }
+      ],
+      "next_scene_id": null
+    }
+  ],
+  "warnings": [
+    "本地规则生成。",
+    "资料主要提供定义，本轮以辨认和比较资料中的描述为主。"
+  ]
+}

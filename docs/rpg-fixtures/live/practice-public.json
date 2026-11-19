@@ -1,0 +1,68 @@
+{
+  "game_type": "rpg_quest",
+  "schema_version": "1.0",
+  "title": "交班实验室：开放日倒计时",
+  "rules": "接受所在场景的任务，按序完成挑战。每题可尝试两次并查看一次提示，完成任务获得经验与物品。",
+  "theme": "laboratory",
+  "start_scene_id": "sc_87aee99bc8e3460d8b0e3854fc12ffa7",
+  "scenes": [
+    {
+      "scene_id": "sc_87aee99bc8e3460d8b0e3854fc12ffa7",
+      "name": "样本接收台",
+      "description": "交班实验室的第 1 批记录抵达样本接收台。复核两份有争议的登记，留下可追溯的处理记录。",
+      "visual_key": "lab",
+      "npc": {
+        "name": "值班研究员",
+        "dialogue": [
+          "交接台已经备好，请独立复核这一批记录。",
+          "复核两份有争议的登记，留下可追溯的处理记录。"
+        ]
+      },
+      "quest": {
+        "quest_id": "qu_030c1fdf8c4848a0a18386f027718f02",
+        "title": "交班手册第 1 次交接",
+        "objective": "复核两份有争议的登记，留下可追溯的处理记录。",
+        "challenge_ids": [
+          "ch_5a97709777d74f6cb8962a275edacada"
+        ],
+        "reward": {
+          "xp": 20,
+          "item": {
+            "id": "it_6714840274084ef2b6677728cb8f30c3",
+            "name": "样本接收台档案章"
+          }
+        }
+      },
+      "challenges": [
+        {
+          "challenge_id": "ch_5a97709777d74f6cb8962a275edacada",
+          "type": "single_choice",
+          "prompt": "展台马上开放，你需要选好展签，交给正在布展的同伴。图示记录的第一栏是「reduces odors」，第二栏是「catches leaves」。两栏标签要按顺序送出，你签发哪一组？",
+          "options": [
+            {
+              "id": "op_2dc759645797444c9063f66fd76873bf",
+              "text": "Carbon bed → Sand bed"
+            },
+            {
+              "id": "op_dc0f7edec9c74f2cb0bb51441dc0e653",
+              "text": "Carbon bed → Screen"
+            },
+            {
+              "id": "op_23fcb265da6e4feaa9c315e3ce259e71",
+              "text": "Screen → Carbon bed"
+            },
+            {
+              "id": "op_ccb85f5418e542f99ffedc4dd93958d1",
+              "text": "Sand bed → Screen"
+            }
+          ]
+        }
+      ],
+      "next_scene_id": null
+    }
+  ],
+  "warnings": [
+    "场景数已随题量调整为 1。"
+  ],
+  "game_id": "g_f008ca14991847ca87fc14f90b520d42"
+}

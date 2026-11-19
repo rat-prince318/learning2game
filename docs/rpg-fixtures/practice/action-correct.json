@@ -1,0 +1,63 @@
+{
+  "event_id": "1575d44318ce4917b12ae502e02af21c",
+  "action": "attempt",
+  "feedback": {
+    "message": "你在交班手册上留下了核对印记。",
+    "correct": true,
+    "challenge_id": "ch_2797d247a18042249a21f1485e4ba326",
+    "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+    "source_ref": "cell-notes.txt / 第 1 行",
+    "revealed_option_id": "op_caeacd34647340dd9b37cc9a416c5a74",
+    "reward_delta": 30,
+    "remediated": false
+  },
+  "progress": {
+    "game_type": "rpg_quest",
+    "session_id": "c16df2c7e73d482c913fc2faef45e174",
+    "game_id": "g_1a8a0591132a44c6a924edc8da11d1d0",
+    "status": "active",
+    "revision": 19,
+    "current_scene_id": "sc_c71b337b37554610b70565e92f7aa48e",
+    "unlocked_scene_ids": [
+      "sc_c71b337b37554610b70565e92f7aa48e"
+    ],
+    "accepted_quest_ids": [
+      "qu_a888e1bb567148c9b196d5afbef4addc"
+    ],
+    "completed_quest_ids": [
+      "qu_a888e1bb567148c9b196d5afbef4addc"
+    ],
+    "resolved_challenge_ids": [
+      "ch_2797d247a18042249a21f1485e4ba326"
+    ],
+    "passed_challenge_ids": [
+      "ch_2797d247a18042249a21f1485e4ba326"
+    ],
+    "remediated_challenge_ids": [],
+    "challenge_attempts": {
+      "ch_2797d247a18042249a21f1485e4ba326": 1
+    },
+    "hints_by_challenge": {},
+    "revealed_hints": {},
+    "xp": 30,
+    "inventory": [
+      {
+        "id": "it_4b9f8436c0814064b0d93a2ad558c09d",
+        "name": "样本接收台签章"
+      }
+    ],
+    "all_quests_completed": true,
+    "last_feedback": {
+      "message": "你在交班手册上留下了核对印记。",
+      "correct": true,
+      "challenge_id": "ch_2797d247a18042249a21f1485e4ba326",
+      "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+      "source_ref": "cell-notes.txt / 第 1 行",
+      "revealed_option_id": "op_caeacd34647340dd9b37cc9a416c5a74",
+      "reward_delta": 30,
+      "remediated": false
+    },
+    "started_at": "2026-11-19T09:50:47.927Z",
+    "elapsed_seconds": 0
+  }
+}

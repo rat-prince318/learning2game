@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RPGChallengeInternal": {
+      "additionalProperties": false,
+      "properties": {
+        "challenge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Challenge Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "single_choice",
+          "default": "single_choice",
+          "title": "Type",
+          "type": "string"
+        },
+        "prompt": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/RPGOption"
+          },
+          "maxItems": 4,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "knowledge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "correct_option_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Correct Option Id",
+          "type": "string"
+        },
+        "hint": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Hint",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_ref": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "evidence": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Evidence",
+          "type": "string"
+        },
+        "success_text": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Success Text",
+          "type": "string"
+        },
+        "remediation_text": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Remediation Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "challenge_id",
+        "prompt",
+        "options",
+        "knowledge_id",
+        "correct_option_id",
+        "hint",
+        "explanation",
+        "source_ref",
+        "evidence",
+        "success_text",
+        "remediation_text"
+      ],
+      "title": "RPGChallengeInternal",
+      "type": "object"
+    },
+    "RPGGameInternal": {
+      "additionalProperties": false,
+      "properties": {
+        "game_type": {
+          "const": "rpg_quest",
+          "default": "rpg_quest",
+          "title": "Game Type",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "rules": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Rules",
+          "type": "string"
+        },
+        "theme": {
+          "enum": [
+            "campus",
+            "laboratory",
+            "fantasy"
+          ],
+          "title": "Theme",
+          "type": "string"
+        },
+        "start_scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Start Scene Id",
+          "type": "string"
+        },
+        "scenes": {
+          "items": {
+            "$ref": "#/$defs/RPGSceneInternal"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Scenes",
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "maxLength": 600,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 24,
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title",
+        "rules",
+        "theme",
+        "start_scene_id",
+        "scenes"
+      ],
+      "title": "RPGGameInternal",
+      "type": "object"
+    },
+    "RPGIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "challenge_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Challenge Id"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "RPGIssue",
+      "type": "object"
+    },
+    "RPGItem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "RPGItem",
+      "type": "object"
+    },
+    "RPGNPC": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "dialogue": {
+          "items": {
+            "maxLength": 400,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Dialogue",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "dialogue"
+      ],
+      "title": "RPGNPC",
+      "type": "object"
+    },
+    "RPGOption": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "RPGOption",
+      "type": "object"
+    },
+    "RPGQuest": {
+      "additionalProperties": false,
+      "properties": {
+        "quest_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Quest Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "objective": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "challenge_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Challenge Ids",
+          "type": "array"
+        },
+        "reward": {
+          "$ref": "#/$defs/RPGReward"
+        }
+      },
+      "required": [
+        "quest_id",
+        "title",
+        "objective",
+        "challenge_ids",
+        "reward"
+      ],
+      "title": "RPGQuest",
+      "type": "object"
+    },
+    "RPGReward": {
+      "additionalProperties": false,
+      "properties": {
+        "xp": {
+          "const": 20,
+          "default": 20,
+          "title": "Xp",
+          "type": "integer"
+        },
+        "item": {
+          "$ref": "#/$defs/RPGItem"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "title": "RPGReward",
+      "type": "object"
+    },
+    "RPGSceneInternal": {
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "visual_key": {
+          "enum": [
+            "lab",
+            "campus",
+            "forest"
+          ],
+          "title": "Visual Key",
+          "type": "string"
+        },
+        "npc": {
+          "$ref": "#/$defs/RPGNPC"
+        },
+        "quest": {
+          "$ref": "#/$defs/RPGQuest"
+        },
+        "challenges": {
+          "items": {
+            "$ref": "#/$defs/RPGChallengeInternal"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Challenges",
+          "type": "array"
+        },
+        "next_scene_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Scene Id"
+        }
+      },
+      "required": [
+        "scene_id",
+        "name",
+        "description",
+        "visual_key",
+        "npc",
+        "quest",
+        "challenges",
+        "next_scene_id"
+      ],
+      "title": "RPGSceneInternal",
+      "type": "object"
+    },
+    "RPGValidationReport": {
+      "additionalProperties": false,
+      "properties": {
+        "valid": {
+          "title": "Valid",
+          "type": "boolean"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/RPGIssue"
+          },
+          "maxItems": 32,
+          "title": "Issues",
+          "type": "array"
+        },
+        "repair_attempts": {
+          "default": 0,
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Repair Attempts",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "valid"
+      ],
+      "title": "RPGValidationReport",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": [
+        "completed",
+        "failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "config": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RPGGameInternal"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "validation": {
+      "$ref": "#/$defs/RPGValidationReport"
+    }
+  },
+  "required": [
+    "status",
+    "validation"
+  ],
+  "title": "RPGGenerationResult",
+  "type": "object"
+}

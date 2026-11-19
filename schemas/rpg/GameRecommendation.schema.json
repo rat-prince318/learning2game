@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "recommended_type": {
+      "enum": [
+        "matching",
+        "rpg_quest"
+      ],
+      "title": "Recommended Type",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "supported_types": {
+      "items": {
+        "enum": [
+          "matching",
+          "rpg_quest"
+        ],
+        "type": "string"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "title": "Supported Types",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "maxLength": 600,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 24,
+      "title": "Warnings",
+      "type": "array"
+    },
+    "mode": {
+      "default": "offline",
+      "enum": [
+        "offline",
+        "live"
+      ],
+      "title": "Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "recommended_type",
+    "rationale",
+    "supported_types"
+  ],
+  "title": "GameRecommendation",
+  "type": "object"
+}

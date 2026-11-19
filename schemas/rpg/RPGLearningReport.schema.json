@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RPGConceptPerformance": {
+      "additionalProperties": false,
+      "properties": {
+        "knowledge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Knowledge Id",
+          "type": "string"
+        },
+        "term": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        },
+        "attempts": {
+          "minimum": 0,
+          "title": "Attempts",
+          "type": "integer"
+        },
+        "mistakes": {
+          "minimum": 0,
+          "title": "Mistakes",
+          "type": "integer"
+        },
+        "first_attempt_correct": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Attempt Correct"
+        },
+        "hints": {
+          "minimum": 0,
+          "title": "Hints",
+          "type": "integer"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "resolved": {
+          "title": "Resolved",
+          "type": "boolean"
+        },
+        "remediated": {
+          "title": "Remediated",
+          "type": "boolean"
+        },
+        "explanation": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "source_ref": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Source Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "knowledge_id",
+        "term",
+        "attempts",
+        "mistakes",
+        "first_attempt_correct",
+        "hints",
+        "passed",
+        "resolved",
+        "remediated",
+        "explanation",
+        "source_ref"
+      ],
+      "title": "RPGConceptPerformance",
+      "type": "object"
+    },
+    "RPGItem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "RPGItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "game_type": {
+      "const": "rpg_quest",
+      "default": "rpg_quest",
+      "title": "Game Type",
+      "type": "string"
+    },
+    "session_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "game_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+      "title": "Game Id",
+      "type": "string"
+    },
+    "finish_reason": {
+      "enum": [
+        "completed",
+        "exited"
+      ],
+      "title": "Finish Reason",
+      "type": "string"
+    },
+    "total_challenges": {
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Total Challenges",
+      "type": "integer"
+    },
+    "resolved_challenges": {
+      "minimum": 0,
+      "title": "Resolved Challenges",
+      "type": "integer"
+    },
+    "correct_challenges": {
+      "minimum": 0,
+      "title": "Correct Challenges",
+      "type": "integer"
+    },
+    "remediated_challenges": {
+      "minimum": 0,
+      "title": "Remediated Challenges",
+      "type": "integer"
+    },
+    "total_quests": {
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Total Quests",
+      "type": "integer"
+    },
+    "completed_quests": {
+      "minimum": 0,
+      "title": "Completed Quests",
+      "type": "integer"
+    },
+    "xp": {
+      "minimum": 0,
+      "title": "Xp",
+      "type": "integer"
+    },
+    "inventory": {
+      "items": {
+        "$ref": "#/$defs/RPGItem"
+      },
+      "title": "Inventory",
+      "type": "array"
+    },
+    "valid_attempts": {
+      "minimum": 0,
+      "title": "Valid Attempts",
+      "type": "integer"
+    },
+    "correct_attempts": {
+      "minimum": 0,
+      "title": "Correct Attempts",
+      "type": "integer"
+    },
+    "mistakes": {
+      "minimum": 0,
+      "title": "Mistakes",
+      "type": "integer"
+    },
+    "attempted_concepts": {
+      "minimum": 0,
+      "title": "Attempted Concepts",
+      "type": "integer"
+    },
+    "untouched_concepts": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Untouched Concepts",
+      "type": "array"
+    },
+    "first_attempt_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "First Attempt Accuracy"
+    },
+    "overall_attempt_accuracy": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Overall Attempt Accuracy"
+    },
+    "completion_rate": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Completion Rate",
+      "type": "number"
+    },
+    "hints_by_concept": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Hints By Concept",
+      "type": "object"
+    },
+    "weak_knowledge_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Weak Knowledge Ids",
+      "type": "array"
+    },
+    "concepts": {
+      "items": {
+        "$ref": "#/$defs/RPGConceptPerformance"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Concepts",
+      "type": "array"
+    },
+    "elapsed_seconds": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Elapsed Seconds",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "session_id",
+    "game_id",
+    "finish_reason",
+    "total_challenges",
+    "resolved_challenges",
+    "correct_challenges",
+    "remediated_challenges",
+    "total_quests",
+    "completed_quests",
+    "xp",
+    "inventory",
+    "valid_attempts",
+    "correct_attempts",
+    "mistakes",
+    "attempted_concepts",
+    "untouched_concepts",
+    "first_attempt_accuracy",
+    "overall_attempt_accuracy",
+    "completion_rate",
+    "hints_by_concept",
+    "weak_knowledge_ids",
+    "concepts"
+  ],
+  "title": "RPGLearningReport",
+  "type": "object"
+}

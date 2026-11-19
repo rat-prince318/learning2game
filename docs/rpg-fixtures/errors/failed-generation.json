@@ -1,0 +1,22 @@
+{
+  "job_id": "00c8bc25583740209c63c411a45cded3",
+  "kind": "generation",
+  "status": "failed",
+  "mode": "offline",
+  "game_type": "rpg_quest",
+  "resource_id": "6e6ad4652370473e8c37d2a42c2341d0",
+  "result": null,
+  "error": "资料描述过长，请选用更简明的讲义或启用模型生成。",
+  "stages_ms": {
+    "generating": 1.196
+  },
+  "tool_calls": [
+    {
+      "name": "rule_generate_rpg_config",
+      "status": "failed",
+      "duration_ms": 0.015
+    }
+  ],
+  "created_at": "2026-11-19T09:50:48.307Z",
+  "updated_at": "2026-11-19T09:50:48.325Z"
+}

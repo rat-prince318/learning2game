@@ -56,30 +56,37 @@ def _now() -> str:
 
 def _session(conn: Connection, session_id: str) -> Row:
     row = conn.execute(
-        """SELECT s.game_id, s.status, g.internal_json, g.card_map_json, g.plan_id
+        """SELECT s.game_id, s.status, g.game_type, g.internal_json, g.card_map_json, g.plan_id
            FROM sessions s JOIN games g ON g.id = s.game_id
            WHERE s.id = ?""",
         (session_id,),
     ).fetchone()
     if row is None:
         raise HTTPException(404, "Session not found")
+    if row["game_type"] != "matching":
+        raise HTTPException(409, "请从 RPG 会话入口打开这一局。")
     return row
 
 
 @router.get("/games/{game_id}", response_model=GameConfigPublic)
 def public_game(game_id: str, request: Request):
     with connection(request.app) as conn:
-        row = conn.execute("SELECT public_json FROM games WHERE id = ?", (game_id,)).fetchone()
+        row = conn.execute("SELECT game_type,public_json FROM games WHERE id = ?", (game_id,)).fetchone()
     if row is None:
         raise HTTPException(404, "Game not found")
+    if row["game_type"] != "matching":
+        raise HTTPException(409, "请从 RPG 游戏入口打开这个关卡。")
     return json.loads(row["public_json"])
 
 
 @router.post("/games/{game_id}/sessions", response_model=SessionStarted, status_code=201)
 def start_session(game_id: str, request: Request):
     with connection(request.app, write=True) as conn:
-        if conn.execute("SELECT 1 FROM games WHERE id = ?", (game_id,)).fetchone() is None:
+        row = conn.execute("SELECT game_type FROM games WHERE id = ?", (game_id,)).fetchone()
+        if row is None:
             raise HTTPException(404, "Game not found")
+        if row["game_type"] != "matching":
+            raise HTTPException(409, "请从 RPG 游戏入口开始这一局。")
         session_id = str(uuid4())
         conn.execute(
             "INSERT INTO sessions (id, game_id, status, created_at) VALUES (?, ?, 'active', ?)",

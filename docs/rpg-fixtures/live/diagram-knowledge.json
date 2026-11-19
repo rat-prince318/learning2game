@@ -1,0 +1,61 @@
+{
+  "knowledge": [
+    {
+      "knowledge_id": "kp_ed66a11ae52a62f7",
+      "term": "Screen",
+      "definition": "catches leaves",
+      "source_ref": "water-stations.png / 图 1",
+      "example": null,
+      "knowledge_type": "part_function",
+      "source_type": "image",
+      "evidence": "Text inside the 'Screen' box states 'catches leaves'",
+      "source_ids": [
+        "image:1"
+      ],
+      "page": null
+    },
+    {
+      "knowledge_id": "kp_a99ed0ded44457bf",
+      "term": "Sand bed",
+      "definition": "traps fine grit",
+      "source_ref": "water-stations.png / 图 1",
+      "example": null,
+      "knowledge_type": "part_function",
+      "source_type": "image",
+      "evidence": "Text inside the 'Sand bed' box states 'traps fine grit'",
+      "source_ids": [
+        "image:1"
+      ],
+      "page": null
+    },
+    {
+      "knowledge_id": "kp_4cec78131293821f",
+      "term": "Carbon bed",
+      "definition": "reduces odors",
+      "source_ref": "water-stations.png / 图 1",
+      "example": null,
+      "knowledge_type": "part_function",
+      "source_type": "image",
+      "evidence": "Text inside the 'Carbon bed' box states 'reduces odors'",
+      "source_ids": [
+        "image:1"
+      ],
+      "page": null
+    },
+    {
+      "knowledge_id": "kp_49353959097ecad8",
+      "term": "Tank",
+      "definition": "stores water",
+      "source_ref": "water-stations.png / 图 1",
+      "example": null,
+      "knowledge_type": "part_function",
+      "source_type": "image",
+      "evidence": "Text inside the 'Tank' box states 'stores water'",
+      "source_ids": [
+        "image:1"
+      ],
+      "page": null
+    }
+  ],
+  "warnings": []
+}

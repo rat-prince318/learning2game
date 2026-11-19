@@ -1,0 +1,307 @@
+{
+  "source": "OpenLux",
+  "vision_model": "gpt-4.1-mini",
+  "author_model": "gpt-5.1",
+  "runs": {
+    "diagram_extraction": {
+      "kind": "extraction",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "extracting": 47355.387,
+        "validating": 0.079
+      },
+      "tool_calls": [
+        {
+          "name": "read_course_material",
+          "status": "ok",
+          "duration_ms": 5.867
+        },
+        {
+          "name": "analyze_diagram",
+          "status": "ok",
+          "duration_ms": 47348.801
+        },
+        {
+          "name": "verify_sources_and_deduplicate",
+          "status": "ok",
+          "duration_ms": 0.227
+        }
+      ]
+    },
+    "water-hard_plan": {
+      "kind": "planning",
+      "mode": "live",
+      "status": "awaiting_confirmation",
+      "error": null,
+      "stages_ms": {
+        "planning": 2621.278,
+        "validating": 0.164
+      },
+      "tool_calls": [
+        {
+          "name": "design_rpg_plan",
+          "status": "ok",
+          "duration_ms": 2608.126
+        }
+      ]
+    },
+    "water-hard_generate": {
+      "kind": "generation",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "generating": 4731.324,
+        "validating": 0.544
+      },
+      "tool_calls": [
+        {
+          "name": "generate_rpg_config",
+          "status": "ok",
+          "duration_ms": 3104.838
+        },
+        {
+          "name": "check_rpg_config",
+          "status": "ok",
+          "duration_ms": 1.535
+        },
+        {
+          "name": "validate_rpg_config",
+          "status": "ok",
+          "duration_ms": 1615.754
+        }
+      ]
+    },
+    "water-hard_feedback": {
+      "kind": "feedback",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "writing_feedback": 2334.329
+      },
+      "tool_calls": [
+        {
+          "name": "write_rpg_feedback",
+          "status": "ok",
+          "duration_ms": 2326.024
+        }
+      ]
+    },
+    "water-hard_practice-plan": {
+      "kind": "practice",
+      "mode": "live",
+      "status": "awaiting_confirmation",
+      "error": null,
+      "stages_ms": {
+        "planning": 2606.7,
+        "validating": 0.145
+      },
+      "tool_calls": [
+        {
+          "name": "design_rpg_plan",
+          "status": "ok",
+          "duration_ms": 2599.584
+        }
+      ]
+    },
+    "water-hard_practice": {
+      "kind": "generation",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "generating": 5046.106,
+        "validating": 0.253
+      },
+      "tool_calls": [
+        {
+          "name": "generate_rpg_config",
+          "status": "ok",
+          "duration_ms": 3816.885
+        },
+        {
+          "name": "check_rpg_config",
+          "status": "ok",
+          "duration_ms": 0.488
+        },
+        {
+          "name": "validate_rpg_config",
+          "status": "ok",
+          "duration_ms": 1219.856
+        }
+      ]
+    },
+    "water-easy_plan": {
+      "kind": "planning",
+      "mode": "live",
+      "status": "awaiting_confirmation",
+      "error": null,
+      "stages_ms": {
+        "planning": 2629.848,
+        "validating": 0.172
+      },
+      "tool_calls": [
+        {
+          "name": "design_rpg_plan",
+          "status": "ok",
+          "duration_ms": 2584.509
+        }
+      ]
+    },
+    "water-easy_generate": {
+      "kind": "generation",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "generating": 5058.672,
+        "validating": 0.382
+      },
+      "tool_calls": [
+        {
+          "name": "generate_rpg_config",
+          "status": "ok",
+          "duration_ms": 3329.326
+        },
+        {
+          "name": "check_rpg_config",
+          "status": "ok",
+          "duration_ms": 0.874
+        },
+        {
+          "name": "validate_rpg_config",
+          "status": "ok",
+          "duration_ms": 1719.327
+        }
+      ]
+    },
+    "biology-easy_extraction": {
+      "kind": "extraction",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "extracting": 28414.672,
+        "validating": 0.106
+      },
+      "tool_calls": [
+        {
+          "name": "read_course_material",
+          "status": "ok",
+          "duration_ms": 0.568
+        },
+        {
+          "name": "extract_knowledge_points",
+          "status": "ok",
+          "duration_ms": 28413.316
+        },
+        {
+          "name": "verify_sources_and_deduplicate",
+          "status": "ok",
+          "duration_ms": 0.319
+        }
+      ]
+    },
+    "biology-easy_plan": {
+      "kind": "planning",
+      "mode": "live",
+      "status": "awaiting_confirmation",
+      "error": null,
+      "stages_ms": {
+        "planning": 3309.653,
+        "validating": 0.203
+      },
+      "tool_calls": [
+        {
+          "name": "design_rpg_plan",
+          "status": "ok",
+          "duration_ms": 3276.651
+        }
+      ]
+    },
+    "biology-easy_generate": {
+      "kind": "generation",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "generating": 4217.381,
+        "validating": 0.44
+      },
+      "tool_calls": [
+        {
+          "name": "generate_rpg_config",
+          "status": "ok",
+          "duration_ms": 2766.166
+        },
+        {
+          "name": "check_rpg_config",
+          "status": "ok",
+          "duration_ms": 0.972
+        },
+        {
+          "name": "validate_rpg_config",
+          "status": "ok",
+          "duration_ms": 1440.195
+        }
+      ]
+    },
+    "recommendation": {
+      "kind": "planning",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "planning": 2805.76
+      },
+      "tool_calls": [
+        {
+          "name": "recommend_game_type",
+          "status": "ok",
+          "duration_ms": 2746.461
+        }
+      ]
+    }
+  },
+  "earlier_iteration": {
+    "feedback_rejected": {
+      "kind": "feedback",
+      "mode": "live",
+      "status": "failed",
+      "error": "建议工具返回的知识范围与本轮报告有出入，请重新生成建议。",
+      "stages_ms": {
+        "writing_feedback": 2495.708
+      },
+      "tool_calls": [
+        {
+          "name": "write_rpg_feedback",
+          "status": "failed",
+          "duration_ms": 2488.779
+        }
+      ]
+    },
+    "feedback_retry": {
+      "kind": "feedback",
+      "mode": "live",
+      "status": "completed",
+      "error": null,
+      "stages_ms": {
+        "writing_feedback": 3053.572
+      },
+      "tool_calls": [
+        {
+          "name": "write_rpg_feedback",
+          "status": "ok",
+          "duration_ms": 3015.876
+        }
+      ]
+    }
+  },
+  "all_recorded_live_generation_jobs": {
+    "completed": 16,
+    "failed": 3
+  }
+}

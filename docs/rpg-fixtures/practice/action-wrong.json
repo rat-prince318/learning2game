@@ -1,0 +1,46 @@
+{
+  "event_id": "f2d3ff7a2749408496b7f0b788fbe085",
+  "action": "attempt",
+  "feedback": {
+    "message": "再试一次。对照任务目标，逐项比较选项的特征。",
+    "correct": false,
+    "challenge_id": "ch_2797d247a18042249a21f1485e4ba326",
+    "reward_delta": 0,
+    "remediated": false
+  },
+  "progress": {
+    "game_type": "rpg_quest",
+    "session_id": "e2cc123528ae4f6397073939a388b2c6",
+    "game_id": "g_1a8a0591132a44c6a924edc8da11d1d0",
+    "status": "active",
+    "revision": 16,
+    "current_scene_id": "sc_c71b337b37554610b70565e92f7aa48e",
+    "unlocked_scene_ids": [
+      "sc_c71b337b37554610b70565e92f7aa48e"
+    ],
+    "accepted_quest_ids": [
+      "qu_a888e1bb567148c9b196d5afbef4addc"
+    ],
+    "completed_quest_ids": [],
+    "resolved_challenge_ids": [],
+    "passed_challenge_ids": [],
+    "remediated_challenge_ids": [],
+    "challenge_attempts": {
+      "ch_2797d247a18042249a21f1485e4ba326": 1
+    },
+    "hints_by_challenge": {},
+    "revealed_hints": {},
+    "xp": 0,
+    "inventory": [],
+    "all_quests_completed": false,
+    "last_feedback": {
+      "message": "再试一次。对照任务目标，逐项比较选项的特征。",
+      "correct": false,
+      "challenge_id": "ch_2797d247a18042249a21f1485e4ba326",
+      "reward_delta": 0,
+      "remediated": false
+    },
+    "started_at": "2026-11-19T09:50:47.838Z",
+    "elapsed_seconds": 0
+  }
+}

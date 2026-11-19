@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "AcceptQuest": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "accept_quest",
+          "title": "Action",
+          "type": "string"
+        },
+        "quest_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Quest Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "action",
+        "quest_id"
+      ],
+      "title": "AcceptQuest",
+      "type": "object"
+    },
+    "AttemptChallenge": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "attempt",
+          "title": "Action",
+          "type": "string"
+        },
+        "challenge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Challenge Id",
+          "type": "string"
+        },
+        "option_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Option Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "action",
+        "challenge_id",
+        "option_id"
+      ],
+      "title": "AttemptChallenge",
+      "type": "object"
+    },
+    "EnterScene": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "enter_scene",
+          "title": "Action",
+          "type": "string"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Scene Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "action",
+        "scene_id"
+      ],
+      "title": "EnterScene",
+      "type": "object"
+    },
+    "RequestHint": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "hint",
+          "title": "Action",
+          "type": "string"
+        },
+        "challenge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Challenge Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "action",
+        "challenge_id"
+      ],
+      "title": "RequestHint",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "accept_quest": "#/$defs/AcceptQuest",
+      "attempt": "#/$defs/AttemptChallenge",
+      "enter_scene": "#/$defs/EnterScene",
+      "hint": "#/$defs/RequestHint"
+    },
+    "propertyName": "action"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/EnterScene"
+    },
+    {
+      "$ref": "#/$defs/AcceptQuest"
+    },
+    {
+      "$ref": "#/$defs/AttemptChallenge"
+    },
+    {
+      "$ref": "#/$defs/RequestHint"
+    }
+  ],
+  "title": "RPGActionInput"
+}

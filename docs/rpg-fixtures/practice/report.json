@@ -1,0 +1,49 @@
+{
+  "game_type": "rpg_quest",
+  "session_id": "e2cc123528ae4f6397073939a388b2c6",
+  "game_id": "g_1a8a0591132a44c6a924edc8da11d1d0",
+  "finish_reason": "completed",
+  "total_challenges": 1,
+  "resolved_challenges": 1,
+  "correct_challenges": 0,
+  "remediated_challenges": 1,
+  "total_quests": 1,
+  "completed_quests": 1,
+  "xp": 20,
+  "inventory": [
+    {
+      "id": "it_4b9f8436c0814064b0d93a2ad558c09d",
+      "name": "样本接收台签章"
+    }
+  ],
+  "valid_attempts": 2,
+  "correct_attempts": 0,
+  "mistakes": 2,
+  "attempted_concepts": 1,
+  "untouched_concepts": [],
+  "first_attempt_accuracy": 0.0,
+  "overall_attempt_accuracy": 0.0,
+  "completion_rate": 1.0,
+  "hints_by_concept": {
+    "kp_81870d8df8f37cb5": 0
+  },
+  "weak_knowledge_ids": [
+    "kp_81870d8df8f37cb5"
+  ],
+  "concepts": [
+    {
+      "knowledge_id": "kp_81870d8df8f37cb5",
+      "term": "细胞核",
+      "attempts": 2,
+      "mistakes": 2,
+      "first_attempt_correct": false,
+      "hints": 0,
+      "passed": false,
+      "resolved": true,
+      "remediated": true,
+      "explanation": "储存遗传信息，参与调控细胞的生长与活动",
+      "source_ref": "cell-notes.txt / 第 1 行"
+    }
+  ],
+  "elapsed_seconds": 0
+}

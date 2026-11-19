@@ -1,0 +1,12 @@
+{
+  "recommended_type": "matching",
+  "rationale": "讲义给出了「细胞核」等条目的定义，配对便于逐一回忆术语与说明。",
+  "supported_types": [
+    "matching",
+    "rpg_quest"
+  ],
+  "warnings": [
+    "本地规则推荐。"
+  ],
+  "mode": "offline"
+}

@@ -1,0 +1,12 @@
+{
+  "recommended_type": "rpg_quest",
+  "rationale": "可以从「细胞核」设计情境任务，让玩家根据讲义线索给 NPC 提供判断。",
+  "supported_types": [
+    "matching",
+    "rpg_quest"
+  ],
+  "warnings": [
+    "本地规则推荐。"
+  ],
+  "mode": "offline"
+}
