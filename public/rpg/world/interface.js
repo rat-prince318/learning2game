@@ -1,6 +1,6 @@
 import { msg, getLocale } from '../../js/locale.js';
 import { h } from '../../js/utils.js';
-import { line, atlas, regionOf, fieldQuest, checkpointAftermath, atChapterExit } from './atlas.js';
+import { line, atlas, regionOf, fieldQuest, checkpointAftermath, atChapterExit, encounterPrerequisite } from './atlas.js';
 import { landmarksFor } from './overland-districts.js';
 import { gearName, heroNames } from '../battle/words.js';
 import { studyMarkup } from '../../js/study.js';
@@ -120,6 +120,7 @@ export function stationDialog(view, selection) {
   let speaker = line(reg.keeper),
     copy = line(reg.opening),
     action = '';
+  const prerequisite = (chosen || selection === 'await-signal') && encounterPrerequisite(view);
   if (selection === 'await-signal') copy = line(reg.needSignal);
   const stop = landmarksFor(i).find((landmark) => landmark.key === selection);
   if (stop) {
@@ -145,8 +146,14 @@ export function stationDialog(view, selection) {
       ? ico('signal') + ' ' + msg('已记入手记', 'Recorded in journal')
       : button('inspect', line(reg.tool) + '　→', 'lr-gold');
   }
-  if (chosen) {
-    speaker = chosen.risk === 'elite' ? line(traps[i]) : routeName(chosen, view);
+  if (chosen) speaker = chosen.risk === 'elite' ? line(traps[i]) : routeName(chosen, view);
+  if (prerequisite) {
+    const target = prerequisite.target;
+    const place = fieldLabels(view)[target];
+    if (chosen) copy = prerequisite.text + msg('。商定行动后再来迎战。', '. Agree on a plan before the fight.');
+    const label = target === 'keeper' ? msg('去找', 'Meet ') : msg('前往', 'Go to ');
+    action = button('follow-quest', label + h(place) + '　→', 'lr-gold', `data-key="${h(target)}"`);
+  } else if (chosen) {
     copy =
       (chosen.risk === 'elite'
         ? msg(

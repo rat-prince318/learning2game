@@ -3,7 +3,7 @@ import { msg, getLocale, setLocale } from '../../js/locale.js';
 import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController } from '../battle/controller.js';
 import { mountBattle } from '../battle/battle.js';
-import { atlas, line, regionOf, fieldQuest, atChapterExit } from './atlas.js';
+import { atlas, line, regionOf, fieldQuest, atChapterExit, encounterPrerequisite } from './atlas.js';
 import {
   header,
   title,
@@ -313,11 +313,7 @@ async function command(fields) {
 async function engage(key) {
   const path = view.routes.find((r) => r.id === key);
   if (!path) return;
-  if (view.eight_chapters && !view.story_marks?.[regionOf(view).id]) {
-    tell(fieldQuest(view).text);
-    resumeField();
-    return;
-  }
+  if (encounterPrerequisite(view)) return choose(key);
   music.cue('danger');
   if (path.risk === 'elite') {
     const field = main.querySelector('.lr-viewport');
@@ -551,7 +547,11 @@ document.addEventListener('click', (event) => {
   if (!b) return;
   // The tide reading can still be saving when a player closes its field note.
   if (b.dataset.do === 'walk' && pick === 'site') return resumeField();
-  if (b.dataset.do === 'spot' || b.dataset.do === 'follow-quest') return world?.navigate(b.dataset.key);
+  if (b.dataset.do === 'spot' || b.dataset.do === 'follow-quest') {
+    if (!world || locked) return;
+    if (pick) resumeField();
+    return world.navigate(b.dataset.key);
+  }
   if (b.dataset.do === 'sound') {
     sound = !sound;
     saveLocal('l2g.lantern.sound', sound);

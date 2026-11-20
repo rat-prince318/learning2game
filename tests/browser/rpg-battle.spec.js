@@ -466,3 +466,100 @@ test('read a counterhit and the finishing blow on the battlefield, reopen after 
 }) => {
   await verifyBattleNotes(page, startDemo, playTurn);
 });
+
+test('an unbriefed Copper Yard guard guides the player to Flint, then allows the original fight', async ({page, request}) => {
+  test.setTimeout(120000);
+  await page.goto('/rpg/');
+  // Twelve scenes place both a patrol and a boss in Copper Yard. Use public lesson
+  // text for staging chapters one and two, keeping the server's story gate intact.
+  const source = readFileSync(new URL('../../public/examples/cell-notes.txt', import.meta.url), 'utf8');
+  let view = await page.evaluate(async source => {
+    const { ApiClient } = await import('/js/api.js');
+    const { fieldbook } = await import('/rpg/world/fieldbook.js');
+    const more = (await fieldbook('zh').text()).split('\n').slice(0, 4);
+    const course = new File([[source.trim(), ...more].join('\n')], '巡道练习.txt', {type:'text/plain'});
+    const api = new ApiClient();
+    const post = (path, body) => api.request(path, {method:'POST', body});
+    const finish = async (path, body) => (await api.waitForJob((await post(path, body)).job_id)).result;
+    const upload = await api.upload(course);
+    await api.waitForJob(upload.job_id);
+    const {volumes} = await post('/rpg/expedition-outline', {
+      sources:[{material_id:upload.material_id}], eight_chapters:true, concepts_per_volume:4,
+      scenes_per_volume:4, question_language:'zh',
+    });
+    const ids = [];
+    for (const volume of volumes) {
+      const plan = await finish('/rpg/plans', volume.plan_request);
+      const game = await finish('/rpg/games', {plan_id:plan.plan_id, confirmed:true});
+      ids.push(game.game_id);
+    }
+    return post('/rpg/expeditions', {game_ids:ids, eight_chapters:true, hero_class:'vanguard', kit:'ward'});
+  }, source);
+  const endpoint = '/rpg/expeditions/' + view.session_id;
+  const orders = await page.evaluate(async () => (await import('/rpg/world/saga/chapters.js')).acts.map(a => a.choices[0].id));
+  async function issue(action, fields = {}) {
+    const response = await request.post(endpoint + '/actions', {data:{
+      action, ...fields, event_id:crypto.randomUUID(), expected_revision:view.revision,
+    }});
+    expect(response.ok()).toBe(true);
+    view = await response.json();
+  }
+  while (view.region_index < 2) {
+    const region = view.map[view.region_index].region_id;
+    if (!view.story_marks[region]) await issue('story_choice', {choice:orders[view.region_index]});
+    await issue('choose_route', {route_id:view.routes[0].id});
+    while (view.phase === 'combat') {
+      const prompt = view.battle.prompt;
+      let option;
+      if (view.battle.rounds.kind === 'tactics') {
+        const [a, b] = prompt.text.match(/\d+/g).map(Number);
+        const result = prompt.text.includes('架势') ? Math.ceil(a / b) : a - b;
+        option = prompt.options.find(o => Number(o.text) === result);
+        expect(option, prompt.text).toBeDefined();
+      } else option = chooseOption(view, true);
+      await issue('answer', {prompt_id:prompt.prompt_id, option_id:option.id, skill:'guard'});
+      expect(view.battle.last_event.correct).toBe(true);
+    }
+    await issue('choose_reward', {reward_id:'purse'});
+  }
+  expect(view.map[2].region_id).toBe('copper_yard');
+  expect(view.story_marks.copper_yard).toBeUndefined();
+  expect(view.routes.some(route => route.id === 'normal')).toBe(true);
+  await page.goto('/rpg/?session=' + view.session_id);
+  const walk = async key => {
+    await page.locator('.lr-travel-list summary').click();
+    await page.locator(`.lr-travel-list [data-key="${key}"]`).click();
+  };
+  const panel = page.getByRole('region', {name:'现场交互'});
+  const lead = panel.locator('[data-do="follow-quest"][data-key="keeper"]');
+  const story = page.locator('#story-dialog');
+  await page.setViewportSize({width:390, height:844});
+  await walk('elite');
+  await expect(lead).toBeVisible({timeout:30000});
+  await expect(panel.locator('[data-do="engage"]')).toHaveCount(0);
+  await page.locator('.lr-track-quest').click({timeout:5000});
+  await expect(story).toBeVisible({timeout:30000});
+  await page.reload();
+  expect((await (await request.get(endpoint)).json()).revision).toBe(view.revision);
+  await page.setViewportSize({width:1360, height:900});
+  await walk('normal');
+  await expect(lead).toBeVisible({timeout:30000});
+  await expect(lead).toContainText('铆青');
+  await expect(panel.locator('[data-do="engage"]')).toHaveCount(0);
+  await lead.click();
+  await expect(story).toBeVisible({timeout:30000});
+  expect((await (await request.get(endpoint)).json()).revision).toBe(view.revision);
+  await story.getByRole('button', {name:/继续/}).click();
+  await story.getByRole('button', {name:/继续/}).click();
+  await story.getByRole('button', {name:/接回装着炉工的尾车/}).click();
+  await story.getByRole('button', {name:'回到战场'}).click();
+  expect((await (await request.get(endpoint)).json()).story_marks.copper_yard).toBe(orders[2]);
+  await walk('normal');
+  const receipt = page.waitForResponse(r => isAction(r, 'choose_route', view.session_id));
+  await panel.getByRole('button', {name:/迎战守卫/}).click({timeout:30000});
+  const reply = await receipt;
+  expect(reply.status()).toBe(200);
+  expect(reply.request().postDataJSON().route_id).toBe('normal');
+  expect((await reply.json()).phase).toBe('combat');
+  await expect(page.getByTestId('battle-submit')).toBeVisible();
+});

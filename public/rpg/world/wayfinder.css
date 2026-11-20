@@ -14,7 +14,6 @@
 .lr-field-task-label { color: #ffd77d; font-weight: 750; }
 .lr-track-quest { font: inherit; padding: 0; border: 0; border-radius: 2px; color: inherit; background: transparent; text-align: start; cursor: pointer; pointer-events: auto; }
 .lr-track-quest:hover, .lr-track-quest:focus-visible { text-decoration: underline; text-underline-offset: .18em; }
-.lr-world:has(.lr-dialog) .lr-track-quest { pointer-events: none; }
 .lr-field-address .lr-quest-detail { margin: 4px 0 0; font: 500 12px/1.35 system-ui, sans-serif; color: #ecdfc6; }
 .lr-guide {
   position: absolute; top: 0; left: 0; z-index: 1;

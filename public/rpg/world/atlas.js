@@ -306,6 +306,13 @@ export function atChapterExit(view) {
     view.scene_index + 1 === view.map[view.region_index].chapters.length);
 }
 
+// Eight-chapter encounters open once the player has agreed on this region's orders.
+export function encounterPrerequisite(view) {
+  if (view.phase === 'route' && view.eight_chapters && !view.story_marks?.[regionOf(view).id])
+    return fieldQuest(view);
+  return null;
+}
+
 export function fieldQuest(view) {
   const post = regionOf(view);
   const title = line(view?.campaign_story ? acts[view.region_index]?.title || post.name : post.name);

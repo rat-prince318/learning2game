@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setLocale } from '../public/js/locale.js';
 import { atlas, checkpointAftermath, fieldQuest } from '../public/rpg/world/atlas.js';
+import { stationDialog } from '../public/rpg/world/interface.js';
 import { acts, arrivalEcho } from '../public/rpg/world/saga/chapters.js';
 
 test('every chapter guides players to its actual story, landmark, exit or battle in both languages', () => {
@@ -69,4 +70,44 @@ test('both choices from each earlier post carry forward by saved ID', () => {
     }
     assert.equal(seen.size, choices.length);
   }
+});
+
+test('guard, trap and boss panels offer the available next action in each chapter', () => {
+  const routes = [
+    { id: 'normal', name: '巡守小径' }, { id: 'elite', name: '近路', risk: 'elite' },
+    { id: 'boss_steady', name: '稳步推进', boss: true, approach: 'steady' },
+    { id: 'boss_daring', name: '直面首领', boss: true, approach: 'daring' },
+  ];
+  const map = atlas.map(({ id }) => ({ region_id: id, chapters: [{ kind: 'battle' }] }));
+  for (const locale of ['zh', 'en']) {
+    setLocale(locale);
+    for (const [index, post] of atlas.entries()) {
+      const view = { phase: 'route', campaign_story: true, eight_chapters: true, region_index: index,
+        scene_index: 0, story_marks: {}, field_signals: [], routes, map };
+      function checkActions(prerequisite) {
+        for (const route of routes) {
+          const html = stationDialog(view, route.id);
+          const buttons = [...html.matchAll(/<button\b([^>]+)>([^<]+)<\/button>/g)];
+          const primary = buttons.filter(([, attrs]) => attrs.includes('class="lr-gold"'));
+          assert.equal(primary.length, 1);
+          const [, attrs, label] = primary[0];
+          assert.ok(attrs.includes(`data-do="${prerequisite ? 'follow-quest' : 'engage'}"`));
+          assert.ok(attrs.includes(`data-key="${prerequisite || route.id}"`));
+          assert.equal(/[\u3400-\u9fff]/u.test(label), locale === 'zh');
+          if (prerequisite) assert.doesNotMatch(html, /data-do="engage"/);
+        }
+      }
+      if ([1, 3, 4].includes(index)) {
+        checkActions('site');
+        view.field_signals.push(post.id);
+      }
+      checkActions(index === 0 ? 'ship' : 'keeper');
+      view.story_marks[post.id] = acts[index].choices[0].id;
+      checkActions(null);
+      delete view.eight_chapters;
+      view.story_marks = {};
+      checkActions(null);
+    }
+  }
+  setLocale('zh');
 });
