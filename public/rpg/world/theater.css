@@ -95,6 +95,41 @@
   background: #071221ba;
   backdrop-filter: blur(3px);
 }
+.lr-field-supplies {
+  position:fixed; inset:auto 0 0; box-sizing:border-box; margin:0;
+  width:100%; max-width:none; max-height:43dvh; overflow:auto;
+  overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#b7a371 #122a2c;
+  padding:clamp(12px,2dvh,22px) max(14px,4vw) max(14px,env(safe-area-inset-bottom));
+  color:#f7ebca; border:0; border-top:1px solid #d7b374;
+  background:linear-gradient(110deg,#11272bf0,#142d2ee0);
+}
+.lr-host:has(.lr-field-supplies[open]) .bf-result { visibility:hidden; }
+.lr-field-supplies::backdrop { background:#0b1c2318; }
+.lr-field-supplies .lr-sheet {
+  display:grid; grid-template-columns:minmax(145px, .9fr) minmax(0,4fr);
+  align-items:start; align-content:start; column-gap:clamp(16px,3vw,45px);
+  padding:0; margin:0; max-width:none; color:inherit; background:transparent; border:0; box-shadow:none; min-height:0;
+}
+.lr-field-supplies .lr-sheet > :not(.lr-grid) { grid-column:1; }
+.lr-field-supplies .lr-sheet h1 { font-size:clamp(1.3rem,2vw,1.9rem); margin:5px 0; }
+.lr-field-supplies .lr-sheet > p { margin:4px 0; }
+.lr-field-supplies .lr-grid {
+  grid-column:2; grid-row:1 / span 4; margin:0; gap:8px;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,118px),1fr));
+}
+.lr-field-supplies .lr-grid article { display:flex; flex-direction:column; align-items:start; padding:9px; background:#203b38a1; }
+.lr-field-supplies .lr-grid button { margin-top:auto; }
+.lr-field-supplies .lr-grid :is(h2,p) { margin:2px 0 8px; }
+.lr-field-supplies .lr-grid h2 { font-size:1.1rem; }
+.lr-field-supplies .lr-supply-close { font:inherit; width:fit-content; }
+.lr-field-supplies [role='status']:empty { display:none; }
+@media (max-width:740px) {
+  .lr-field-supplies { max-height:52dvh; }
+  .lr-field-supplies .lr-sheet { display:flex; flex-flow:row wrap; align-items:center; gap:6px 9px; }
+  .lr-field-supplies .lr-sheet > p { flex-basis:100%; order:1; }
+  .lr-field-supplies .lr-supply-close { margin-inline-start:auto; }
+  .lr-field-supplies .lr-grid { flex-basis:100%; order:2; grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 .sc-card {
   position: relative;
   background: linear-gradient(155deg, #233941, #192832 60%, #101b28);

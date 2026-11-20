@@ -30,6 +30,17 @@
   transform:translateX(-50%); opacity:0; transition:opacity .48s ease-out; pointer-events:none;
 }
 .rpg-ferry-plate-visible { opacity:1; }
+.bf-immersive .rpg-stage-backdrop, .bf-immersive .rpg-ferry-bank {
+  bottom: auto; height: var(--bf-field-depth, 100%);
+}
+.bf-immersive .rpg-stage-backdrop {
+  container-type: size;
+  background-size: var(--rpg-plate-width,100%) 100%;
+}
+.rpg-stage-foreground {
+  position: absolute; left: 0; top: var(--bf-field-depth,100%); width: 100%;
+  height: calc(100% - var(--bf-field-depth,100%)); pointer-events: none; image-rendering: pixelated;
+}
 .rpg-stage-world[data-reduced="true"] .rpg-ferry-plate { transition:none; }
 .rpg-stage-backdrop {
   background: #658a7f url("./art/willow-ferry.png") center 64% / cover no-repeat;

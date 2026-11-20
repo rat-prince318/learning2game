@@ -1,77 +1,44 @@
 import { expect } from '@playwright/test';
 
-// Continue the very same two-chapter save that the battle has just handed
-// back. This small host stands in for the team's camp and map screens.
 export async function verifyCampContinuation(page, rewardView) {
-  await page.evaluate(async (first) => {
-    const { mountBattle } = await import('/rpg/battle/battle.js');
-    const { ApiClient } = await import('/js/api.js');
-    const { newId } = await import('/js/utils.js');
-    const api = new ApiClient();
-    const host = document.querySelector('#host');
-    const path = '/rpg/expeditions/' + encodeURIComponent(first.session_id);
+  const actions = '/rpg/expeditions/' + rewardView.session_id + '/actions';
+  const receipt = action => page.waitForResponse(response =>
+    new URL(response.url()).pathname === actions && response.request().method() === 'POST' &&
+    response.request().postDataJSON().action === action);
+  const exit = page.getByTestId('battle-exit');
+  const camp = page.getByRole('dialog', {name:'驿站补给'});
+  const field = await page.getByTestId('battle-arena').elementHandle();
 
-    function showChoices(view) {
-      host.replaceChildren();
-      host.dataset.handoffPhase = view.phase;
-      host.dataset.handoffRevision = String(view.revision);
-      const camp = view.phase === 'reward';
-      for (const entry of camp ? view.rewards : view.routes) {
-        const button = document.createElement('button');
-        button.dataset.hostChoice = entry.id;
-        button.textContent = entry.name;
-        button.disabled = camp && (!entry.affordable || entry.requires_replacement);
-        button.onclick = async () => {
-          const choice = camp
-            ? { action: 'choose_reward', reward_id: entry.id }
-            : { action: 'choose_route', route_id: entry.id };
-          await api.request(path + '/actions', {
-            method: 'POST', body: { ...choice, expected_revision: view.revision, event_id: newId() },
-          });
-          host.replaceChildren();
-          const component = mountBattle(host, { sessionId: view.session_id, onExit(latest) {
-            component.destroy();
-            showChoices(latest);
-          } });
-          await component.ready;
-        };
-        host.append(button);
-      }
-    }
-    showChoices(first);
-  }, rewardView);
+  await exit.click();
+  await expect(camp).toBeVisible();
+  await camp.getByRole('button', {name:'返回战场'}).click();
+  await expect(camp).toHaveCount(0);
+  await expect(exit).toBeFocused();
+  await exit.click();
+  await expect(camp).toBeVisible();
+  expect(await field.evaluate(node => node === document.querySelector('[data-testid="battle-arena"]'))).toBe(true);
 
-  async function choose(id, action) {
-    const next = page.waitForResponse((r) =>
-      r.request().method() === 'POST' && r.request().postDataJSON()?.action === action &&
-      new URL(r.url()).pathname === '/rpg/expeditions/' + rewardView.session_id + '/actions');
-    await page.locator('[data-host-choice="' + id + '"]').click();
-    const response = await next;
-    expect(response.status()).toBe(200);
-    const result = await response.json();
-    expect(result.session_id).toBe(rewardView.session_id);
-    await expect(page.locator('[data-battle-phase]')).toHaveAttribute('data-battle-revision', String(result.revision));
-    return result;
-  }
-
-  const supplies = rewardView.rewards.find((item) => item.kind === 'purse');
+  const supplies = rewardView.rewards.find(item => item.kind === 'purse');
   expect(supplies?.affordable).toBe(true);
-  const routeView = await choose(supplies.id, 'choose_reward');
+  const claim = receipt('choose_reward');
+  await camp.locator('[data-do="claim"][data-key="' + supplies.id + '"]').click();
+  const reply = await claim;
+  expect(reply.status()).toBe(200);
+  const routeView = await reply.json();
   expect(routeView.phase).toBe('route');
   expect(routeView.scene_index).toBe(rewardView.scene_index + 1);
   expect(routeView.coins).toBe(rewardView.coins + supplies.coins - supplies.cost);
   expect(routeView.journal.at(-1).reward_id).toBe(supplies.id);
+  await expect(camp).toHaveCount(0);
+  await expect(page.locator('.lr-world')).toBeVisible();
 
-  // A map can resume at a route checkpoint: the battle yields the current
-  // revision without silently selecting a path or advancing another turn.
-  await expect(page.getByTestId('battle-result')).toContainText('队伍已到达路口');
-  await expect(page.getByTestId('battle-submit')).toHaveCount(0);
-  await page.getByTestId('battle-exit').click();
-  await expect(page.locator('#host')).toHaveAttribute('data-handoff-phase', 'route');
-  await expect(page.locator('#host')).toHaveAttribute('data-handoff-revision', String(routeView.revision));
-  const nextPath = routeView.routes.find((route) => route.boss && route.approach === 'steady');
+  const nextPath = routeView.routes.find(route => route.boss && route.approach === 'steady');
   expect(nextPath).toBeDefined();
-  const secondFight = await choose(nextPath.id, 'choose_route');
+  await page.locator('.lr-travel-list summary').click();
+  await page.locator('[data-do="spot"][data-key="' + nextPath.id + '"]').click();
+  const march = receipt('choose_route');
+  await page.locator('[data-do="engage"]').click();
+  const secondFight = await (await march).json();
   expect(secondFight.phase).toBe('combat');
   expect(secondFight.revision).toBe(routeView.revision + 1);
   expect(secondFight.battle.stage.number).toBe(2);

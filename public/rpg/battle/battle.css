@@ -1,5 +1,6 @@
 @import url("/study/study.css");
 @import url("./stage.css");
+@import url("./field-notes.css");
 
 .battle-page {
   margin: 0;
@@ -325,6 +326,7 @@
 .l2g-battle .bf-quiz h2 { font-size: clamp(20px, 2cqw, 25px); line-height: 1.45; }
 .l2g-battle .bf-options { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 12px 0; }
 .l2g-battle .bf-options button {
+  min-width: 0;
   text-align: left; color: #293a30; background: linear-gradient(110deg,#fff8e5,#f5edd6); border: 1px solid #ad9d76;
   display: flex; align-items: center; gap: 9px; padding: 8px 10px;
   line-height: 1.45; min-height: 42px; border-radius: 2px;

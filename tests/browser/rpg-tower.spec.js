@@ -33,6 +33,9 @@ test('a recruited pilot joins the spire, a turn survives remount, and a clear op
   await page.evaluate(() => window.visitTestPanel('tower'));
   await page.getByRole('button',{name:'Ascend to floor 1'}).click();
   await expect(page.locator('.ex-towerbar')).toContainText('Floor 1');
+  const arena = page.locator('.rpg-expansion [data-testid="battle-arena"]');
+  await expect.poll(() => arena.boundingBox()).toEqual({x:0, y:0, width:390, height:844});
+  await expect(page.getByRole('button',{name:'Spire gate'})).toBeInViewport({ratio:1});
   const path = '/rpg/expeditions/'+id;
   const fetchRun = async () => (await page.request.get(path)).json();
   for (let turn=0;turn<20;turn++) {

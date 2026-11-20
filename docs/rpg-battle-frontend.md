@@ -2,9 +2,9 @@
 
 一个可以从开场打到结算的答题战场。独立试玩用细胞生物学讲义生成一章，玩家操纵星纹术士，对阵柳根闸主。接进主站后，同一组件读取玩家已经创建的远征存档，使用该局的职业、装备、题目、敌方意图和进度。
 
-![同一场烟柳渡实战的片段，术士格挡破势、普攻、坠星引发二阶段，最终一击后渡船通航](media/willow-parry.webp)
+![烟柳渡实机中的滚动力学题，角色站在木桥上，双方血条悬在场景两侧](media/field-battle.webp)
 
-这段实录剪自同一局。首回合截断蓄势，造成 14 点伤害并击破四格架势。随后普攻追击破绽，造成 37 点伤害并蓄满星能。第三回合的坠星术造成 45 点伤害，首领反击 5 点，江面随之转冷。结尾跳至真正的最后一击，船夫划出闸口。血条、架势、蓄力和奖励均取自服务端回执。
+这场实战使用自编的力学练习。选中刻印后可直接点敌人出招，命中时血条与伤害飘字一起变化，最后一击的解析、经验、掉落和补给都能留在渡口查看。[观看这场战斗](media/field-battle.mp4)
 
 ## 接手先跑一局
 
@@ -16,7 +16,9 @@
 
 烟柳渡有专属场景与首领造型。其他七个地区各有独立场景，按图鉴类别选择敌方立绘。打开 [/rpg/](../public/rpg/index.html) 可从世界地图开始远征，独立入口适合展示渡口一战。
 
-手机上读长题滑出战场后，确认出招会短暂在屏幕顶端显示同一场交手。小窗在结算后收起，保留答题位置。简化动效模式保留战斗数值与结果文字，适合希望专心阅读题目的玩家。
+主线、回声塔和独立入口的战场都铺满浏览器视口。左右血条各自对应桥上的角色，底部显示本回合的题干和选项。选项中的短公式随文字排版，超宽公式支持触屏横移与键盘阅读。手机上的长题可以在底部区域内滚动，角色和血条始终留在原位。
+
+结算后点 **回合解析** 或 **最后一击解析** 可查看服务器确认的伤害、当前解题思路及材料出处，按 Esc 或关闭按钮即可返回。点击 **前往营地** 可在原景挑选本章补给。主线使用右上菜单调节战斗音效和简化动效，独立入口使用右上设置。
 
 ## 让知识决定这一击
 
@@ -34,6 +36,7 @@
 
 ```html
 <link rel="stylesheet" href="/rpg/battle/battle.css">
+<link rel="stylesheet" href="/rpg/world/combat-viewport.css">
 <div id="encounter"></div>
 ```
 
@@ -46,6 +49,7 @@ function enterEncounter(sessionId) {
   const container = document.querySelector('#encounter');
   const battle = mountBattle(container, {
     sessionId,
+    immersive: true,
     onExit(current) {
       battle.destroy();
       if (current.phase === 'reward') return renderCamp(current);
@@ -63,6 +67,7 @@ function enterEncounter(sessionId) {
 | --- | --- |
 | `mountBattle(container, {sessionId, onExit, onViewChange})` | 同步返回组件句柄。传入远征顶层 `session_id`。宿主通常直接用 `onExit(latestView)` 切页。 |
 | `handle.ready`、`handle.getView()` | 等待首次读取后，可取最新一次已呈现的 `ExpeditionView`。首次读取失败时页面给出重试入口，当前值为 `null`。 |
+| `immersive` | 设为 `true` 并加载上面的两份样式即可采用全屏战场。默认值 `false` 适合嵌在其他可滚动页面内。 |
 | `controller` | 可选依赖，提供 `load`、`send`、`retry`、`hasPending` 和 `resynced`。无尽塔借此适配自己的命令与楼层视图。 |
 | `onViewChange(view)` | 可选。首次读取和后续服务器回包呈现后通知宿主，可同步侧栏进度。 |
 | `handle.destroy()` | 路由切走时调用，清理事件、舞台和音效。再次打开同局时用原编号重新挂载。 |
@@ -144,4 +149,4 @@ python -m pytest -q
 
 [首领战浏览器验收](../tests/browser/rpg-battle.spec.js)使用公开讲义作答，与真实 HTTP 回包、存档和战报核对。试跑时可主动失败一次，检查营地笔记里的课程出处，刷新后完成巩固，再挑战同一首领。[控制器测试](../tests/rpg-battle-controller.test.js)可以单独复核重试、并发和独立开局逻辑。
 
-实测记录：一次六题首领战在第八回合通关，服务器发放 60 点经验和一件装备。另一局主动战败，在营地完成修习后恢复满血，再战同一首领。多章验收中，宿主领取首章补给后获得 3 枚路币，第二章保留首章经验。桌面验证了完整动作与伤害飘字，手机在 390 像素宽度验证了读档、触控、静音偏好、系统简化动效，以及读长题时的战斗小窗。[跨章节验收代码](../tests/browser/rpg-battle-camp.js)
+回归覆盖主线和独立入口的完整视口、攻防、胜利与营地，跨章继承装备和经验，以及单独嵌入其他页面时的手机战斗小窗。缩放和触摸测试检查短分式的实际滚动宽度、长公式的阅读与选项点击。[主线游玩](../tests/browser/rpg-saga.spec.js) | [跨章节验收](../tests/browser/rpg-battle-camp.js) | [公式回归](../tests/browser/formula-overflow.spec.js)

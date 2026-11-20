@@ -75,7 +75,7 @@ function grade(image, story) {
   return plate;
 }
 
-export function createFerryPalette(backdrop) {
+export function createFerryPalette(backdrop, onPlate) {
   const layers = Array.from({length:2}, () => {
     const surface = document.createElement('canvas');
     surface.className='rpg-ferry-plate';
@@ -95,6 +95,7 @@ export function createFerryPalette(backdrop) {
         target.getContext('2d').putImageData(next,0,0);
         layers[visible].classList.remove('rpg-ferry-plate-visible');
         target.classList.add('rpg-ferry-plate-visible');
+        onPlate?.(target);
         visible=1-visible;
       }).catch(()=> { /* The original background also supports the whole battle. */ });
     },

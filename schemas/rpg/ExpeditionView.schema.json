@@ -360,6 +360,17 @@
             }
           ]
         },
+        "prior_answer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BattleEvent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "tactics": {
           "anyOf": [
             {

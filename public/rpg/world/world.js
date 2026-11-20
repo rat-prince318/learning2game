@@ -57,6 +57,8 @@ const dials = [
 function tell(text = '') {
   notice.textContent = text;
   notice.hidden = !text;
+  const supplyStatus = main.querySelector('.lr-field-supplies [role="status"]');
+  if (supplyStatus) supplyStatus.textContent = text;
 }
 function errorText(e) {
   if (e.message?.includes('旧版试卷题库')) return reuploadNotice();
@@ -116,7 +118,7 @@ function release() {
 }
 function stationPhase() {
   if (view?.campaign_story && view.phase === 'victory') return 'ending';
-  return ['combat', 'sidequest'].includes(view?.phase)
+  return ['combat', 'sidequest', 'reward'].includes(view?.phase)
     ? 'battle'
     : view?.phase === 'retreated'
       ? 'ending'
@@ -136,6 +138,28 @@ function statusPage(text) {
     '<section class="lr-sheet lr-loading"><div class="lr-compass" aria-hidden="true">✧</div><h1>' +
     text +
     '</h1><p role="status" id="lr-progress"></p></section>';
+}
+function openFieldSupplies(host) {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'lr-field-supplies';
+  dialog.setAttribute('aria-label', msg('驿站补给', 'Wayside supplies'));
+  dialog.innerHTML = rewardPage(view);
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'lr-glass lr-supply-close';
+  close.textContent = msg('返回战场', 'Back to the field');
+  close.addEventListener('click', () => dialog.close());
+  const status = document.createElement('p');
+  status.setAttribute('role', 'status');
+  const sheet = dialog.querySelector('.lr-sheet');
+  sheet.insertBefore(close, sheet.querySelector('.lr-grid'));
+  dialog.append(status);
+  host.append(dialog);
+  dialog.addEventListener('close', () => {
+    dialog.remove();
+    host.querySelector('[data-act="exit"]')?.focus({ preventScroll: true });
+  }, { once: true });
+  dialog.showModal();
 }
 function signalPanel() {
   const r = regionOf(view),
@@ -209,13 +233,15 @@ async function goto(dest) {
     const host = main.firstElementChild;
     const options = {
       sessionId: view.session_id,
-      onExit: async () => {
+      onExit: () => run(async () => {
         if (ticket !== epoch) return;
         mem(await controller.load());
+        if (ticket !== epoch) return;
+        if (dest === 'battle' && view.phase === 'reward') return openFieldSupplies(host);
         pick = '';
 
         await goto(stationPhase());
-      },
+      }),
       onViewChange: (next) => {
         if (ticket !== epoch || !next?.map) return;
         mem(next);
@@ -223,7 +249,7 @@ async function goto(dest) {
           music.scene(view.region_index, view.phase === 'sidequest' ? 'camp' : 'battle');
       },
     };
-    if (dest === 'battle') mounted = mountBattle(host, options);
+    if (dest === 'battle') mounted = mountBattle(host, { ...options, immersive: true });
     else {
       const mod =
         dest === 'tower' ? await import('../tower/tower.js') : await import('../tower/party.js');

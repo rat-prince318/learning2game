@@ -37,6 +37,20 @@ async function walkTo(page, key) {
   await page.locator(`[data-do="spot"][data-key="${key}"]`).click();
 }
 
+async function expectFullField(page) {
+  const geometry = await page.getByTestId('battle-arena').evaluate(stage => {
+    const rect = stage.getBoundingClientRect();
+    return {
+      edges: [rect.left, rect.top, innerWidth - rect.right, innerHeight - rect.bottom],
+      documentOverflow: document.documentElement.scrollWidth - innerWidth,
+      pageScroll: scrollY,
+    };
+  });
+  expect(geometry.edges.every(edge => Math.abs(edge) <= 1), JSON.stringify(geometry)).toBe(true);
+  expect(geometry.documentOverflow).toBeLessThanOrEqual(1);
+  expect(geometry.pageScroll).toBe(0);
+}
+
 async function checkCombatViewport(page) {
   const options = page.getByTestId('battle-option');
   await expect(options).toHaveCount(3);
@@ -48,9 +62,12 @@ async function checkCombatViewport(page) {
   ];
   for (const viewport of [
     { width: 390, height: 844 },
+    { width: 844, height: 390 },
+    { width: 1708, height: 938 },
     { width: 1152, height: 720 },
   ]) {
     await page.setViewportSize(viewport);
+    await expectFullField(page);
     for (const element of elements) await expect(element).toBeInViewport({ ratio: 1 });
   }
 }
@@ -88,6 +105,21 @@ test('rescue the ferry crew, master both dragon phases and reload the final orde
   await walkTo(page, 'boss_steady');
   await page.locator('[data-do="engage"]').click();
   await checkCombatViewport(page);
+  await page.locator('#game-menu-toggle').click();
+  for (const preference of ['sound','motion']) {
+    const control = page.locator('[data-field-pref="' + preference + '"]');
+    const source = page.locator('.bf-system [data-act="' + preference + '"]');
+    const original = await control.getAttribute('aria-pressed');
+    expect(['true','false']).toContain(original);
+    await control.click();
+    const toggled = String(original !== 'true');
+    await expect(control).toHaveAttribute('aria-pressed', toggled);
+    await expect(source).toHaveAttribute('aria-pressed', toggled);
+    await control.click();
+    await expect(source).toHaveAttribute('aria-pressed', original);
+  }
+  await page.locator('#game-menu-toggle').click();
+  const field = await page.getByTestId('battle-arena').elementHandle();
   let view = await state();
   const phases = new Set();
   for (let turn = 0; view.phase === 'combat' && turn < 18; turn++) {
@@ -109,6 +141,16 @@ test('rescue the ferry crew, master both dragon phases and reload the final orde
   }
   expect([...phases]).toEqual([1, 2]);
   expect(view.phase).toBe('victory');
+  const result = page.getByTestId('battle-result');
+  await expect(result).toBeVisible();
+  expect(await field.evaluate(node => node === document.querySelector('[data-testid="battle-arena"]'))).toBe(true);
+  for (const viewport of [{width:390,height:844}, {width:1708,height:938}]) {
+    await page.setViewportSize(viewport);
+    await expectFullField(page);
+    await expect(result.getByRole('heading')).toBeInViewport();
+    await expect(page.getByTestId('battle-exit')).toBeInViewport({ratio:1});
+    await expect(page.locator('.bf-hud .bf-enemyhp progress')).toHaveJSProperty('value', 0);
+  }
   await page.getByTestId('battle-exit').click();
   await story.getByRole('button', { name: '斩冠凯旋' }).click();
   await story.getByRole('button', { name: '查看战绩' }).click();

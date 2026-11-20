@@ -4,6 +4,22 @@
   font-family:inherit; border:1px solid var(--ex-edge); border-radius:10px; overflow:hidden;
 }
 .rpg-expansion .ex-content { min-width:0; }
+.rpg-expansion:has(.bf-immersive) { position:relative; max-width:none; border:0; border-radius:0; }
+.lantern .lr-host:has(.rpg-expansion .bf-immersive) { position:fixed; inset:0; max-width:none; margin:0; padding:0; }
+.rpg-expansion:has(.bf-immersive) .ex-towerbar {
+  position:absolute; z-index:7; inset:max(8px,env(safe-area-inset-top)) auto auto 50%; transform:translateX(-50%);
+  gap:10px; padding:2px 4px 2px 12px; border-radius:4px; border:1px solid #d6bc7f70;
+  background:#182930dc; line-height:1.2; font-size:13px; color:#ffefc9;
+}
+.rpg-expansion .ex-towerbar button { min-height:36px; padding:4px 8px; }
+@media (max-width:950px) {
+  .rpg-expansion:has(.bf-immersive) .ex-towerbar {
+    left:max(8px,env(safe-area-inset-left)); transform:none; max-width:calc(100% - 125px);
+    gap:6px; padding-left:7px; font-size:11px;
+  }
+  .ex-towerbar small { display:block; }
+  .rpg-expansion .bf-immersive .bf-location { visibility:hidden; }
+}
 .rpg-expansion [data-tower], .ex-heading button, .ex-card button, .ex-status button {
   border:1px solid #a38861; background:#2a3438; color:#fff0cf; font:inherit;
   font-weight:650; border-radius:5px; padding:.6rem 1rem; cursor:pointer; min-height:44px;

@@ -5,5 +5,6 @@ const sessionId = new URL(location.href).searchParams.get('session');
 mountBattle(document.querySelector('#battle'), {
   sessionId: sessionId || getSavedSession(),
   standalone: true,
+  immersive: true,
   savedEntry: !sessionId,
 });

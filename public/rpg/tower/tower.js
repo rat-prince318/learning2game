@@ -38,7 +38,7 @@ export function mountTower(container, options) {
           retry:async () => project(await ctx.controller.retry()),
           send:async fields => project(await ctx.controller.send({...fields, action:'tower_'+fields.action})),
         };
-        battle = mountBattle(arena, {sessionId:view.session_id, controller:relay, onExit:showLanding,
+        battle = mountBattle(arena, {sessionId:view.session_id, controller:relay, immersive:true, onExit:showLanding,
           onViewChange:() => { ctx.accept(ctx.controller.view); updateBar(bar, ctx.controller.view.tower); }});
       }
       updateBar(ctx.content.firstElementChild, tower);

@@ -2,6 +2,7 @@ import { animateParcel, cargoFor, cargoMarkup, cargoOption, operateCargo } from 
 import { BattleController } from './controller.js';
 import { forgetSavedSession, rememberSession, startDemo } from './demo.js';
 import { createStage } from './stage.js';
+import { receiptBody } from './field-notes.js';
 import { briefing, chainPieces, consequence, encounter, glyph, heading, heroInfo, hud, icon, result, showContact, submitName } from './panels.js';
 import { displayText, readLocal, saveLocal } from '../../js/utils.js';
 
@@ -9,20 +10,23 @@ import { getLocale, msg, setLocale } from '../../js/locale.js';
 import { eventText } from './words.js';
 
 const prefKey = 'l2g.battle.preferences.v1';
+const campNoteKey = 'l2g.battle.open-camp-note.v1';
 
-export function mountBattle(container, { sessionId, controller: suppliedController, standalone = false, savedEntry = false,
+export function mountBattle(container, { sessionId, controller: suppliedController, standalone = false, immersive = false, savedEntry = false,
   onExit, onViewChange } = {}) {
   if (!container || (!standalone && !sessionId && !suppliedController)) throw new Error(msg('请选择一个远征存档和战场容器。','Choose an expedition and a battle container.'));
   const root = container.ownerDocument.createElement('div');
-  root.className = 'l2g-battle';
+  root.className = immersive ? 'l2g-battle bf-immersive' : 'l2g-battle';
   root.innerHTML = `<header class="bf-bar"><div class="bf-brand">
       <span class="bf-crest" aria-hidden="true">${icon('compass')}</span><span data-brand></span></div>
+      ${immersive ? '<details class="bf-settings"><summary><span aria-hidden="true">⚙</span></summary>' : ''}
       <div class="bf-system"><button type="button" data-act="lang"></button><button type="button" data-act="sound"></button>
-        <button type="button" data-act="motion"></button></div></header>
+        <button type="button" data-act="motion"></button></div>${immersive ? '</details>' : ''}</header>
     <div class="bf-wrap"><div class="bf-location"></div>
       <div class="bf-frame"><div class="bf-stage-slot"><div class="bf-stage" data-testid="battle-arena"></div></div>
         <div class="bf-hud"></div><div class="bf-board"></div></div>
-      <div class="bf-status" role="status" aria-live="polite" aria-atomic="true"></div></div>`;
+      <div class="bf-status" role="status" aria-live="polite" aria-atomic="true"></div></div>
+      ${immersive ? '<dialog class="bf-field-notes" data-testid="battle-field-notes"></dialog>' : ''}`;
   container.append(root);
   const find = (selector) => root.querySelector(selector);
   const board = find('.bf-board'), status = find('.bf-status');
@@ -37,10 +41,22 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   let view = null, choice = '', skill = 'strike', busy = false, destroyed = false;
   let retryAction = '', exiting = false, picked = [], lens = -1;
   let lastStatus = '', cargo = null;
+  const notes = find('.bf-field-notes');
+  const dockSize = notes && new ResizeObserver(() => alignNotes());
+  let receipt = null;
+
+  function alignNotes() {
+    const dock = board.querySelector('.bf-quiz, .bf-result');
+    if (!dock || !notes?.open) return;
+    notes.style.setProperty('--bf-note-depth', dock.getBoundingClientRect().height + 'px');
+    dockSize.observe(dock);
+  }
 
   function preferences() {
     find('[data-brand]').textContent = msg('远征战场','Battlefield');
     find('.bf-hud').setAttribute('aria-label',msg('战斗状态','Combat status'));
+    find('.bf-settings summary')?.setAttribute('aria-label',msg('战场设置','Battle settings'));
+    notes?.setAttribute('aria-label',msg('回合解析','Turn notes'));
     const lang = find('[data-act="lang"]');
     lang.textContent = msg('EN','中文');
     lang.setAttribute('aria-label',msg('Switch to English','切换至中文'));
@@ -56,10 +72,11 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
     root.classList.toggle('bf-reduced', prefs().reducedMotion);
   }
 
-  function tell(message = '', action = '') {
+  function tell(message = '', action = '', kind = '') {
     lastStatus = message;
     retryAction = action;
     status.replaceChildren();
+    status.dataset.kind = kind;
     status.append(displayText(message));
     if (action) {
       const retry = document.createElement('button');
@@ -86,16 +103,40 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
     if (!view && controller) {
       board.innerHTML = '<section class="bf-paper bf-loading"><h2>'+msg('读取远征存档','Opening your expedition')+'</h2><p>'+msg('正在与战场会合。','Joining the battlefield…')+'</p></section>';
     } else if (!view) board.innerHTML = briefing();
-    else if (view.phase === 'combat' || view.phase === 'sidequest') board.innerHTML = encounter(view, skill, choice, picked, lens, cargo);
-    else board.innerHTML = result(view, standalone, standalone && savedEntry);
+    else if (view.phase === 'combat' || view.phase === 'sidequest') {
+      const planOpen = Boolean(find('.bf-enemy-plan[open]'));
+      board.innerHTML = encounter(view, skill, choice, picked, lens, cargo, {immersive, receipt});
+      if (planOpen) find('.bf-enemy-plan')?.setAttribute('open', '');
+      const camp = find('.bf-camp-notes');
+      if (camp && view.battle.prompt) {
+        const promptKey = view.session_id + '/' + view.battle.prompt.prompt_id;
+        camp.open = readLocal(campNoteKey) === promptKey;
+        camp.addEventListener('toggle', () => {
+          if (camp.isConnected) saveLocal(campNoteKey, camp.open ? promptKey : '');
+        });
+      }
+    } else board.innerHTML = result(view, standalone, standalone && savedEntry, {immersive, receipt});
+    if (notes?.open && receipt) {
+      notes.innerHTML = receiptBody(receipt, view);
+      notes.querySelector('[data-act="receipt-close"]')?.focus({preventScroll:true});
+      dockSize.disconnect();
+      alignNotes();
+    }
     watchCargo();
     stage.setView(view);
     syncAim();
   }
 
-  function accept(next) {
+  function accept(next, attempt) {
     if (destroyed) return;
     const previous = view;
+    const event = next.battle?.last_event;
+    if (typeof event?.correct === 'boolean') receipt = {event, ...attempt};
+    else if (event?.kind === 'hint') {
+      const samePrompt = previous?.session_id === next.session_id &&
+        previous.battle?.prompt?.prompt_id === next.battle?.prompt?.prompt_id && !controller?.resynced;
+      if (!samePrompt || !receipt) receipt = next.battle.prior_answer ? {event:next.battle.prior_answer} : null;
+    } else receipt = null;
     view = next;
     if (previous?.session_id !== next.session_id ||
         previous?.battle?.prompt?.prompt_id !== next.battle?.prompt?.prompt_id || previous?.phase !== next.phase) {
@@ -114,7 +155,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   // briefly at its top edge, keeping the reader's scroll position and form in place.
   async function playTurn(before, after, action) {
     const rect = arena.getBoundingClientRect();
-    const peek = !prefs().reducedMotion && rect.bottom < rect.height * .45 &&
+    const peek = !immersive && !prefs().reducedMotion && rect.bottom < rect.height * .45 &&
       root.clientWidth <= 640 && typeof arena.showPopover === 'function';
     if (peek) {
       arena.setAttribute('popover', 'manual');
@@ -156,19 +197,23 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
         next = await controller.send(fields);
       }
       if (destroyed) return;
-      const receipt = next.battle?.last_event;
-      if (type === 'submit' && !controller.resynced && before.phase === 'combat' && receipt) {
-        tell(eventText(receipt,next));
+      const turn = next.battle?.last_event;
+      if (type === 'submit' && !controller.resynced && before.phase === 'combat' && turn) {
+        tell(eventText(turn,next), '', 'receipt');
         // Progress is already saved. A rendering failure must never repeat this answer.
         try { await playTurn(before, next, previousSkill); }
         catch (error) { console.warn('Battle animation skipped', error); }
       }
       if (destroyed) return;
-      accept(next);
-      const progress = next.phase === 'sidequest' ? msg(' 营地讲义已展开。',' The camp guide is open.') : '';
+      const prompt = before?.battle?.prompt;
+      const attempt = type === 'submit' && !controller.resynced && prompt ?
+        {prompt:prompt.text, selected:prompt.options.find(option => option.id === choice)?.text} : undefined;
+      accept(next, attempt);
+      const progress = next.phase === 'sidequest' ? msg(' 可在营火旁查阅修习笔记。',' Camp notes are available by the fire.') : '';
       tell(controller.resynced ? msg('已同步最新战况。','Battle synchronized.') :
-        type === 'submit' ? displayText(eventText(receipt,next) || msg('回合已结算。','Turn resolved.')) + progress :
-        type === 'hint' ? msg('讲义提示已展开。','The field note is open.') : '');
+        type === 'submit' ? displayText(eventText(turn,next) || msg('回合已结算。','Turn resolved.')) + progress :
+        type === 'hint' ? msg('讲义提示已展开。','The field note is open.') : '', '',
+        type === 'submit' && !controller.resynced ? 'receipt' : '');
       if (fromKeyboard && type === 'submit') {
         lock(false);
         find('[data-prompt-title]')?.focus({preventScroll:true});
@@ -269,6 +314,13 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
       return;
     }
     if (busy || exiting) return;
+    if (act === 'receipt-close') { notes?.close(); return; }
+    if (act === 'receipt' && notes && receipt) {
+      notes.innerHTML = receiptBody(receipt, view);
+      notes.showModal();
+      alignNotes();
+      return;
+    }
     if (act === 'retry' && retryAction) return run(retryAction);
     if (controller?.hasPending) return run('restore');
     if (act === 'cargo') return useCargo(button);
@@ -292,9 +344,13 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
     if (['submit', 'start', 'hint'].includes(act)) return run(act);
   }
 
+  notes?.addEventListener('close', () => {
+    dockSize.disconnect();
+    if (!destroyed) find('[data-act="receipt"]')?.focus({preventScroll:true});
+  }, {signal:lifetime.signal});
   root.addEventListener('click', click, {signal:lifetime.signal});
   root.addEventListener('keydown', event => {
-    if (busy || event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
+    if (busy || notes?.open || event.target.closest('.bf-settings') || event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
         !['combat','sidequest'].includes(view?.phase) || event.target.closest('.bf-cargo, input, textarea, select, [contenteditable="true"]')) return;
     const keys = {q:'strike',w:'guard',e:'burst'};
     let button;
@@ -308,7 +364,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
     if (!lastStatus) return;
     if (retryAction) tell(msg('连接遇到问题，请再试一次。','Connection interrupted. Try again.'),retryAction);
     else if (busy) tell(msg('正在确认当前操作。','Resolving your action…'));
-    else tell(eventText(view?.battle?.last_event,view));
+    else tell(eventText(view?.battle?.last_event,view), '', status.dataset.kind);
   }, {signal:lifetime.signal});
   media.addEventListener('change', preferences, {signal:lifetime.signal});
   preferences();
@@ -317,6 +373,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   return {ready, getView:() => view, destroy() {
     if (destroyed) return;
     destroyed = true;
+    dockSize?.disconnect();
     lifetime.abort();
     stage.destroy();
     root.remove();

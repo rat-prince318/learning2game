@@ -7,6 +7,7 @@ import { drawFerryLight } from './effects/ferry-light.js';
 import { createLivingFerry } from './effects/living-ferry.js';
 import { createActorPoses } from './effects/actor-poses.js';
 import { createFerryPalette } from './effects/ferry-palette.js';
+import { createForeground } from './effects/foreground.js';
 
 const asset = (file) => new URL('./art/' + file, import.meta.url).href;
 const heroes = new Set(['arcanist', 'ranger', 'vanguard']);
@@ -105,7 +106,8 @@ export function createStage(container, preferences = {}) {
   storyMark.hidden = true;
   const title = element('span','rpg-stage-technique');
   title.hidden = true;
-  const palette = createFerryPalette(backdrop);
+  const foreground = container.closest('.bf-immersive') ? createForeground(world, backdrop) : null;
+  const palette = createFerryPalette(backdrop, foreground?.setFerryPlate);
   backdrop.append(backCanvas);
   const orbit = element('span','rpg-field-orbit');
   orbit.hidden = true;
@@ -145,6 +147,8 @@ export function createStage(container, preferences = {}) {
       world.dataset.region = id;
       world.dataset.regional = String(regional);
       backdrop.style.backgroundImage = regional ? 'url("/rpg/world/region-art/'+id+'.webp")' : '';
+      foreground?.setRegion(regional ? id : 'willow_ferry', regional
+        ? '/rpg/world/region-art/' + id + '.webp' : asset('willow-ferry.png'));
       scenery.setEnabled(!regional);
     }
     const sameRun = view?.session_id && storySession === view.session_id;
@@ -249,8 +253,9 @@ export function createStage(container, preferences = {}) {
     const timing = turnTiming(action, outgoing, counter, broken, receipt.critical);
     const bounds = world.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return Promise.resolve();
-    const height = 168, width = Math.max(1, Math.round(height * bounds.width / bounds.height));
-    const ratio = bounds.height / height;
+    const ratio = (backdrop.clientHeight || bounds.height) / 168;
+    const height = Math.max(1, Math.round(bounds.height / ratio));
+    const width = Math.max(1, Math.round(bounds.width / ratio));
     canvas.width = width;
     canvas.height = height;
     reflections.width = width;
@@ -261,8 +266,12 @@ export function createStage(container, preferences = {}) {
     ctx.imageSmoothingEnabled = false;
     function anchor(actor, yRatio) {
       const rect = actor.body.getBoundingClientRect();
+      const image = actor.image;
+      const paintedHeight = image.naturalWidth
+        ? Math.min(rect.height, rect.width * image.naturalHeight / image.naturalWidth)
+        : rect.height;
       return {x: (rect.left + rect.width * .5 - bounds.left) * width / bounds.width,
-        y: (rect.top + rect.height * yRatio - bounds.top) / ratio};
+        y: (rect.bottom - paintedHeight * (1 - yRatio) - bounds.top) / ratio};
     }
     const h = anchor(hero, .53), f = anchor(foe, .55), groundY = anchor(foe, .94).y;
     const start = performance.now(), still = reduced;
@@ -291,7 +300,7 @@ export function createStage(container, preferences = {}) {
         const tag = broken ? msg('破势','Break') : receipt.critical ? msg('暴击','Critical') : receipt.tactics?.exploited_break ? msg('破绽','Opening') :
           receipt.tactics?.phase_changed ? msg('形态转变','Phase change') : '';
         const value = hit ? '−' + receipt.damage_dealt : '0';
-        placeNumber(numbers, {x:f.x/width + .045, y:clamp(f.y/height - .21)},
+        placeNumber(numbers, {x:f.x/width + .045, y:clamp((f.y - 29)/height)},
           tag, value, 'foe', strong ? 'strong' : 'normal', still);
         if (support && support.effect !== 'guard') ally.dataset.assist=support.effect;
         onContact?.('foe');
@@ -301,7 +310,7 @@ export function createStage(container, preferences = {}) {
         sound.impact({parry:guard && blocked});
         const label = guard ? msg('格挡','Guard') : msg('减伤','Blocked');
         const tag = blocked && hurt ? label + ' ' + receipt.damage_blocked : blocked ? label : '';
-        placeNumber(numbers, {x:h.x/width - .035, y:clamp(h.y/height - .18)},
+        placeNumber(numbers, {x:h.x/width - .035, y:clamp((h.y - 25)/height)},
           tag, hurt ? '−' + receipt.damage_received : String(receipt.damage_blocked),
           'hero', blocked && !hurt ? 'guard' : 'normal', still);
         if (support?.effect === 'guard') ally.dataset.assist='guard';
@@ -433,7 +442,7 @@ export function createStage(container, preferences = {}) {
     castButton.setAttribute('aria-label',msg('在战场上','On the field: ')+label);
   },destroy() {
     active?.finish(); hideStoryMark(); life.abort();
-    poses.destroy(); scenery.destroy(); palette.destroy(); sound.destroy();
+    poses.destroy(); scenery.destroy(); palette.destroy(); foreground?.destroy(); sound.destroy();
     world.remove(); overlay.remove(); container.classList.remove('rpg-stage-host');
   }};
 }

@@ -122,6 +122,7 @@ def begin_encounter(state: BattleState, game: RPGGameInternal, encounter_id: str
     _set_fight(result, game, recover=False)
     result.prompt_serial += 1
     result.last_event = None
+    result.prior_answer = None
     return result
 
 
@@ -148,7 +149,7 @@ def view(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeIte
     return BattleView(
         session_id=state.session_id, game_id=state.game_id, title=game.title, phase=state.phase,
         revision=state.revision, cleared_stages=state.cleared_stages, defeats=state.defeats,
-        sidequests_completed=state.sidequests_completed, last_event=state.last_event,
+        sidequests_completed=state.sidequests_completed, last_event=state.last_event, prior_answer=state.prior_answer,
         stage=StageView(index=state.stage_index, number=state.stage_index + 1, total=len(game.scenes),
                         scene_id=scene.scene_id, name=scene.name, objective=scene.quest.objective, boss=boss),
         enemy=EnemyView(name=name, sprite=sprite, hp=state.enemy_hp, max_hp=maximum, boss=boss,
@@ -268,8 +269,15 @@ def _combat_answer(state, game, exam, action, correct):
             state.pending.append(state.pending.pop(0))
         else:
             state.finishing_turn += 1
+        # A missed seal stays in the queue. Its field note offers the next
+        # reasoning step without disclosing the correct option on a retry.
+        needs_review = [item for item in exam.supporting if item.knowledge_id in missed] or [q]
+        refs = list(dict.fromkeys(item.source_ref for item in needs_review))
+        joined = " / ".join(refs)
         feedback = BattleEvent(kind="miss", message="判断偏离了线索，敌人发动反击。",
-                               correct=False, skill=action.skill)
+                               correct=False, skill=action.skill,
+                               explanation="\n".join(item.hint for item in needs_review),
+                               source_ref=joined if len(joined) <= 500 else refs[0])
 
     if correct and len(exam.supporting) > 1:
         feedback.explanation = "\n".join(q.explanation for q in exam.supporting)
@@ -340,7 +348,7 @@ def _review_answer(state, game, exam, action, correct):
     tally.review_correct += 1
     state.review_index += 1
     feedback = BattleEvent(kind="review_correct", correct=True, message="档案修复成功，继续下一条营地记录。",
-                           explanation=exam.lesson.definition, source_ref=exam.lesson.source_ref)
+                           explanation=exam.question.explanation, source_ref=exam.question.source_ref)
     if state.review_index == len(state.review_queue):
         state.sidequests_completed += 1
         _set_fight(state, game)
@@ -409,6 +417,10 @@ def advance(state: BattleState, action: BattleAction | ExpeditionAnswer, game: R
             result.hinted = False
             result.prompt_serial += 1
     feedback.hero_class = result.hero_class
+    # A hint has its own action receipt. Keep the most recent resolved turn
+    # available to the journal when the player reloads during this same prompt.
+    result.prior_answer = (result.last_event if feedback.kind == "hint"
+                           and result.last_event and result.last_event.correct is not None else None)
     result.last_event = feedback
     result.revision += 1
     return result

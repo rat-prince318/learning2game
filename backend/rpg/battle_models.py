@@ -122,6 +122,7 @@ class BattleState(StrictModel):
     sidequests_completed: Count = 0
     concepts: dict[Identifier, BattleTally]
     last_event: BattleEvent | None = None
+    prior_answer: BattleEvent | None = None
     expedition: EncounterState | None = None
 
     @model_validator(mode="before")
@@ -228,4 +229,5 @@ class BattleView(StrictModel):
     defeats: Count
     sidequests_completed: Count
     last_event: BattleEvent | None
+    prior_answer: BattleEvent | None = None
     tactics: TacticsView | None = None

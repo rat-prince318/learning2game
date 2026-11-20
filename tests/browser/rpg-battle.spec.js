@@ -1,6 +1,7 @@
 import { test as base, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { verifyCampContinuation } from './rpg-battle-camp.js';
+import { verifyBattleNotes } from './rpg-battle-notes.js';
 
 const battlePath = '/rpg/battle/';
 const screen = (page) => page.locator('[data-battle-phase]');
@@ -154,6 +155,7 @@ test('public lecture to willow boss victory, actual XP and loot, one answer per 
 }) => {
   let view = await startDemo();
   await expectCharactersOnBridge(page);
+  const field = await page.getByTestId('battle-arena').elementHandle();
   await expect(page.getByTestId('battle-intent')).toContainText(view.battle.tactics.intent.name);
   expect(view.player.burst_ready).toBe(false);
   await expect(page.getByTestId('battle-skill-burst')).toBeDisabled();
@@ -196,6 +198,7 @@ test('public lecture to willow boss victory, actual XP and loot, one answer per 
   expect(event.loot_items.length).toBeGreaterThan(0);
   const result = page.getByTestId('battle-result');
   await expect(result).toBeVisible();
+  expect(await field.evaluate(node => node === document.querySelector('[data-testid="battle-arena"]'))).toBe(true);
   await expect(result).toContainText(String(event.xp_gained));
   for (const item of event.loot_items) await expect(result).toContainText(item.name);
   const report = await (await request.get('/rpg/expeditions/' + view.session_id + '/report')).json();
@@ -252,11 +255,14 @@ test('mobile reduced-motion controls, hint receipt and a bookmarked battle survi
   await page.emulateMedia({ reducedMotion: 'reduce' });
   let view = await startDemo();
   await expectCharactersOnBridge(page);
+  const settings = page.locator('.bf-settings summary');
+  await settings.click();
   await expect(page.getByRole('button', {name:'简化动效'})).toHaveAttribute('aria-pressed', 'true');
   const sound = page.getByRole('button', {name:'战斗音效'});
   await expect(sound).toHaveAttribute('aria-pressed', 'false');
   await sound.click();
   await expect(sound).toHaveAttribute('aria-pressed', 'true');
+  await settings.click();
   const receipt = page.waitForResponse((r) => isAction(r, 'hint', view.session_id));
   await page.getByTestId('battle-hint').click();
   view = await (await receipt).json();
@@ -266,7 +272,9 @@ test('mobile reduced-motion controls, hint receipt and a bookmarked battle survi
   await page.goto(battlePath + '?session=' + encodeURIComponent(view.session_id));
   await expectView(page, view);
   await expect(page.locator('body')).toContainText(view.battle.prompt.hint);
+  await settings.click();
   await expect(sound).toHaveAttribute('aria-pressed', 'true');
+  await settings.click();
   const next = await playTurn(page, view);
   await page.reload();
   await expectView(page, next);
@@ -310,12 +318,14 @@ test('an interrupted hint replays the same event on reload and a competing tab r
   await expect(page.locator('body')).toContainText(advanced.battle.prompt.text);
 });
 
-test('a phone reader sees the offscreen fight in a temporary stage and keeps their reading position', async ({
+test('a scrolling embedded host briefly brings its offscreen fight to a phone reader', async ({
   page, startDemo,
 }) => {
   await page.setViewportSize({width:390, height:490});
   await page.emulateMedia({reducedMotion:'no-preference'});
   let view = await startDemo();
+  await openTestHost(page, view.session_id);
+  await expectView(page, view);
   const arena = page.getByTestId('battle-arena');
   await arena.evaluate((el) => {
     el.dataset.openCount = '0';
@@ -353,7 +363,7 @@ test('a phone reader sees the offscreen fight in a temporary stage and keeps the
   }
 });
 
-test('an embedded first chapter hands its real reward choices back to the traveling party', async ({
+test('first chapter rewards stay on the battlefield and can be handed back to the traveling party', async ({
   page, request, startDemo,
 }) => {
   const uploaded = page.waitForResponse((r) => r.request().method() === 'POST' && pathOf(r) === '/materials');
@@ -382,17 +392,35 @@ test('an embedded first chapter hands its real reward choices back to the travel
   view = await (await request.post(path + '/actions', { data: {
     action: 'choose_route', route_id: view.routes[0].id, event_id: 'first-chapter', expected_revision: view.revision,
   } })).json();
-  await openTestHost(page, view.session_id);
+  await page.goto('/rpg/?session=' + view.session_id);
   await expectView(page, view);
+  const arena = page.getByTestId('battle-arena');
+  const field = await arena.elementHandle();
   for (let i = 0; view.phase === 'combat' && i < 24; i++) view = await playTurn(page, view);
   expect(view.phase).toBe('reward');
   expect(view.cleared_chapters).toBe(1);
   expect(view.rewards.length).toBeGreaterThan(0);
   await expect(page.getByTestId('battle-result')).toContainText('本章胜利');
-  await page.getByTestId('battle-exit').click();
-  await expect(page.locator('#host')).toHaveAttribute('data-returned-revision', String(view.revision));
+  expect(await field.evaluate(node => node === document.querySelector('[data-testid="battle-arena"]'))).toBe(true);
+  for (const viewport of [{width:1708,height:938}, {width:390,height:844}]) {
+    await page.setViewportSize(viewport);
+    await expect.poll(() => arena.boundingBox()).toEqual({x:0, y:0, ...viewport});
+    await expect(page.getByTestId('battle-exit')).toBeInViewport({ratio:1});
+  }
+  const embed = await page.context().newPage();
+  await openTestHost(embed, view.session_id);
+  await expectView(embed, view);
+  await embed.getByTestId('battle-exit').click();
+  await expect(embed.locator('#host')).toHaveAttribute('data-returned-revision', String(view.revision));
+  await embed.close();
   const saved = await (await request.get(path)).json();
   expect(saved.phase).toBe('reward');
   expect(saved.revision).toBe(view.revision);
   await verifyCampContinuation(page, view);
+});
+
+test('read a counterhit and the finishing blow on the battlefield, reopen after saving, return keyboard focus', async ({
+  page, startDemo,
+}) => {
+  await verifyBattleNotes(page, startDemo, playTurn);
 });

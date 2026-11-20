@@ -7,12 +7,22 @@
 .study-math {
   display: inline-block;
   vertical-align: middle;
+  box-sizing: border-box;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: normal;
-  padding: 0.12em 0;
+  /* KaTeX fraction and italic glyphs can paint past their fractional advance
+     width at browser zoom. Reserve end space before testing for overflow. */
+  padding-block: 0.12em;
+  padding-inline-end: 0.16em;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 55%, transparent) transparent;
   text-align: start;
+}
+.study-math:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
 }
 .study-display,
 .study-scroll,

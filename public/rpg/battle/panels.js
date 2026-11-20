@@ -1,4 +1,5 @@
 import { cargoMarkup } from './cargo.js';
+import { partnerNote, receiptButton } from './field-notes.js';
 import { displayText, escapeHtml, h, sourceCitation } from '../../js/utils.js';
 import { msg } from '../../js/locale.js';
 import { studyMarkup } from '../../js/study.js';
@@ -106,37 +107,37 @@ export function consequence(view, skill) {
   const reward = skill === 'guard' ? msg('格挡削势','Guard chips poise') : msg('命中蓄力 +1','Hit gives +1 focus');
   return reward + msg('。若对手存活，正确出招预计损失 ','. On a correct cast, a surviving foe costs ') + amount + ' HP' + msg('。','.');
 }
-function tacticsPanel(view, selected) {
+function tacticsPanel(view, selected, immersive) {
   const t = view.battle.tactics, p = view.player;
   const [name, tell, advice] = intentCopy(t?.intent);
-  return `<aside class="bf-orders bf-tactics"><div class="bf-command-top"><div class="bf-section-label">${icon('compass')} ${msg('敌方意图','Enemy intent')}</div>
-    <span class="bf-round">${msg('回合 ','Turn ')}${t?.turn || 1}</span>
-    ${p.combo ? '<span class="bf-combo">'+msg('连击 ','Combo ')+p.combo+'</span>' : ''}</div>
-    <div data-testid="battle-intent" class="bf-intent"><h2>${h(name)}</h2><p>${h(tell || view.battle.stage.objective)}</p>
-    ${advice ? '<p class="bf-advice">'+h(advice)+'</p>' : ''}</div>
-    <div class="bf-skills" role="group" aria-label="${msg('战斗指令','Battle commands')}">
+  const round = `<span class="bf-round">${msg('回合 ','Turn ')}${t?.turn || 1}</span>`;
+  const combo = p.combo ? '<span class="bf-combo">'+msg('连击 ','Combo ')+p.combo+'</span>' : '';
+  const info = `<p>${h(tell || view.battle.stage.objective)}</p>${advice ? '<p class="bf-advice">'+h(advice)+'</p>' : ''}`;
+  const exposure = `<p data-exposure class="bf-exposure">${consequence(view,selected)}</p>`;
+  const skills = `<div class="bf-skills" role="group" aria-label="${msg('战斗指令','Battle commands')}">
     ${skillButton('strike',msg('普攻','Strike'),0,selected,false,msg('蓄能','Focus'))}
     ${skillButton('guard',msg('格挡','Guard'),1,selected,false,msg('反击','Counter'))}
-    ${skillButton('burst',heroInfo(view)[1],commandIcons[p.hero_class] ?? 2,selected,!p.burst_ready,p.burst_ready ? msg('就绪','Ready') : p.focus+' / '+p.focus_max)}</div>
-    <p data-exposure class="bf-exposure">${consequence(view,selected)}</p></aside>`;
+    ${skillButton('burst',heroInfo(view)[1],commandIcons[p.hero_class] ?? 2,selected,!p.burst_ready,p.burst_ready ? msg('就绪','Ready') : p.focus+' / '+p.focus_max)}</div>`;
+  if (immersive) return `<aside class="bf-orders bf-tactics"><details class="bf-enemy-plan">
+    <summary data-testid="battle-intent">${round} <strong>${h(name)}</strong> ${combo}</summary>
+    <div class="bf-intent">${info}${exposure}</div></details>${skills}</aside>`;
+  return `<aside class="bf-orders bf-tactics"><div class="bf-command-top"><div class="bf-section-label">${icon('compass')} ${msg('敌方意图','Enemy intent')}</div>
+    ${round}${combo}</div><div data-testid="battle-intent" class="bf-intent"><h2>${h(name)}</h2>${info}</div>
+    ${skills}${exposure}</aside>`;
 }
-function lessonPanel(side) {
+function lessonPanel(side, immersive) {
+  const body = `<div class="bf-studybody">${study(side.lesson.definition)}</div><div class="bf-source">${msg('讲义出处','Field notes')}<br>${h(sourceCitation(side.lesson.source_ref))}</div>
+    <p class="bf-note">${msg('修补残页后，将满血回到刚才的战场。','Mend the lost pages to rejoin the fight at full health.')}</p>`;
+  if (immersive) return `<details class="bf-camp-notes" data-testid="battle-lesson"><summary>${icon('book-open')}
+    <span>${msg('营地摘记','Camp notes')}</span><strong>${study(side.lesson.term)}</strong>
+    <span class="bf-round">${side.completed + 1} / ${side.total}</span></summary><div class="bf-camp-text">${body}</div></details>`;
   return `<aside class="bf-orders bf-study" data-testid="battle-lesson"><div class="bf-section-label">${icon('book-open')} ${msg('营地修习','Camp study')}
     <span class="bf-round">${side.completed + 1} / ${side.total}</span></div>
-    <h2>${study(side.lesson.term)}</h2><div class="bf-studybody">${study(side.lesson.definition)}</div><div class="bf-source">${msg('讲义出处','Field notes')}<br>${h(sourceCitation(side.lesson.source_ref))}</div>
-    <p class="bf-note">${msg('修补残页后，将满血回到刚才的战场。','Mend the lost pages to rejoin the fight at full health.')}</p></aside>`;
+    <h2>${study(side.lesson.term)}</h2>${body}</aside>`;
 }
 function canPresent(prompt) {
   return [prompt.text,...prompt.options.map(o => o.text)].every(text =>
     displayText(text,'') === String(text).replace(/\u00b7/gu,' ').trim());
-}
-function partnerNote(event) {
-  const aid = event?.partner_assist;
-  if (!aid) return '';
-  const who = {reed:msg('苇舟','Reed'),flint:msg('铆青','Flint'),lumen:msg('星萤','Lumen')}[aid.companion_id];
-  if (!who) return '';
-  const effect = {guard:msg('抵挡伤害','damage blocked'),strike:msg('协击伤害','assist damage'),focus:msg('额外蓄力','extra focus')}[aid.effect];
-  return `<div class="bf-aid">${icon('sparkles')} <strong>${who}</strong> Lv. ${aid.level} <span>${effect} +${aid.amount}</span></div>`;
 }
 function feedback(event, view) {
   if (!event || event.kind === 'hint') return '';
@@ -194,9 +195,11 @@ export function submitName(view, skill) {
   if (view?.phase === 'sidequest') return msg('修复这一页','Mend this page');
   return {strike:msg('刻印出击','Cast strike'),guard:msg('刻印架盾','Cast guard'),burst:heroInfo(view)[1]}[skill];
 }
-export function encounter(view, skill, option, picked=[], lens=-1, cargo=null) {
+export function encounter(view, skill, option, picked=[], lens=-1, cargo=null, presentation={}) {
   const {battle} = view, prompt = battle.prompt, side = battle.sidequest;
-  const left = side ? lessonPanel(side) : tacticsPanel(view,skill);
+  const {immersive, receipt} = presentation;
+  const camp = side ? lessonPanel(side,immersive) : '';
+  const left = side ? (immersive ? '' : camp) : tacticsPanel(view,skill,immersive);
   const recovery = view.legacy_exam_cover ? `<aside class="bf-clue" data-testid="legacy-exam-recovery">
     <p>${reuploadNotice()}</p><a href="/rpg/?prepare=1">${msg('选择原试卷','Choose the original paper')}</a></aside>` : '';
   if (!prompt || !canPresent(prompt)) return left + `<section class="bf-paper">${recovery}<h2>${msg('请核对课程题面','Review the course text')}</h2>
@@ -206,14 +209,17 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null) {
   const evidence = view.mode === 'tower' ? towerEvidence(prompt) : null;
   const speakerIndex = Math.max(0, atlas.findIndex(region=>region.id === regionId(view)));
   const speaker = atlas[speakerIndex];
-  return left + `<section class="bf-paper bf-quiz"><div class="bf-papertop">
+  return left + `<section class="bf-paper bf-quiz">${immersive ? '<div class="bf-reading">' : ''}<div class="bf-papertop">
     <div class="bf-speaker"><i class="bf-scout-face" aria-hidden="true" style="--speaker:${speakerIndex}"></i>
       <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${side ? msg('修复残页','Mend the field guide') : evidence ? msg('星轨校准','Align the star seals') : chain ? msg('双重刻印','Linked inscription') : msg('战技刻印','Inscribe a technique')}</span></div></div>
+    ${immersive ? '<div class="bf-notes-actions">'+receiptButton(receipt) : ''}
     <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查阅营地笔记','Read the camp notes') : msg('翻阅手记会放弃本回合的连击暴击。','Opening the field notes forgoes a combo critical this turn.')}"
-      ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button></div>
+      ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button>${immersive ? '</div>' : ''}</div>
     ${recovery}<div class="bf-line" tabindex="-1" data-prompt-title role="heading" aria-level="2">${evidence ? evidenceNav(evidence.clues.length,lens)+evidenceReadout(evidence.clues,lens) : study(prompt.text)}</div>
     ${cargoMarkup(cargo)}
     ${prompt.hint ? '<div class="bf-clue">'+study(prompt.hint)+'</div>' : ''}
+    ${immersive ? camp : ''}
+    ${immersive ? '</div><div class="bf-decision">' : ''}
     ${chain ? chainMarkup(prompt,picked) : '<div class="bf-options" role="group" aria-label="'+msg('选择刻印','Choose an inscription')+'">'+prompt.options.map((o,i)=>
       '<button type="button" data-act="option" data-testid="battle-option" data-option-id="'+escapeHtml(o.id)+'" aria-pressed="'+(o.id===option)+'"><b aria-hidden="true">'+glyph(i)+'</b><span>'+(evidence?evidenceReadout(evidence.rows[i],lens):study(o.text))+'</span></button>').join('')+'</div>'}
     <div class="bf-send"><span>${side ? msg('循着营地摘记修复书页','Use your camp notes to mend the page.') : evidence ? msg('切换线索，逐项核对同一枚刻印的星轨。','Focus each clue to inspect its binding on the same seal.') : chain ?
@@ -221,22 +227,30 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null) {
        msg('把线索刻入战技，再点亮战场上的目标。','Bind a clue, then trigger the marked target in the field.')}</span>
       <button type="button" class="bf-primary" data-act="submit" data-testid="battle-submit"
         ${option ? '' : 'disabled'}>${icon(side?'book-open':'swords')} <span data-submit-label>${submitName(view,skill)}</span></button></div>
-    ${feedback(battle.last_event,view)}</section>`;
+    ${immersive ? '</div>' : feedback(battle.last_event,view)}</section>`;
 }
-export function result(view, standalone, canReplay) {
+export function result(view, standalone, canReplay, {immersive, receipt} = {}) {
   const event = view.battle?.last_event, won = ['victory','reward'].includes(view.phase), tower=view.mode === 'tower';
   const title = {victory:tower?msg('塔层突破','Floor cleared'):msg('远征通关','Expedition complete'),reward:msg('本章胜利','Chapter cleared'),
     route:msg('队伍已到达路口','At the crossroads'),retreated:msg('队伍已返回营地','Back at camp')}[view.phase] || msg('远征进度','Journey progress');
   const acquired = event?.loot_items ?? (event?.loot ? [event.loot] : []);
   const next = standalone ? msg('回到主站','Return to studio') : tower ? msg('返回塔阶','Return to the stair') :
     ({reward:msg('前往营地','Visit camp'),victory:msg('查看远征结果','View expedition'),route:msg('返回地图','Return to map')}[view.phase] || msg('结束战斗','Leave battle'));
-  return `<aside class="bf-orders"><div class="bf-section-label">${icon('flag')} ${msg('远征记录','Expedition record')}</div>
-    <h2>${tower ? msg('第 '+view.floor+' 层','Floor '+view.floor) : view.cleared_chapters+' / '+view.chapter_count+' '+msg('章','chapters')}</h2><p>${msg('路币 ','Trail coins ')}${view.coins}</p></aside>
-    <section class="bf-paper bf-result" data-testid="battle-result"><div class="bf-section-label">${icon(won?'sparkles':'compass')} ${won ? msg('战斗结算','After the battle') : msg('队伍行程','Journey')}</div>
-    <h2 tabindex="-1" data-prompt-title>${title}</h2><p>${h(msg(view.narrative, won ? eventText(event,view) || 'The way ahead is open.' : 'Your progress is safe in the expedition journal.'))}</p>
-    ${won ? '<ul class="bf-loot"><li>'+msg('经验','XP')+' +'+(event?.xp_gained ?? 0)+'</li>'+
-      (event?.levels_gained ? '<li>'+msg('升至 ','Level up: ')+'Lv. '+view.player.level+'</li>' : '')+
-      acquired.map(item=>'<li>'+h(gearName(item))+'</li>').join('')+'</ul>' : ''}
-    ${partnerNote(event)}<div class="bf-actions">${canReplay ? '<button type="button" class="bf-primary" data-act="start">'+msg('再战渡口','Replay the ferry')+'</button>' : ''}
+  const progress = tower ? msg('第 '+view.floor+' 层','Floor '+view.floor) : view.cleared_chapters+' / '+view.chapter_count+' '+msg('章','chapters');
+  const balance = msg('路币 ','Trail coins ')+view.coins;
+  const narrative = immersive && won && event ? eventText(event,view) :
+    msg(view.narrative, won ? eventText(event,view) || 'The way ahead is open.' : 'Your progress is safe in the expedition journal.');
+  const loot = won && event ? '<ul class="bf-loot"><li>'+msg('经验','XP')+' +'+event.xp_gained+'</li>'+
+    (event.levels_gained ? '<li>'+msg('升至 ','Level up ' )+'Lv. '+view.player.level+'</li>' : '')+
+    acquired.map(item=>'<li>'+h(gearName(item))+'</li>').join('')+'</ul>' : '';
+  const sidebar = immersive ? '' : `<aside class="bf-orders"><div class="bf-section-label">${icon('flag')} ${msg('远征记录','Expedition record')}</div>
+    <h2>${progress}</h2><p>${balance}</p></aside>`;
+  return sidebar + `<section class="bf-paper bf-result" data-testid="battle-result">
+    <header class="bf-result-header"><div class="bf-section-label">${icon(won?'sparkles':'compass')} ${won ? msg('战斗结算','After the battle') : msg('队伍行程','Journey')}</div>
+      <h2 tabindex="-1" data-prompt-title>${title}</h2><p>${h(narrative)}</p></header>
+    ${loot}${partnerNote(event)}
+    ${immersive ? '<div class="bf-result-meta"><span>'+progress+'</span><span>'+balance+'</span></div>' : ''}
+    <div class="bf-actions">${immersive ? receiptButton(receipt, won) : ''}
+    ${canReplay ? '<button type="button" class="bf-primary" data-act="start">'+msg('再战渡口','Replay the ferry')+'</button>' : ''}
     <button type="button" class="${canReplay?'bf-linkbtn':'bf-primary'}" data-act="exit" data-testid="battle-exit">${next}</button></div></section>`;
 }
