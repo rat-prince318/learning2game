@@ -6,7 +6,7 @@ const heroes = {
   ranger: ['岚弓游侠', '穿云箭'],
 };
 const numbers = ['一', '二', '三', '四', '五', '六', '七', '八'];
-const heroInfo = (view) => heroes[view?.player?.hero_class] || heroes.arcanist;
+export const heroInfo = (view) => heroes[view?.player?.hero_class] || heroes.arcanist;
 export const icon = (name) => `<i class="bf-icon bf-i-${name}" aria-hidden="true"></i>`;
 
 export function heading(view) {
@@ -43,6 +43,26 @@ export function hud(view) {
       ${tactics ? track('架势', tactics.shield, tactics.shield_max, 'poise') : ''}
       ${!view ? '<p>柳木总闸 <span class="bf-slash">/</span> 根须借力</p>' : ''}
     </div>`;
+}
+
+// Reveal only the server-issued gauges at each point of contact. The next
+// prompt, final level and settlement are still shown together after the turn.
+export function showContact(hudElement, view, side) {
+  const enemy = view.battle?.enemy, tactics = view.battle?.tactics, player = view.player;
+  const values = side === 'foe' ? [
+    ['enemyhp', enemy?.hp, enemy?.max_hp], ['poise', tactics?.shield, tactics?.shield_max],
+    ['focus', player.focus, player.focus_max],
+  ] : [['hp', player.hp, player.max_hp]];
+  for (const [name, value, max] of values) {
+    const row = hudElement.querySelector('.bf-' + name);
+    if (!row || value == null || max == null) continue;
+    const progress = row.querySelector('progress');
+    progress.max = max || 1;
+    progress.value = value;
+    const number = row.querySelector('.bf-number');
+    number.firstChild.nodeValue = String(value);
+    number.querySelector('small').textContent = '/' + max;
+  }
 }
 
 export function briefing() {

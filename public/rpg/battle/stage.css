@@ -1,12 +1,12 @@
 .rpg-stage-host { position: relative; overflow: hidden; background: #476e66; }
-.rpg-stage-world, .rpg-stage-backdrop, .rpg-stage-shade, .rpg-stage-canvas, .rpg-stage-numbers {
+.rpg-stage-world, .rpg-stage-backdrop, .rpg-stage-shade, .rpg-stage-canvas, .rpg-stage-reflections, .rpg-stage-numbers {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
-.rpg-stage-world { isolation: isolate; overflow: hidden; container-type: size; }
+.rpg-stage-world { isolation: isolate; overflow: hidden; container-type: size; transform-origin: 56% 64%; }
 .rpg-stage-backdrop {
   background: #658a7f url("./art/willow-ferry.png") center 64% / cover no-repeat;
   background-size: max(100%, 265cqh) 100%;
@@ -15,12 +15,26 @@
 .rpg-stage-shade {
   background: linear-gradient(to right, #162f331f, transparent 19%, transparent 84%, #19352f29);
 }
+.rpg-stage-light {
+  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 55% 57%, #152d3b2b 6%, #102b3b85 62%, #0c2635b8);
+}
+.rpg-stage-technique {
+  position: absolute; top: 7%; left: 3.5%; padding: .24em 1.1em .28em .7em;
+  border-left: 3px solid #ffe59c; color: #fff4c7;
+  background: linear-gradient(102deg, #152c31f0 9%, #25403de6 70%, transparent);
+  clip-path: polygon(0 0, 96% 0, 88% 14%, 100% 18%, 91% 65%, 95% 69%, 85% 91%, 46% 100%, 0 92%);
+  font: 700 clamp(15px, 7cqh, 26px)/1.25 var(--serif, serif); letter-spacing: .10em;
+  text-shadow: 1px 2px #253b38;
+}
+.rpg-stage-technique[hidden] { display: none; }
 .rpg-stage-actor {
   position: absolute;
   display: grid;
   justify-items: center;
   align-items: end;
   translate: -50% 0;
+  transform-origin: 50% 88%;
   width: 30%;
   pointer-events: none;
 }
@@ -87,17 +101,26 @@
   object-fit: contain; object-position: center bottom; image-rendering: pixelated;
 }
 .rpg-stage-world[data-camp="true"] .rpg-stage-camp { display: block; }
-.rpg-stage-canvas { image-rendering: pixelated; }
+.rpg-stage-canvas, .rpg-stage-reflections { image-rendering: pixelated; }
+.rpg-stage-reflections { mix-blend-mode: screen; }
 .rpg-stage-number {
   position: absolute;
   transform: translate(-50%,-50%);
-  color: #fff4bd;
-  font: 900 clamp(17px,2.25vw,32px)/1 ui-monospace, Consolas, monospace;
-  text-shadow: 2px 2px #292d28, -1px 1px #292d28, 0 -1px #292d28;
+  transform-origin: center bottom;
+  text-align: center; color: #fff2c1;
+  font: italic 900 clamp(19px, 8.5cqh, 34px)/1 ui-monospace, Consolas, monospace;
+  -webkit-text-stroke: 2.5px #25342e; paint-order: stroke fill;
+  text-shadow: 1px 3px #24322d;
   white-space: nowrap;
 }
-.rpg-stage-number[data-side="hero"] { color: #ffe3c6; }
-.rpg-stage-number em { display: block; text-align: center; font: 700 .52em/1.5 system-ui,sans-serif; color: #fce5a0; }
+.rpg-stage-number[data-tone="strong"] { font-size: clamp(23px, 11cqh, 42px); color: #ffe59a; }
+.rpg-stage-number[data-side="hero"] { color: #ffc8a6; }
+.rpg-stage-number[data-tone="guard"] { color: #c7f5dd; }
+.rpg-stage-number em {
+  display: table; margin: 0 auto 2px; padding: 2px 6px; background: #203b36e8;
+  font: 700 clamp(11px, 4cqh, 15px)/1.16 var(--serif, serif); color: #fff1ba;
+  -webkit-text-stroke: 0; text-shadow: none; border-bottom: 1px solid #ebcf80;
+}
 .rpg-stage-ember {
   position: absolute;
   width: 3px;

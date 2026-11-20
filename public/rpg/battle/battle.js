@@ -1,7 +1,7 @@
 import { BattleController } from './controller.js';
 import { forgetSavedSession, rememberSession, startDemo } from './demo.js';
 import { createStage } from './stage.js';
-import { briefing, encounter, heading, hud, icon, result } from './panels.js';
+import { briefing, encounter, heading, heroInfo, hud, icon, result, showContact } from './panels.js';
 import { displayText, readLocal, saveLocal } from '../../js/utils.js';
 
 const prefKey = 'l2g.battle.preferences.v1';
@@ -105,7 +105,8 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
       arena.showPopover();
     }
     try {
-      await stage.play({before, after, action});
+      await stage.play({before, after, action, technique:heroInfo(before)[1],
+        onContact:side => showContact(find('.bf-hud'), after, side)});
     } finally {
       if (peek) {
         if (arena.matches(':popover-open')) arena.hidePopover();
