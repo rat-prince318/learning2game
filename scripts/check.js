@@ -9,7 +9,7 @@ async function files(dir) {
     )
   ).flat();
 }
-const scripts = (await Promise.all(['public/js', 'scripts', 'tests'].map(files)))
+const scripts = (await Promise.all(['public/js', 'public/rpg', 'scripts', 'tests'].map(files)))
   .flat()
   .filter((p) => p.endsWith('.js'));
 for (const p of scripts) {
