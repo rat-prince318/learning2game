@@ -97,6 +97,22 @@ body:has(.lr-world) {
 .lr-field-stats span:last-of-type {
   color: #f3d39e;
 }
+.lr-field-pack {
+  padding: 5px 8px;
+  border: 1px solid #b69b64;
+  border-radius: 3px;
+  background: #283c39;
+  color: #ffe4ab;
+  font: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.lr-field-pack:hover, .lr-field-pack:focus-visible { background: #475147; }
+.lr-field-pack kbd { font: inherit; opacity: .8; margin-inline-start: 3px; }
+@media (pointer: coarse) {
+  .lr-field-pack { min-height: 40px; }
+  .lr-field-pack kbd { display: none; }
+}
 .lr-radar-link {
   position: absolute;
   right: max(18px, env(safe-area-inset-right));

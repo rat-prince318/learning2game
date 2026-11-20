@@ -189,7 +189,7 @@ export function mountOverland(
     const editing = e.target.closest?.('input,textarea,select,[contenteditable="true"]');
     if (editing) return;
     if (!canMove()) {
-      if (e.code === 'KeyE' && !e.repeat) {
+      if (e.code === 'KeyF' && !e.repeat) {
         e.preventDefault();
         onLeaveDialogue();
       }
@@ -209,7 +209,7 @@ export function mountOverland(
       destination = null;
       return;
     }
-    if (e.code === 'KeyE' || (e.code === 'Enter' && !e.target.closest?.('button,summary,a'))) {
+    if (e.code === 'KeyF' || (e.code === 'Enter' && !e.target.closest?.('button,summary,a'))) {
       e.preventDefault();
       if (!e.repeat) interact(nearest);
     }

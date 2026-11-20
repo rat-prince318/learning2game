@@ -225,7 +225,9 @@ def _win(state, game, feedback):
         feedback.xp_gained = 35 + 10 * state.stage_index + 7 * ctx.region_index + {
             "normal": 0, "elite": 15, "boss": 25}[spec.tier]
         weapons = class_info(state.hero_class).weapon_ids
-        best_tier = max(i for i, weapon in enumerate(weapons) if weapon in state.inventory_ids)
+        # Discarding a spare weapon must not reset the player's earned tier.
+        unlocked = set(state.inventory_ids) | set(state.earned_item_ids)
+        best_tier = max(i for i, weapon in enumerate(weapons) if weapon in unlocked)
         next_tier = min(best_tier + 1, len(weapons) - 1)
         weapon_award = next_tier > best_tier
     else:
@@ -450,7 +452,7 @@ def _review_answer(state, game, exam, action, correct):
     return feedback
 
 
-def equip_item(state: BattleState, item_id: str) -> Gear:
+def equip_item(state: BattleState, item_id: str, *, relic_ids=None, edge_ranks=None, plating_ranks=None) -> Gear:
     if item_id not in state.inventory_ids:
         raise BattleError(422, "请从已获得的装备中选择。")
     item = equipment(item_id)
@@ -458,7 +460,8 @@ def equip_item(state: BattleState, item_id: str) -> Gear:
         raise BattleError(422, "请选择本职业可以使用的装备。")
     setattr(state.loadout, item.slot, item.id)
     state.equipped_id = state.loadout.weapon
-    state.hp = min(state.hp, player_stats(state).max_hp)
+    stats = player_stats(state, relic_ids=relic_ids, edge_ranks=edge_ranks, plating_ranks=plating_ranks)
+    state.hp = min(state.hp, stats.max_hp)
     return item
 
 

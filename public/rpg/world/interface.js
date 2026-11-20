@@ -1,6 +1,7 @@
 import { msg, getLocale } from '../../js/locale.js';
 import { h } from '../../js/utils.js';
 import { line, atlas, regionOf, fieldQuest, checkpointAftermath, atChapterExit, encounterPrerequisite } from './atlas.js';
+import { acts, speakers, portraitPosition } from './saga/chapters.js';
 import { landmarksFor } from './overland-districts.js';
 import { gearName, heroNames } from '../battle/words.js';
 import { studyMarkup } from '../../js/study.js';
@@ -14,6 +15,7 @@ const glyphs = {
   party: '♙',
   tower: '♜',
   book: '▤',
+  bag: '▣',
   sound: '♫',
   language: '文',
   back: '‹',
@@ -29,9 +31,11 @@ const asset = (name) => '/rpg/world/region-art/' + name + '.webp';
 export const roleIndex = (id) => ['arcanist', 'vanguard', 'ranger'].indexOf(id);
 export const plate = (index) =>
   `<span aria-hidden="true" class="lr-portrait" style="--face:${index}"></span>`;
+export const hasPack = (page) => ['scene', 'battle', 'party', 'tower', 'reward', 'atlas', 'journal', 'ending'].includes(page);
 export function header(page, view, sound) {
   const tabs = [
     ['scene', 'road', msg('旅程', 'Journey')],
+    ...(hasPack(page) ? [['pack', 'bag', msg('背包', 'Pack')]] : []),
     ['atlas', 'map', msg('地图', 'Atlas')],
     ['party', 'party', msg('队伍', 'Party')],
     ['tower', 'tower', msg('回声塔', 'Echo Tower')],
@@ -184,7 +188,11 @@ export function stationDialog(view, selection) {
     );
   }
   if (!selection && phase === 'route') return '';
-  return `<div class="lr-dialog" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${plate(i)}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div>${phase === 'route' || atChapterExit(view) ? button('walk', chosen?.risk === 'elite' ? msg('绕开陷阱', 'Leave the trap') : msg('继续赶路', 'Back to the trail'), 'lr-glass lr-dismiss') : ''}</div>`;
+  const talking = phase === 'route' && (selection === 'keeper' || selection === 'await-signal');
+  const actor = talking && speakers[acts[i]?.conversation[0].speaker];
+  if (actor) speaker = line(actor.name);
+  const portrait = actor ? `<span aria-hidden="true" class="lr-spoken-bust" style="background-position:${portraitPosition(actor.frame)}"></span>` : plate(i);
+  return `<div class="lr-dialog${talking ? ' lr-spoken' : ''}" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${portrait}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div>${phase === 'route' || atChapterExit(view) ? button('walk', chosen?.risk === 'elite' ? msg('绕开陷阱', 'Leave the trap') : msg('继续赶路', 'Back to the trail'), 'lr-glass lr-dismiss') : ''}</div>`;
 }
 export function fieldLabels(view) {
   const reg = regionOf(view);
@@ -209,14 +217,14 @@ export function scene(view, selection) {
     labels = fieldLabels(view);
   const quest = fieldQuest(view);
   return `<section class="lr-world" data-region="${region.id}"><div class="lr-viewport" tabindex="0"
- aria-label="${msg('自由探索。WASD 或方向键移动，E 调查。', 'Free exploration. Move with WASD or arrows. Press E to inspect.')}">
+ aria-label="${msg('自由探索。WASD 或方向键移动，F 互动，E 打开背包。', 'Free exploration. Move with WASD or arrows. Press F to interact or E to open your pack.')}">
  <canvas class="lr-field-canvas" aria-hidden="true"></canvas>
  <div class="lr-field-hud"><div class="lr-field-address"><div class="lr-chapter">${msg('第 ' + (view.region_index + 1) + ' / ' + view.map.length + ' 章', 'Chapter ' + (view.region_index + 1) + ' / ' + view.map.length)}　<h1>${line(region.name)}</h1></div>${quest?.target ? '<p class="lr-field-objective"><span class="lr-field-task-label">' + msg('主线　', 'Quest　') + '</span>' + button('follow-quest', h(quest.text) + '　↗', 'lr-track-quest', 'data-key="' + h(quest.target) + '" title="' + msg('沿路前往任务地点', 'Follow the trail to your objective') + '"') + '</p><p class="lr-quest-detail">' + h(quest.title) + '</p>' : ''}</div>
- <div class="lr-field-stats"><strong>Lv. ${view.player.level}</strong><span aria-label="${msg('生命', 'Health')}">♥ ${view.player.hp}/${view.player.max_hp}</span><span aria-label="${msg('路币', 'Coins')}">◈ ${view.coins}</span></div></div>
+ <div class="lr-field-stats"><strong>Lv. ${view.player.level}</strong><span aria-label="${msg('生命', 'Health')}">♥ ${view.player.hp}/${view.player.max_hp}</span><span aria-label="${msg('路币', 'Coins')}">◈ ${view.coins}</span><button type="button" class="lr-field-pack" data-do="pack" aria-keyshortcuts="E">${msg('背包', 'Pack')} <kbd>E</kbd></button></div></div>
  <button type="button" class="lr-radar-link" data-do="atlas" aria-label="${msg('查看地图', 'View atlas')}"><canvas class="lr-radar" width="68" height="46" aria-hidden="true"></canvas></button>
- <div class="lr-walk-hint">${msg('WASD 移动　E 互动', 'WASD Move　E Interact')}</div>
+ <div class="lr-walk-hint">${msg('WASD 移动　F 互动', 'WASD Move　F Interact')}</div>
  ${quest?.target ? '<div class="lr-guide" data-target="' + h(quest.target) + '" aria-hidden="true" hidden><b></b><small></small></div>' : ''}
- <button type="button" class="lr-field-action" hidden><kbd>E</kbd> <span></span></button>
+ <button type="button" class="lr-field-action" aria-keyshortcuts="F" hidden><kbd>F</kbd> <span></span></button>
  <div class="lr-touchpad" aria-label="${msg('方向控制', 'Movement controls')}">${[
    ['north', '↑', '向上', 'Up'],
    ['west', '←', '向左', 'Left'],
@@ -272,7 +280,7 @@ const relics = {
   epicycle: 'Epicycle',
   dawn_prism: 'Dawn prism',
 };
-const relicName = (r) => msg(h(r.name), relics[r.id] || h(r.id));
+export const relicName = (r) => msg(h(r.name), relics[r.id] || h(r.id));
 const bonusNames = {
   attack: 'ATK',
   defense: 'DEF',

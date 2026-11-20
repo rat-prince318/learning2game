@@ -12,7 +12,7 @@ import { eventText } from './words.js';
 const prefKey = 'l2g.battle.preferences.v1';
 const campNoteKey = 'l2g.battle.open-camp-note.v1';
 
-export function mountBattle(container, { sessionId, controller: suppliedController, standalone = false, immersive = false, savedEntry = false,
+export function mountBattle(container, { sessionId, controller: suppliedController, standalone = false, immersive = false, savedEntry = false, packShortcut = false,
   onExit, onViewChange } = {}) {
   if (!container || (!standalone && !sessionId && !suppliedController)) throw new Error(msg('请选择一个远征存档和战场容器。','Choose an expedition and a battle container.'));
   const root = container.ownerDocument.createElement('div');
@@ -352,7 +352,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   root.addEventListener('keydown', event => {
     if (busy || notes?.open || event.target.closest('.bf-settings') || event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
         !['combat','sidequest'].includes(view?.phase) || event.target.closest('.bf-cargo, input, textarea, select, [contenteditable="true"]')) return;
-    const keys = {q:'strike',w:'guard',e:'burst'};
+    const keys = {q:'strike',w:'guard',[packShortcut ? 'r' : 'e']:'burst'};
     let button;
     if (keys[event.key.toLowerCase()]) button = find('[data-id="'+keys[event.key.toLowerCase()]+'"]');
     else if (/^[1-9]$/.test(event.key)) button = [...board.querySelectorAll('[data-act="option"],[data-act="fragment"]')][Number(event.key)-1];

@@ -217,7 +217,7 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
     await cdp.detach();
   }
   await page.locator('[data-do="walk"]').click();
-  await page.keyboard.press('e');
+  await page.keyboard.press('f');
   await page.locator('[data-do="engage"][data-key="elite"]').click();
   await expect(page.locator('[data-battle-phase="combat"]')).toBeVisible();
   const ambush = await (await page.request.get('/rpg/expeditions/' + shortcut.session_id)).json();

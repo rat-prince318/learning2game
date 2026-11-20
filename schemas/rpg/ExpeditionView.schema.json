@@ -780,6 +780,42 @@
       "title": "HeldRelic",
       "type": "object"
     },
+    "HeldSupply": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "field_bandage",
+            "focus_tea"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "quantity": {
+          "minimum": 0,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "heal": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Heal",
+          "type": "integer"
+        },
+        "focus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Focus",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "quantity"
+      ],
+      "title": "HeldSupply",
+      "type": "object"
+    },
     "HeroStats": {
       "additionalProperties": false,
       "properties": {
@@ -1869,6 +1905,13 @@
   },
   "additionalProperties": false,
   "properties": {
+    "supplies": {
+      "items": {
+        "$ref": "#/$defs/HeldSupply"
+      },
+      "title": "Supplies",
+      "type": "array"
+    },
     "eight_chapters": {
       "default": false,
       "title": "Eight Chapters",

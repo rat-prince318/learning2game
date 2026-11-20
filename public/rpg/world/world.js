@@ -6,6 +6,7 @@ import { mountBattle } from '../battle/battle.js';
 import { atlas, line, regionOf, fieldQuest, atChapterExit, encounterPrerequisite } from './atlas.js';
 import {
   header,
+  hasPack,
   title,
   setup,
   scene,
@@ -25,6 +26,7 @@ import { mountGuide } from './wayfinder.js';
 import { stationInstrument } from './station-tools.js';
 import { openDistrictTool, operateDistrictTool, districtToolReady } from './district-tools.js';
 import { reuploadNotice } from './exam-recovery.js';
+import { openPack } from './pack.js';
 
 const main = document.querySelector('#journey'),
   top = document.querySelector('#top'),
@@ -38,6 +40,7 @@ let page = 'home',
   mounted = null,
   world = null,
   guide = null,
+  pack = null,
   epoch = 0,
   locked = false;
 let pin = 0,
@@ -125,9 +128,41 @@ function clearField() {
 }
 function release() {
   epoch++;
+  closePackOnNavigation();
   clearField();
   mounted?.destroy?.();
   mounted = null;
+}
+function closePackOnNavigation() {
+  const previous = pack;
+  pack = null;
+  previous?.destroy();
+}
+function showPack(trigger = document.activeElement) {
+  if (pack || locked || !view || !hasPack(page) ||
+      document.querySelector('dialog[open], .bf-board[aria-busy="true"], .rpg-expansion[aria-busy="true"]')) return;
+  if (document.querySelector('.game-menu-open')) document.querySelector('#game-menu-toggle')?.click();
+  const before = view;
+  world?.pause(true);
+  pack = openPack({
+    view: mounted?.packView?.() || view,
+    send: command,
+    onClose() {
+      pack = null;
+      world?.pause(false);
+      if (before.revision !== view.revision) {
+        if (before.phase !== view.phase || before.region_index !== view.region_index) {
+          pick = '';
+          return run(() => goto(stationPhase()));
+        }
+        if (['battle', 'party', 'tower'].includes(page)) return run(() => goto(page));
+        draw();
+      }
+      if (trigger?.isConnected && trigger.getClientRects().length && trigger !== document.body)
+        trigger.focus({ preventScroll: true });
+      else world?.focus();
+    },
+  });
 }
 function stationPhase() {
   if (view?.campaign_story && view.phase === 'victory') return 'ending';
@@ -236,6 +271,7 @@ function draw() {
 }
 async function goto(dest) {
   const ticket = ++epoch;
+  closePackOnNavigation();
   clearField();
   mounted?.destroy?.();
   mounted = null;
@@ -250,6 +286,7 @@ async function goto(dest) {
     const host = main.firstElementChild;
     const options = {
       sessionId: view.session_id,
+      packShortcut: true,
       onExit: () => run(async () => {
         if (ticket !== epoch) return;
         mem(await controller.load());
@@ -304,6 +341,10 @@ async function command(fields) {
   const next = await controller.send(fields);
   mem(next);
   if (controller.resynced) {
+    if (pack) {
+      pack.update(next);
+      throw Object.assign(new Error(msg('已读入最新存档，请再选一次。', 'Your save has changed. Check your pack and try again.')), { status: 409 });
+    }
     pick = '';
     await goto(stationPhase());
     throw Object.assign(new Error('存档已同步，请再次选择。'), { status: 409 });
@@ -542,9 +583,18 @@ async function act(action, b) {
     }
   }
 }
+document.addEventListener('keydown', (event) => {
+  if (event.code !== 'KeyE' || event.defaultPrevented || event.repeat || event.isComposing ||
+      event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
+      event.target.closest?.('input, textarea, select, [contenteditable="true"], dialog')) return;
+  if (!view || !hasPack(page) || document.querySelector('dialog[open]')) return;
+  event.preventDefault();
+  showPack();
+});
 document.addEventListener('click', (event) => {
   const b = event.target.closest('[data-do]');
   if (!b) return;
+  if (b.dataset.do === 'pack') return showPack(b);
   // The tide reading can still be saving when a player closes its field note.
   if (b.dataset.do === 'walk' && pick === 'site') return resumeField();
   if (b.dataset.do === 'spot' || b.dataset.do === 'follow-quest') {

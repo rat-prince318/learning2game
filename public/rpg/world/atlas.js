@@ -12,7 +12,7 @@ export const atlas = [
     site: ['水尺', 'Flood gauge'],
     signal: ['河灯', 'River lamp'],
     opening: acts[0].arrival,
-    dialogue: acts[0].beats[0],
+    dialogue: acts[0].conversation[0].text,
     clue: [
       '三块踏板中，水痕最低的一块还露着干木纹。把绳结系在那里，渡船就有了靠岸的支点。',
       'Of three mooring boards, the lowest mark still shows dry grain. Hitch the line there and the ferry can hold against the current.',
@@ -35,7 +35,7 @@ export const atlas = [
     site: ['潮汐浮标', 'Tide buoy'],
     signal: ['航灯', 'Harbor light'],
     opening: acts[1].arrival,
-    dialogue: acts[1].beats[0],
+    dialogue: acts[1].conversation[0].text,
     clue: [
       '塔影落在长满藤壶的青石上。铜链的第三环仍留着盐霜。',
       'The tower shadow falls across barnacled stone. Salt still dusts the third link of the chain.',
@@ -58,7 +58,7 @@ export const atlas = [
     site: ['断轨扳机', 'Rail switch'],
     signal: ['炉火', 'Furnace fire'],
     opening: acts[2].arrival,
-    dialogue: acts[2].beats[0],
+    dialogue: acts[2].conversation[0].text,
     clue: [
       '风箱和岔轨装在同一根轴上。拉下冷却柄，矿车的安全钩也会落下。',
       'Bellows and switch share a shaft. Pulling the cooling handle will drop the wagon’s safety catch.',
@@ -81,7 +81,7 @@ export const atlas = [
     site: ['风索绞盘', 'Sail winch'],
     signal: ['风旗', 'Wind pennant'],
     opening: acts[3].arrival,
-    dialogue: acts[3].beats[0],
+    dialogue: acts[3].conversation[0].text,
     clue: [
       '风向袋指向山口。逆着它转绞盘，种子就能顺绳滑下。',
       'The windsock points toward the pass. Wind the winch against it to give the seed sacks a clear descent.',
@@ -104,7 +104,7 @@ export const atlas = [
     site: ['校样透光台', 'Proofing table'],
     signal: ['书灯', 'Reading lamp'],
     opening: acts[4].arrival,
-    dialogue: acts[4].beats[0],
+    dialogue: acts[4].conversation[0].text,
     clue: [
       '纸上叠着两层笔迹。透光后，原稿的字从红线间露了出来。',
       'Two hands have written on the sheet. Held to the light, the first appears between the red strokes.',
@@ -127,7 +127,7 @@ export const atlas = [
     site: ['山口木铃', 'Pass chimes'],
     signal: ['雪铃', 'Snow bell'],
     opening: acts[5].arrival,
-    dialogue: acts[5].beats[0],
+    dialogue: acts[5].conversation[0].text,
     clue: [
       '回声向两侧散，绳结的震动只沿一条冰脊传到手心。',
       'The echo scatters both ways. The rope’s vibration reaches your palm along a single ice ridge.',
@@ -150,7 +150,7 @@ export const atlas = [
     site: ['铜簧音叉', 'Tuning fork'],
     signal: ['桥钟', 'Bridge bell'],
     opening: acts[6].arrival,
-    dialogue: acts[6].beats[0],
+    dialogue: acts[6].conversation[0].text,
     clue: [
       '音叉上磨平了一道铜纹。轻轻抵住第三根簧，重叠的余音渐渐分开。',
       'One groove is worn smooth. Rest the tuning fork against the third reed and the overtones separate.',
@@ -173,7 +173,7 @@ export const atlas = [
     site: ['黄铜日环', 'Brass meridian'],
     signal: ['日晷', 'Solar dial'],
     opening: acts[7].arrival,
-    dialogue: acts[7].beats[0],
+    dialogue: acts[7].conversation[0].text,
     clue: [
       '把铜环上的晨星对准地平线。八个刻度依次亮起，各自对应一座有人守望的城。',
       'Align the brass ring’s morning star with the horizon. Eight marks light in turn, each a town with someone on watch.',
@@ -204,7 +204,7 @@ const campaignPosts = {
   },
   salt_harbor: {
     scoutFirst: true,
-    needSignal: ['弩长指着压得很低的船舷。「伤员船吃水两米。先上灯塔，给它指条过得去的水道。」', 'The captain points at a low-riding boat. “Two metres of draught and wounded aboard. Get to the lighthouse and mark a channel deep enough for her.”'],
+    needSignal: ['看船舷的水线。伤员船吃水两米。先上灯塔，给它指条过得去的水道。', 'See how low she sits? Two metres of draught and wounded aboard. Get to the lighthouse and mark a channel deep enough for her.'],
     meet: ['去码头找盐港弩长', 'Meet the bow captain on the wharf'],
     approach: ['打通通往潮泵的巡道', 'Clear the harbor patrol on the way to the pump'],
     boss: ['击停逆潮司泵，打开出港水道', 'Stop the Tide Engine to clear the harbor channel'],
@@ -224,7 +224,7 @@ const campaignPosts = {
   },
   sail_terraces: {
     scoutFirst: true,
-    needSignal: ['领航员死死抓着索梯。「先替我稳住那面侧帆！腾出一只手，我就能拉你上船。」', 'The navigator grips the rope ladder. “Catch that loose sail! Free one of my hands and I’ll haul you aboard.”'],
+    needSignal: ['先替我稳住那面侧帆！我得腾出一只手，才能拉你上船。', 'Catch that loose sail! Free one of my hands and I’ll haul you aboard.'],
     meet: ['去梯田找粮船领航员', 'Meet the grain ship’s navigator in the terraces'],
     approach: ['清出通往帆索的山路', 'Clear the trail to the sail crossing'],
     boss: ['逼退悬帆渡鸢，把粮船牵回来', 'Drive off the Sailwing Kite and land the grain ship'],
@@ -235,7 +235,7 @@ const campaignPosts = {
   },
   palimpsest: {
     scoutFirst: true,
-    needSignal: ['阿简把一张折过角的战报递过来。「那行小字盖在红印底下。先去透光台读给我听，我就把原册找出来。」', 'Wren hands you a dog-eared dispatch. “There’s a line underneath that red seal. Take it to the proofing table. Tell me what it says and I’ll fetch the original.”'],
+    needSignal: ['拿着这张折过角的战报。那行小字盖在红印底下。去透光台读给我听，我就把原册找出来。', 'Take this dog-eared dispatch. There’s a line underneath that red seal. Hold it up at the proofing table. Tell me what it says and I’ll fetch the original.'],
     meet: ['找编目员阿简借阅征名底册', 'Ask Wren for the original muster roll'],
     approach: ['穿过书架，去装订房找原稿', 'Get past the stacks to the binding room'],
     boss: ['击败红线总校官，取回底册', 'Defeat the Redline Scribe and reclaim the roll'],

@@ -119,6 +119,49 @@
       "title": "ChooseRoute",
       "type": "object"
     },
+    "DiscardItem": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "discard_item",
+          "title": "Action",
+          "type": "string"
+        },
+        "quantity": {
+          "exclusiveMinimum": 0,
+          "title": "Quantity",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "item_id",
+        "action",
+        "quantity"
+      ],
+      "title": "DiscardItem",
+      "type": "object"
+    },
     "Equip": {
       "additionalProperties": false,
       "properties": {
@@ -542,6 +585,81 @@
       ],
       "title": "TowerHint",
       "type": "object"
+    },
+    "Unequip": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "unequip",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "item_id",
+        "action"
+      ],
+      "title": "Unequip",
+      "type": "object"
+    },
+    "UseItem": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "item_id": {
+          "enum": [
+            "field_bandage",
+            "focus_tea"
+          ],
+          "title": "Item Id",
+          "type": "string"
+        },
+        "action": {
+          "const": "use_item",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "item_id",
+        "action"
+      ],
+      "title": "UseItem",
+      "type": "object"
     }
   },
   "discriminator": {
@@ -551,6 +669,7 @@
       "assign_companion": "#/$defs/PartyCommand",
       "choose_reward": "#/$defs/ChooseReward",
       "choose_route": "#/$defs/ChooseRoute",
+      "discard_item": "#/$defs/DiscardItem",
       "equip": "#/$defs/Equip",
       "hint": "#/$defs/Hint",
       "inspect_landmark": "#/$defs/InspectLandmark",
@@ -560,7 +679,9 @@
       "tower_answer": "#/$defs/TowerAnswer",
       "tower_enter": "#/$defs/TowerCommand",
       "tower_equip": "#/$defs/TowerEquip",
-      "tower_hint": "#/$defs/TowerHint"
+      "tower_hint": "#/$defs/TowerHint",
+      "unequip": "#/$defs/Unequip",
+      "use_item": "#/$defs/UseItem"
     },
     "propertyName": "action"
   },
@@ -576,6 +697,15 @@
     },
     {
       "$ref": "#/$defs/Equip"
+    },
+    {
+      "$ref": "#/$defs/Unequip"
+    },
+    {
+      "$ref": "#/$defs/UseItem"
+    },
+    {
+      "$ref": "#/$defs/DiscardItem"
     },
     {
       "$ref": "#/$defs/ChooseReward"

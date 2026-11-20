@@ -81,19 +81,25 @@
   width: 43%;
 }
 #story-dialog {
+  position: fixed;
+  inset: auto 0 max(14px, env(safe-area-inset-bottom));
+  width: min(1120px, calc(100vw - 32px));
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  margin: 0 auto;
   padding: 0;
-  border: 1px solid #cbab77;
-  background: #14202b;
-  color: #fcf0d6;
-  width: min(820px, calc(100vw - 26px));
-  max-height: 90dvh;
-  overflow: auto;
-  box-shadow: 0 20px 110px #061019;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: #fff5dc;
   font: inherit;
 }
 #story-dialog::backdrop {
-  background: #071221ba;
-  backdrop-filter: blur(3px);
+  background: linear-gradient(to top, #07122068, transparent 52%);
+}
+body:has(#story-dialog[open]) .lr-world :is(.lr-touchpad, .lr-field-action, .lr-radar-link, .lr-walk-hint, .lr-travel-list) {
+  visibility: hidden;
 }
 .lr-field-supplies {
   position:fixed; inset:auto 0 0; box-sizing:border-box; margin:0;
@@ -131,78 +137,129 @@
   .lr-field-supplies .lr-grid { flex-basis:100%; order:2; grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 .sc-card {
+  --bust: clamp(148px, 19vw, 212px);
   position: relative;
-  background: linear-gradient(155deg, #233941, #192832 60%, #101b28);
+  isolation: isolate;
+  padding: clamp(12px, 2.2vw, 24px) clamp(16px, 3vw, 36px) 16px calc(var(--bust) + 18px);
+  border: 1px solid #d4b274;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 3px #172a2c, inset 0 0 0 4px #a58b5a77, 0 5px 28px #06101980;
+  background: radial-gradient(ellipse at 9% 100%, #49645ad9, transparent 45%),
+    linear-gradient(105deg, #203a3af9, #142b31f5 54%, #14252cf5);
 }
-.sc-image {
-  display: block;
-  width: 100%;
-  height: clamp(118px, 30dvh, 320px);
-  object-fit: cover;
-  object-position: 50% 43%;
-  border-bottom: 2px solid #a78857;
+.sc-bust, .lr-spoken-bust {
+  background-image: url('saga/speakers.webp');
+  background-repeat: no-repeat;
+  background-size: 400% 200%;
+  image-rendering: pixelated;
+}
+.sc-bust {
+  position: absolute;
+  left: 5px;
+  bottom: 4px;
+  width: var(--bust);
+  aspect-ratio: 1;
+  pointer-events: none;
+  filter: drop-shadow(3px 0 0 #0b192859) drop-shadow(0 5px 7px #031a20b5);
 }
 .sc-text {
-  padding: clamp(14px, 3vw, 28px);
+  max-height: max(57dvh, 155px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #958362 #243d40;
 }
-.sc-eyebrow,
-.sc-speaker {
-  color: #ddc18a;
-  letter-spacing: 0.12em;
-  font-size: 0.8rem;
+.sc-strip, .sc-controls, .sc-footer, .sc-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+.sc-strip {
+  border-bottom: 1px solid #ccb07755;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+.sc-chapter, .sc-count, .sc-choice-keys, .sc-quiet { font: 500 0.78rem/1.3 system-ui, sans-serif; }
+.sc-chapter, .sc-count, .sc-choice-keys { color: #d7c5a2; }
 .sc-card h2 {
-  font:
-    700 clamp(1.55rem, 3.5vw, 2.7rem) / 1.12 'KaiTi',
-    'STKaiti',
-    Georgia,
-    serif;
-  margin: 0.35em 0;
+  margin: 0;
+  line-height: 1.3;
+  font-size: 0.89rem;
+  font-weight: 500;
+  color: #e1d6bd;
+}
+.sc-controls { margin-inline-start: auto; flex-shrink: 0; gap: 3px; }
+.sc-speaker {
+  display: block;
+  color: #ffd58c;
+  font: 750 clamp(1.2rem, 2.3vw, 1.68rem)/1.25 'KaiTi', 'STKaiti', Georgia, serif;
 }
 .sc-dialogue {
-  font-size: clamp(1rem, 1.7vw, 1.18rem);
-  line-height: 1.65;
-  margin: 8px 0 14px;
+  margin: 4px 0 9px;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
-.sc-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
+.sc-dialogue:focus { outline: none; }
+.sc-memory { font-size: 0.86rem; color: #c5d7cd; margin: 0 0 8px; }
+.sc-footer, .sc-options { flex-wrap: wrap; }
+.sc-footer { justify-content: space-between; }
+.sc-options { flex: 1; justify-content: end; }
 .sc-action {
   min-height: 42px;
+  padding: 6px 14px;
   border: 1px solid #ac9164;
-  padding: 8px 15px;
-  border-radius: 4px;
+  border-radius: 3px;
   background: #20373e;
   color: #fff2ce;
   font: inherit;
   cursor: pointer;
 }
-.sc-action.primary,
-.sc-action.choice:hover {
+.sc-action.primary, .sc-action.choice:hover {
   background: #ead197;
   color: #30271d;
   box-shadow: inset 0 0 0 2px #b29564;
 }
-.sc-action.choice small {
-  display: block;
-  font-size: 0.73rem;
-  opacity: 0.83;
+.sc-action.choice { text-align: start; }
+.sc-action.choice small { display: block; margin-top: 2px; font-size: 0.75rem; opacity: 0.86; }
+.sc-action:disabled { opacity: 0.55; cursor: default; }
+.sc-action.sc-quiet {
+  min-height: 32px;
+  padding: 3px 8px;
+  background: transparent;
+  border-color: transparent;
+  color: #e2d5b9;
+  font-size: 0.82rem;
 }
-.sc-action:disabled {
-  opacity: 0.55;
-  cursor: default;
+.sc-quiet:hover, .sc-quiet:focus-visible { border-color: #b5a37b; }
+.sc-next kbd { margin-inline-start: 10px; border: 1px solid #766246; padding: 1px 4px; font-size: 0.72rem; }
+.sc-error { color: #ffd79b; }
+.sc-journal-art { width: 100%; max-height: 230px; object-fit: cover; }
+.lr-dialog.lr-spoken .lr-spoken-bust {
+  width: clamp(58px, 9vw, 110px);
+  align-self: end;
+  aspect-ratio: 1;
 }
-.sc-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #182735e8;
+@media (max-width: 620px) {
+  #story-dialog { width: calc(100vw - 12px); bottom: max(6px, env(safe-area-inset-bottom)); }
+  .sc-card { --bust: 74px; padding: 8px 12px 12px; }
+  .sc-bust { left: 5px; top: -34px; bottom: auto; }
+  .sc-strip { margin-inline-start: 70px; min-height: 31px; gap: 4px; }
+  .sc-controls { gap: 0; }
+  .sc-card h2 { font-size: 0.74rem; }
+  .sc-chapter { flex-shrink: 0; font-size: 0.71rem; }
+  .sc-action.sc-quiet { padding-inline: 4px; font-size: 0.74rem; min-height: 34px; }
+  .sc-options { gap: 4px; }
+  .sc-action { padding: 6px 9px; }
+  #story-dialog[data-stage='choice'] .sc-options > button { flex: 1 1 125px; }
+  .sc-next kbd, .sc-choice-keys { display: none; }
 }
-.sc-error {
-  color: #ffd79b;
+@media (max-height: 480px) and (min-width: 621px) {
+  .sc-card { --bust: 122px; padding-block: 6px; }
+  .sc-strip { margin-bottom: 3px; padding-bottom: 0; }
+  .sc-speaker { font-size: 1.13rem; }
+  .sc-dialogue { margin-block: 3px; line-height: 1.35; }
+  .sc-action { min-height: 34px; }
 }
 @media (max-width: 540px) {
   #game-chrome button {
@@ -216,9 +273,6 @@
   }
   .lantern .lr-host > .l2g-battle .bf-bar {
     padding-right: 103px;
-  }
-  .sc-options {
-    display: grid;
   }
   .sc-dialogue {
     line-height: 1.5;

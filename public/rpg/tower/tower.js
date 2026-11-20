@@ -38,7 +38,7 @@ export function mountTower(container, options) {
           retry:async () => project(await ctx.controller.retry()),
           send:async fields => project(await ctx.controller.send({...fields, action:'tower_'+fields.action})),
         };
-        battle = mountBattle(arena, {sessionId:view.session_id, controller:relay, immersive:true, onExit:showLanding,
+        battle = mountBattle(arena, {sessionId:view.session_id, controller:relay, immersive:true, packShortcut:options.packShortcut, onExit:showLanding,
           onViewChange:() => { ctx.accept(ctx.controller.view); updateBar(bar, ctx.controller.view.tower); }});
       }
       updateBar(ctx.content.firstElementChild, tower);
@@ -86,5 +86,12 @@ export function mountTower(container, options) {
       panel.context.redraw();
     }
   }, {signal:panel.context.signal});
-  return {ready:panel.ready, destroy() { battle?.destroy(); panel.destroy(); }};
+  return {
+    ready: panel.ready,
+    packView() {
+      const floor = battle?.getView();
+      return floor ? {...floor, supplies: []} : null;
+    },
+    destroy() { battle?.destroy(); panel.destroy(); },
+  };
 }

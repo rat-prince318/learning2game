@@ -66,6 +66,8 @@ python -m scripts.prepare_expedition --eight-chapters publish <plan_id_1> <plan_
 
 每个动作均需独立 `event_id` 和**远征顶层**的 `expected_revision`。选路使用 `choose_route` 与当前 `routes[].id`。作答使用 `answer`、当前 `battle.prompt.prompt_id` 和 `option_id`，可传 `skill` 为 `strike`、`guard` 或 `burst`。巩固支线使用默认 `strike`。开战时 `battle.tactics.intent` 显示预告，`strike_exposure` 和 `guard_exposure` 预估答对且敌人存活时的承伤。提示、换装、撤离分别使用 `hint`、`equip`、`retreat`。
 
+整理背包同样向本端点提交动作。地图及领奖时可用 `equip` 更换装备、`unequip` 卸下护甲或饰品、`use_item` 使用一份补给、`discard_item` 丢弃物品。四种动作都传 `item_id`，丢弃另外传正整数 `quantity`。以回包中的 `player.loadout`、`player.inventory`、`player.stats` 和 `supplies` 更新界面。绷带与茶的剩余数量及效果分别放在 `quantity`、`heal`、`focus`。
+
 领取补给用 `choose_reward` 和 `reward_id`。字段 `cost`、`affordable` 和 `requires_replacement` 说明花费与购买条件，替换遗物时提交 `replace_relic_id`。在八章主线中，章中胜利可就地领补给，随后从交手处继续走。本章最后一战若还有下一站，地图在 `reward` 阶段恢复当前地点，把主线目标指向出口补给车，到车旁选定补给才提交 `choose_reward` 并换区。探索章从出口提交 `advance_exploration`，最终首领则走结局流程。战报的 `journal` 按关记录选路、收入和补给。
 
 同一开局编号在同一首卷下可以重试，相同配置会返回当前进度。重复提交同一动作及其原始内容会得到首次回包；同号异内容、过期版本和未解锁的进阶周目返回 409。读档、结算和奖励均由服务器负责。删除任一入选课程的原资料，会一并清理引用该资料的远征存档、回包和战报。

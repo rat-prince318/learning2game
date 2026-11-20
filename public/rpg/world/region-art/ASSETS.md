@@ -25,6 +25,8 @@
 | war-posts.webp | 项目内建 ImageGen，断旗瞭望塔、先锋军帐篷、裂隙水晶，三幅 96 像素方格。营帐会随第一站救援抉择出现在渡口。 |
 | district-monuments.webp | 项目内建 ImageGen，八种透明像素建筑。起重机、港口灯塔、铜炉、风磨、书馆、雪屋、钟楼和浑天仪按脚点对齐，横排八格，每格 160 像素。 |
 | district-props.webp | 项目内建 ImageGen，八组地区道具。鱼摊、铜矿车、麦车、阅览桌、蓝冰、运河民居、望远镜和渔船分别裁切，再缩为八格 128 像素的横图集。 |
+| pack-arcanist.webp、pack-vanguard.webp、pack-ranger.webp | 项目使用 ImageGen 绘制的背包全身像。参考游戏已有的战斗人物和头像，为星纹术士、先锋及游侠保留相应的兜帽、服色与武器。每张透明 WebP 为 400 × 800。 |
+| pack-items.png | 22 枚 32 像素的装备、道具和遗物图标取自 Dungeon Crawl Stone Soup 的 CC0 素材。每枚图标的版本与原图见[物品美术清单](PACK-ART.md)。 |
 
 游玩时由场景绘制器将透明精灵按脚点纵坐标排序。八区各占 112 × 72 格。烟柳渡沿两条水道建有五座桥。其余七区分别按海港、矿道、梯田、室内回廊、冰脊、运河群岛和日轨环路绘制。chapter-plans.js 保存路网、地标、入口、遭遇和建筑的位置，chapter-map.js 从同一份布局生成碰撞和交互地点。overland-districts.js 提供 24 处地标的双语地名与现场线索。
 

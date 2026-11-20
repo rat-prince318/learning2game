@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from ..models import Count, Identifier, Rate, StrictModel
+from .backpack import DiscardItem, HeldSupply, SupplyPouch, Unequip, UseItem, supply_stacks
 from .battle_models import BattleState, BattleView, Equip, ExpeditionAnswer, Hint, PlayerView, Retreat
 from .battle_reports import BattleConcept
 from .companions import CompanionId, CompanionView
@@ -75,7 +76,7 @@ class TowerEquip(Equip):
     action: Literal["tower_equip"]
 
 
-ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | ChooseReward | Retreat |
+ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | Unequip | UseItem | DiscardItem | ChooseReward | Retreat |
                              PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark | AdvanceExploration,
                              Field(discriminator="action")]
 
@@ -151,6 +152,7 @@ class TowerView(StrictModel):
 
 
 class ExpeditionState(StrictModel):
+    supplies: SupplyPouch = Field(default_factory=SupplyPouch)
     used_drills: list[Identifier] = Field(default_factory=list)
     eight_chapters: bool = False
     excluded_cards: dict[Identifier, list[Identifier]] = Field(default_factory=dict)
@@ -202,6 +204,7 @@ class RegionMap(StrictModel):
 
 
 class ExpeditionView(StrictModel):
+    supplies: list[HeldSupply] = Field(default_factory=lambda: supply_stacks(SupplyPouch()))
     eight_chapters: bool = False
     cleared_regions: Count = 0
     knowledge_count: Count = 0

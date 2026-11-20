@@ -1,5 +1,7 @@
 // Choice IDs are part of the save format. Each choice also has one line to
 // bring its consequences back on the player's arrival at the following post.
+const spoken = (speaker, zh, en) => ({ speaker, text: [zh, en] });
+
 export const acts = [
   {
     title: ['把人从船上带回来', 'Bring the rowers home'],
@@ -9,19 +11,15 @@ export const acts = [
       '你来烟柳渡接妹妹赤翎。她的马还拴在柳树下，人却上了灰冠的军船。船逆流而上，每喊出一个名字，岸上就有一人丢下家当，走去划桨。',
       'You came to Willow Ferry to meet your sister Kestrel. Her horse is tied to the willow, but she is aboard Ashcrown’s ship. Each time a name rings out, someone on the bank drops their bags and takes an oar.',
     ],
-    beats: [
-      [
-        '船底传来三长一短的敲击。小时候偷溜回家，赤翎总这么叫你开门。苇舟把母亲留下的半块虎符塞给你，横过小艇。「回她一声。我撑船。」',
-        'Three long knocks, one short. Kestrel used to knock like that when she sneaked home late. Reed slips you the half seal your mother left with him and brings his skiff alongside. “Knock back. I’ll hold her here.”',
-      ],
-      [
-        '赤翎隔着木板说：「舱里还有人。锁在你脚下，盖军令的帅印在船头。你够得着哪个？」',
-        '“Got people down here,” Kestrel calls through the planks. “Lock at your feet. Up on the prow there’s a seal they stamp the orders with. Take your pick!”',
-      ],
+    conversation: [
+      spoken("reed", "赤翎把马拴在柳树下，跳上了灰冠的军船。听船底，三长一短。你妹妹小时候喊你开门，也是这么敲的吧？", "Kestrel tied her horse to that willow and jumped aboard Ashcrown’s ship. Listen under the hull. Three long knocks, one short. Is that how your sister used to knock at home?"),
+      spoken("reed", "拿着。你娘把这半块虎符交给我的那天，说总有孩子会回来要它。我撑船，你敲回去。", "Take the half seal. Your mother left it with me. Said one of her children would come asking for it. I’ll hold the skiff. Knock back."),
+      spoken("kestrel", "我在底下！他们把桨手铐成了一排。你脚边有把锁，船头有枚帅印。你够得着哪一个？", "Down here! The rowers are chained to the same bench. There’s a lock at your feet and an officer’s seal up on the prow. Which can you reach?"),
     ],
     choices: [
       {
         id: 'ferry_child',
+        reply: spoken("kestrel", "最后一个桨手也上来了。把手给我！咱们得赶到白汐港，那口钟再响，他们还会被召回船上。", "That’s the last rower aboard. Give me your hand! We need to reach Salt Harbor before the bell calls them back."),
         label: ['砸开船牢', 'Break open the brig'],
         outcome: [
           '锁掉进水里。赤翎把被铐在一起的桨手一个个推上小艇，最后才把手伸给你。「下游白汐港。那口钟一响，他们还得回船。」',
@@ -34,6 +32,7 @@ export const acts = [
       },
       {
         id: 'ferry_decree',
+        reply: spoken("reed", "桨停了。好，把帅印收好。下游有人问这船归谁管，你就把它亮给他看。", "Oars up all along the ship. Good. Keep that seal handy. If the harbor watch asks who commands this boat, show them."),
         label: ['夺下帅印，命令停船', 'Seize the seal and halt the ship'],
         outcome: [
           '你在停船令上重重一按。桨手齐刷刷松开了手。赤翎爬上来，袖口还滴着水。「留着这玩意儿。下游还有座水寨要过。」',
@@ -54,19 +53,15 @@ export const acts = [
       '港钟响了一下。码头上的弩手同时转身，把弩口对准了来接他们的家人。钟楼空着，声音是从浮标下面传来的。',
       'The bell tolls once. Every bow on the pier swings toward the families waiting to take the watchmen home. The bell tower is empty. The sound rises from beneath a buoy.',
     ],
-    beats: [
-      [
-        '老弩长一脚踩住自己的弩。「拿绳子绑我。等会儿手一松，对面站的是我儿子。」他的靴尖在石板上磨出了一道白印。',
-        'The captain plants a boot on his own bow. “Tie me up. That lad across the wharf is my son. Can’t have this thing slipping.” His heel scrapes a white line in the stone.',
-      ],
-      [
-        '浮标忽然抬高，水面下露出钟锤。赤翎已经把绳刀咬在嘴里。一个人够得着弩手的腕索，另一个得守在链边。',
-        'The buoy lifts and the hammer breaks the surface. Kestrel holds a rigging knife in her teeth. One of you can reach the bowmen’s wrist lines while the other holds the chain.',
-      ],
+    conversation: [
+      spoken("bow", "听见水底那口钟了吗？每响一次，我的弩手就朝岸上举弩。对面来接班的，是他们的家里人。", "Hear that bell under the buoy? Each time it rings, my bowmen aim at the quay. Those are their families across the water."),
+      spoken("bow", "把我的手绑上，绑紧。穿黄布衫的小子是我儿子。上回教他拉弓，他两只手才够着弦。", "Tie my hands. Tighter. That lad in yellow is my son. Last time I taught him to shoot, it took both his hands to draw the string."),
+      spoken("kestrel", "退潮了，钟锤露出来了。我守住这根链。你去割弩手的腕索，还是跟我一块儿把锤子卸了？", "Tide’s going out. There’s the hammer. I’ll hold the chain. Can you cut those bowmen loose, or shall we haul the hammer out together?"),
     ],
     choices: [
       {
         id: 'harbor_choir',
+        reply: spoken("bow", "绳子都割开了。他认得我了！快去赤铆车场，钟上那道铸缝是我学徒时天天修的。", "The wrist lines are cut. My lad knows me again! Go to Copper Yard. I used to dress a casting seam just like that as an apprentice."),
         label: ['割断弩手的腕索', 'Cut the bowmen loose'],
         outcome: [
           '弩长收起弩，把儿子抱得两脚离了地。军械员从水里拖出一截钟链，上面打着赤铆车场的厂记。',
@@ -79,6 +74,7 @@ export const acts = [
       },
       {
         id: 'harbor_bell',
+        reply: spoken("kestrel", "替我托住钟锤。瞧这底下，盐一擦就看得清了。赤铆车场。咱们去找铸它的人。", "Hold the hammer steady. Look underneath, where the salt rubbed off. Copper Yard. Let’s find whoever cast it."),
         label: ['卸下钟锤', 'Take the hammer off the bell'],
         outcome: [
           '你们把铜锤吊上码头。钟彻底哑了。赤翎拿袖子擦掉锤头的盐，下面露出四个字「赤铆车场」。',
@@ -99,19 +95,15 @@ export const acts = [
       '车场的矿车正往山上运一批新钟。轨道两边全是空饭盒，炉工们被赶进了最后一节车厢。灰冠打算给沿路每座城都挂一口点名钟。',
       'Ore cars packed with new bells are heading uphill. Empty lunch tins line the track. The smiths have been locked in the rear car. Ashcrown means to put a muster bell in every town along the road.',
     ],
-    beats: [
-      [
-        '铆青指了指守卫胸前亮闪闪的甲片。「我的手艺。左腋下面少钉了一颗铆钉。」他把锤子递给你，「故意的。」',
-        'Flint points at a guard’s polished armor. “My work. Missing a rivet under the left arm.” He hands you his hammer. “On purpose.”',
-      ],
-      [
-        '军械车冒起白汽，炉工正在车门上拍出人数。铆青能替你扳一次岔道。把尾车送回站台，或让军械车撞开存图的铁柜。',
-        'Steam curls off the train. The smiths tap their headcount against the door. Flint can throw the switch once. Bring the rear car back to the platform, or ram the cabinet that holds the plans.',
-      ],
+    conversation: [
+      spoken("flint", "看那列往山上跑的军械车。前面几节装满点名钟，后面那节装的是我们炉上的伙计。", "See the train climbing out of the yard? Muster bells up front. My entire furnace crew is locked in the rear car."),
+      spoken("flint", "守卫胸口那片新甲是我打的，左腋少了一颗铆钉。把这锤子拿好。那颗钉子我故意留着。", "I made the guard’s breastplate. One rivet short under the left arm. Here, take my hammer. I kept that rivet for a reason."),
+      spoken("flint", "听，他们在敲车门报数。我只扳得动一次岔道。让尾车回站台，还是拿它撞开藏军械图的铁柜？", "Hear them tapping the door? That’s the crew counting heads. I can throw this switch once. Bring the rear car home, or send it through the cabinet with the armor plans?"),
     ],
     choices: [
       {
         id: 'forge_knight',
+        reply: spoken("flint", "尾车停稳了！老邱连饭盒都攥在手里。先带他们出车场，我们坐下一趟车去追山上的粮船。", "Rear car’s stopped! Old Qiu still has his lunch tin in his fist. Get them out of the yard. We’ll catch the next train up after the grain ship."),
         label: ['接回装着炉工的尾车', 'Bring the smiths’ car home'],
         outcome: [
           '尾车撞进煤堆，车门弹开。最年长的炉工拎起空饭盒就跑。「悬帆梯田还有人等粮，快跟我来！」',
@@ -124,6 +116,7 @@ export const acts = [
       },
       {
         id: 'forge_mask',
+        reply: spoken("kestrel", "军械图到手了。票背上还有一道调令，叫飞骑去悬帆梯田扣粮船。抢在他们前头上山！", "Got the armor plans. There’s another order on the back of the ticket. Riders are heading to Sail Terraces to seize the grain ship. Let’s beat them there!"),
         label: ['撞开铁柜，抢军械图', 'Ram the cabinet and take the plans'],
         outcome: [
           '铁柜倒地，铺开半屋图纸。你卷起灰冠的胸甲图。车票背面还有一条调令，叫飞骑扣下梯田的粮船。',
@@ -144,19 +137,15 @@ export const acts = [
       '悬帆梯田的人已经生了火，锅里还是清水。满载种粮的帆船就飘在他们头顶，拖船的巨鸢正往敌营转向。',
       'At the Sail Terraces, cooking fires are lit under pots of plain water. The seed ship hangs directly overhead. The kite towing it banks toward the enemy camp.',
     ],
-    beats: [
-      [
-        '领航员把绳子在手腕上绕了两圈。「我姑娘刚学会做饭。她说今晚她掌勺。你看，底下最小那一堆火。」',
-        'The navigator loops a line twice around his wrist. “My girl’s just learned to cook. Said supper was on her tonight. See that little fire down there?”',
-      ],
-      [
-        '船头擦着山脊转过来。粮舱的门和舵手的图匣都在手边。底下有人喊：「风要转了，趁现在！」',
-        'The bow scrapes past the ridge. The grain hatch and the pilot’s chart case are both within reach. Someone on the ground shouts, “Wind’s turning. Now!”',
-      ],
+    conversation: [
+      spoken("reef", "闻见柴火味儿了吗？底下家家都生了火，锅里还全是水。咱们的粮就在头顶那条船上。", "Smell the woodsmoke? Every stove below is lit. All they’ve got to boil is water. Our grain’s on that ship overhead."),
+      spoken("reef", "看见最小那堆火了吧？我姑娘说今晚她掌勺。我得给她弄点能下锅的东西。", "See the smallest fire down there? My little girl says she’s cooking supper tonight. I’d like to bring her something she can put in that pot."),
+      spoken("kestrel", "风转了！粮舱正好在脚下，舵手的图匣在那头。要我守住舱盖，还是跟你去抢航图？", "Wind’s turning! Grain hatch under our feet, pilot’s chart case up by the wheel. Shall I hold the hatch or come with you for the chart?"),
     ],
     choices: [
       {
         id: 'sail_seed',
+        reply: spoken("reef", "接住啦！小丫头拿碗来舀了。咦，这些名牌怎么缝在袋子底下？上头盖的是复写馆的章。", "They’ve got it! There’s my girl with her bowl. What are these name tags doing sewn into the sacks? That’s the archive seal on them."),
         label: ['守粮舱，放下第一袋粮', 'Hold the hatch and lower the grain'],
         outcome: [
           '粮袋落地，一个孩子赶紧拿碗去舀。袋底缝着运粮人的名牌，每块都被盖上了复写馆的红印。',
@@ -169,6 +158,7 @@ export const acts = [
       },
       {
         id: 'sail_chart',
+        reply: spoken("kestrel", "船头转过来了。把图翻过来给我看看……这是我的签名。我可没签过这张纸。走，去复写馆。", "The bow’s coming round. Let me see the back of that chart. That’s my signature. I never signed this sheet. We’re going to the archive."),
         label: ['登上驾驶台，夺航图', 'Board the wheelhouse and take the chart'],
         outcome: [
           '你推开舵手，把船头扳向谷地。航图背面密密麻麻写满了名字，赤翎一下就认出了自己的笔迹。图是从复写馆送来的。',
@@ -189,19 +179,15 @@ export const acts = [
       '复写馆藏着灰冠的底册。每印一页，就有一船人听他号令。守着底册的二十七名老兵，胸牌上刻的都是你母亲那支连队的番号。',
       'Here is the master roll. Every copy printed puts another ship’s worth of people under Ashcrown’s orders. Twenty-seven veterans guard it. Every badge carries the number of your mother’s old company.',
     ],
-    beats: [
-      [
-        '阿简认出了你腰间的半块虎符，把灯挪到一封旧战报下面。「她是我连长。这一页，她折了个角。你们俩看看。」',
-        'Wren sees the half seal at your belt and slides a lamp under an old dispatch. “She was my captain. See where she folded the corner? You two should read this.”',
-      ],
-      [
-        '你母亲写道：「我在镜雪山口给后队留了路。灰冠胸口那座炉子一开，铁冠就护不住他。来换班的人，记得多带麻绳。」',
-        'Your mother wrote, “I left a trail for the rearguard at Mirror Pass. When the furnace in Ashcrown’s chest opens, you have a clear shot. Whoever comes to relieve me, bring extra rope.”',
-      ],
+    conversation: [
+      spoken("wren", "这就是征名底册。灰冠每多印一页，就多一船人替他划桨。门外那二十七个人，都是我当年的战友。", "This is the master roll. Every time Ashcrown prints a page, another boatload of people takes his oars. Those twenty-seven guards outside served with me."),
+      spoken("wren", "你腰间那半块虎符，我认得。你娘是我连长。她把这份战报折了个角，你们看看她写了什么。", "I know that half seal at your belt. Your mother was my captain. She folded the corner of this dispatch. Here, read what she left you."),
+      spoken("mother", "我在镜雪山口给后队留了路。等灰冠胸炉一开，朝炉心打。来换班的弟兄，记得多带几捆麻绳。", "I left a trail for the rearguard at Mirror Pass. When Ashcrown opens his chest furnace, strike the core. Whoever comes to relieve me, bring a few extra coils of rope."),
     ],
     choices: [
       {
         id: 'archive_names',
+        reply: spoken("wren", "二十七声到，一个都齐了。你先带他们出去，我知道仓库里那几捆绳搁在哪儿。", "Twenty-seven replies. Every last one accounted for. Lead them out. I know where we put those coils of rope."),
         label: ['按原册给老兵点名', 'Call the veterans by their own names'],
         outcome: [
           '头一个名字才出口，一个白头兵便站得笔直。二十七个人答了二十七声到。阿简收起墨笔，去仓库取绳。',
@@ -214,6 +200,7 @@ export const acts = [
       },
       {
         id: 'archive_pact',
+        reply: spoken("kestrel", "换炉的时辰我抄好了。印板下还有张运人名单，娘那一栏空着。去镜雪山口，咱们自己找。", "I’ve copied the furnace times. There’s an evacuation list under the plate, too. Mum’s line is blank. Come on, we’ll look for her at Mirror Pass."),
         label: ['取走灰冠的换炉令', 'Take the furnace orders'],
         outcome: [
           '赤翎把换炉的时刻抄在护腕内侧。你掀起印板，底下压着一张去山口运人的名单。母亲那一栏还空着。',
@@ -234,19 +221,15 @@ export const acts = [
       '镜雪山口有十几条一模一样的脚印。雪底传来三长一短。赤翎立刻趴下去，把耳朵贴在冰上。「这回是我的人。还活着。」',
       'A dozen identical sets of tracks cross Mirror Pass. Three long knocks, one short, come from beneath the snow. Kestrel drops to the ice. “My scouts this time. Still alive.”',
     ],
-    beats: [
-      [
-        '一面冰壁里映着母亲当年撤退的背影。她把军刀插进崖缝，把绳头绕在刀柄上。十九年过去，那根绳还绷着。',
-        'The ice holds an image of your mother on the retreat. She drives her sword into a crack and loops a rope around the hilt. Nineteen years later the rope is still taut.',
-      ],
-      [
-        '冰下的人已经抓住绳子。赤翎喊道：「我拉左边，你去接人。也可以换个绳桩，把娘的刀带走。钟城的闸锁就是她用这把刀劈开的。」',
-        'Hands close around the rope below. “I’ve got this end,” Kestrel says. “Help them out, or rig a new anchor and bring Mum’s sword. She cut the bridge lock with it once.”',
-      ],
+    conversation: [
+      spoken("kestrel", "先别踩。把耳朵贴在这儿。三长一短……是我的队员，他们还在冰底下！", "Watch your step. Put your ear right here. Three long knocks, one short. That’s my signal. My scouts are still under the ice!"),
+      spoken("kestrel", "这圈皮绳是我小时候缠的。娘把刀楔在这里当绳桩，十九年了，底下还有人靠它撑着。", "I wrapped this sword grip when I was a kid. Mum wedged the blade into this crack for an anchor. Nineteen years later it’s still holding someone up."),
+      spoken("kestrel", "他们抓住绳了！我拉这头，你接人。要是能换根绳桩，就把娘的刀也带回去，钟城那道锁吃过它的苦头。", "They’ve got the rope! I’ll haul, you catch. If you can rig a fresh anchor, bring Mum’s blade too. She cut the city’s bridge lock with it once."),
     ],
     choices: [
       {
         id: 'pass_echo',
+        reply: spoken("kestrel", "全上来了。听听！我们那鼓手冻得拿不住碗，一摸鼓槌，七桥那段接应鼓点还是一拍都没错。", "Everyone’s up. Hear that? Our drummer can barely hold a cup. Put sticks in his hands and he can still play the Seven Bridges signal without missing a beat."),
         label: ['拉斥候上来', 'Pull the scouts up'],
         outcome: [
           '一个，两个，最后一个背着队里的战鼓。他坐在雪地里缓了口气，手里的鼓槌已经敲出了七桥守军的接应鼓点。',
@@ -259,6 +242,7 @@ export const acts = [
       },
       {
         id: 'pass_blade',
+        reply: spoken("kestrel", "把刀给我瞧瞧。嗯，这地方还是缠歪的。当年娘说握着正合手，就这么带上了山。", "Let me see the grip. Still crooked there, where I wound it. Mum said it fit her hand perfectly. Took it up the mountain just like that."),
         label: ['换好绳桩，取回军刀', 'Set a new anchor and take the sword'],
         outcome: [
           '木桩吃住绳劲，军刀顺着崖缝滑进你手里。赤翎拉着斥候们爬上来，看了一眼刀柄。「上面那圈皮，还是我给她缠的。」',
@@ -279,19 +263,15 @@ export const acts = [
       '七座桥全吊在半空。桥下挤着出城的车，桥头站着灰冠铸出的钟师，锤子每落一下，吊索就收紧一圈。天台就在对岸。',
       'All seven bridges hang in the air. Carts are jammed along the banks. Ashcrown’s iron Bellfounder stands over the winch. Every fall of his hammer takes up another turn of cable. The Orrery is on the far side.',
     ],
-    beats: [
-      [
-        '修钟匠踮起脚，勉强把音叉塞进你手里。「认准第三响。它拉索，我松簧，桥一落你就走。」他转身钻进了齿轮底下。',
-        'The bell tender stands on tiptoe to press a tuning fork into your palm. “Listen for the third stroke. When it pulls the cable, I’ll trip the spring. The instant that bridge drops, go.” He crawls under the gears.',
-      ],
-      [
-        '桥板砸在岸边。头一辆车的轮子卡住了，另一头，敌兵正在拽升桥的铁链。你的人都在等你先迈那一步。',
-        'The bridge slams onto the bank. The first cart catches a wheel. On the far side, soldiers haul at the chain to raise the span again. Your company waits for you to move.',
-      ],
+    conversation: [
+      spoken("copper", "七座桥都吊着呢。瞧桥头那家伙，它每砸一下锤，吊索就收一圈。再收半圈，我这些齿轮就得崩。", "All seven spans are up. Look at that thing at the winch. Each hammer stroke takes up another turn of cable. Half a turn more and my gears will snap."),
+      spoken("copper", "拿稳音叉。第三响它会换手，我就能钻到底下松簧。桥板一落，你带人过，别等我爬出来。", "Hold that fork steady. On the third note it changes hands. I’ll get under the wheel and trip the spring. When the bridge drops, get your people across."),
+      spoken("kestrel", "桥落了！头一辆车卡在板缝上，对岸的人已经摸到绞盘了。我举盾护车，还是跟你去抢盘？", "Span’s down! The lead cart’s wedged in a seam. Their men are at the winch already. Want my shield on the cart or my bow at the winch?"),
     ],
     choices: [
       {
         id: 'bell_feast',
+        reply: spoken("copper", "军医的马车全过了。瞧，他连缰绳都没解就掉头回来接伤员了。你们赶紧上天台吧！", "There goes the surgeon’s cart. He hasn’t even unhitched the horses and he’s coming back for the wounded. The Orrery’s yours to reach now!"),
         label: ['举盾护送车队', 'Escort the carts under shields'],
         outcome: [
           '你把盾塞到轴下，把车抬过了缝。最后一辆是军医的车。过了桥，他连马都没解就调头来接伤员。',
@@ -304,6 +284,7 @@ export const acts = [
       },
       {
         id: 'bell_duel',
+        reply: spoken("kestrel", "绞盘卡稳了。后队，看我的旗！踩着我们的脚印走，一口气跑上天台！", "The winch is holding. Rearguard, eyes on my flag! Follow our tracks. Straight up to the Orrery!"),
         label: ['冲过桥去夺绞盘', 'Rush the winch across the span'],
         outcome: [
           '你顺着晃动的桥板跑到底，把绞盘卡在最低一格。赤翎一挥旗，后面的队伍踩着你的脚印直奔天台。',
@@ -324,19 +305,15 @@ export const acts = [
       '星门大开，成堆的征名册被推向炉口。灰冠低下龙首，甲片合拢，整座天台随他的呼吸一起一伏。你们一路追来的炉子，就在他胸前。',
       'The star gate swings open. Carts tip their muster rolls into a furnace. Ashcrown lowers his dragon head and closes his armor. The whole observatory rises and falls with his breathing. The furnace is in his chest.',
     ],
-    beats: [
-      [
-        '你摊开母亲留下的战报。赤翎用手指敲了敲那一行。「听见他吸气就举盾。等他那一下落空，你看我旗子。」',
-        'You unfold your mother’s dispatch. Kestrel taps the line with one finger. “Shield up when he draws breath. When his blow misses, watch my flag.”',
-      ],
-      [
-        '龙翼刮过石台，后队被隔在坡下。灰冠胸前有片甲还挂在军械架上。你有时间把后队接进来，也来得及让那片甲永远挂在那里。',
-        'A sweep of the dragon’s wing cuts off your rearguard. One plate from his chest still hangs on the armory rack. There’s time to bring the rearguard in, or to make sure that plate stays where it is.',
-      ],
+    conversation: [
+      spoken("kestrel", "你看灰冠脚边那些车。每车一叠征名册，都要喂进他胸前的炉子。那层胸甲打开的时候，就是机会。", "See those carts at Ashcrown’s feet? Each stack of muster rolls goes straight into his chest furnace. We get our opening when those plates part."),
+      spoken("kestrel", "娘的战报上还留着手指印，就在这一行。听见他吸气就举盾。等那一下落空，抬头看我的旗。", "Mum left a thumbprint beside this line. Shield up when he draws breath. When his blow misses, look up for my flag."),
+      spoken("kestrel", "我的后队还在坡下，铸甲机上剩一片胸甲。你去接人，还是卡住压机？把手势给我，我跟你上。", "My rearguard’s still on the slope. His last chest plate is in the press. Are we bringing them in or jamming those teeth? Give me the sign and I’ll follow you."),
     ],
     choices: [
       {
         id: 'star_girl',
+        reply: spoken("kestrel", "人到齐了。把盾举高点……好，旗就插在这儿。等我往下一挥，你带大家冲。", "All here. Lift your shield a little. There, the flag sits nicely on the rim. When I bring it down, lead the charge."),
         label: ['接应赤翎的后队', 'Bring Kestrel’s rearguard through'],
         outcome: [
           '你举盾走回坡口。赤翎最后一个进阵，把红旗插在盾沿。「这下好了。你抬头就看得见。」',
@@ -345,6 +322,7 @@ export const acts = [
       },
       {
         id: 'star_key',
+        reply: spoken("kestrel", "你的半块虎符咬住了压机！他胸口那条缝，已经能看见炉火了。看旗，冲！", "Your half seal’s jammed the press! Look at that gap. The furnace is showing through. On my flag, charge!"),
         label: ['卡住敌军的铸甲机', 'Jam the armor press'],
         outcome: [
           '你把半块虎符塞进齿缝。铸甲机咬住了，灰冠侧过胸口，露出一线橙红的炉光。赤翎的旗子猛地挥下。',
@@ -354,6 +332,17 @@ export const acts = [
     ],
   },
 ];
+
+export const speakers = Object.fromEntries(
+  ['reed', 'bow', 'flint', 'reef', 'wren', 'kestrel', 'copper', 'mother'].map((id, frame) => [
+    id,
+    { frame, name: id === 'mother' ? ['先锋连长的手令', 'The captain’s dispatch'] : acts[frame].speaker },
+  ]),
+);
+
+export function portraitPosition(frame) {
+  return (frame % 4) * 100 / 3 + '% ' + Math.floor(frame / 4) * 100 + '%';
+}
 
 export const endings = [
   {

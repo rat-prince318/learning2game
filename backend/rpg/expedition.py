@@ -6,6 +6,7 @@ from typing import NamedTuple
 from ..models import KnowledgeItem
 from ..legacy_exam import has_legacy_exam_cover
 from . import battle_rules, companions, expedition_combat, quest_story, tower
+from .backpack import DiscardItem, Unequip, UseItem, manage_pack, supply_stacks
 from .battle_models import BattleState, Equip, Retreat
 from .battle_reports import concept_rows
 from .battle_rules import BattleError
@@ -252,6 +253,8 @@ def _settle(state, courses):
     companions.bond_on_win(state, fight)
     game, knowledge = courses[fight.game_id]
     coins = {"normal": 3, "elite": 5, "boss": 6}[route.risk]
+    if route.boss:
+        state.supplies.focus_tea += 1
     if route.boss and route.approach == "daring":
         coins += 2
     state.coins += coins
@@ -320,14 +323,18 @@ def advance(state: ExpeditionState, action: ExpeditionAction, courses: Courses) 
     result = state.model_copy(deep=True)
     if isinstance(action, Retreat):
         result.phase = "retreated"
+    elif isinstance(action, (UseItem, DiscardItem, Unequip)):
+        manage_pack(result, action)
     elif isinstance(action, Equip) and state.phase in {"route", "reward"}:
-        battle_rules.equip_item(result.battle, action.item_id)
+        battle_rules.equip_item(result.battle, action.item_id, relic_ids=result.relic_ids,
+                                edge_ranks=result.edge_ranks, plating_ranks=result.plating_ranks)
     elif isinstance(action, InspectLandmark):
         if state.phase != "route":
             raise BattleError(409, "回到地图路口后可以调查地标。")
         landmark = region_at(state.region_index).id
         if landmark not in result.field_signals:
             result.field_signals.append(landmark)
+            result.supplies.field_bandage += 1
             maximum = battle_rules.player_stats(result.battle, relic_ids=result.relic_ids,
                                                 edge_ranks=result.edge_ranks, plating_ranks=result.plating_ranks).max_hp
             result.battle.hp = min(maximum, result.battle.hp + 3)
@@ -462,7 +469,7 @@ def view(state: ExpeditionState, courses: Courses) -> ExpeditionView:
         narrative = _current_route(state, courses).description
     elif state.phase == "sidequest":
         narrative = "打开讲义摘记，完成本章复习后重返刚才的战场。"
-    return ExpeditionView(eight_chapters=state.eight_chapters,
+    return ExpeditionView(eight_chapters=state.eight_chapters, supplies=supply_stacks(state.supplies),
                           cleared_regions=sum(all(c.status == "cleared" for c in r.chapters) for r in atlas),
                           knowledge_count=sum(r.knowledge_count for r in atlas), covered_knowledge_count=studied,
                           legacy_exam_cover=has_legacy_exam_cover(courses[game_id][1]),

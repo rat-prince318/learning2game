@@ -49,6 +49,32 @@ def payload(state, action, **fields):
     return {"action": action, "expected_revision": state["revision"], "event_id": uuid4().hex, **fields}
 
 
+def test_backpack_commands_survive_retries_and_restart(app, tmp_path):
+    with TestClient(app) as c:
+        source = upload(c, "pack.txt", b"\n".join(COURSE.read_bytes().splitlines()[:4]))
+        book = c.post("/rpg/expedition-outline", json={
+            "sources": [{"material_id": source["material_id"]}]}).json()["volumes"][0]
+        start = opening(c, [publish(c, book["plan_request"])])
+        path = f"{BASE}/{start['session_id']}"
+        action = payload(start, "use_item", item_id="focus_tea")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            replies = list(pool.map(lambda _: c.post(path + "/actions", json=action), range(2)))
+        live = replies[0].json()
+        assert all(r.status_code == 200 and r.json() == live for r in replies)
+        assert live["revision"] == start["revision"] + 1 and live["player"]["focus"] == 1
+        assert {s["id"]: s["quantity"] for s in live["supplies"]} == {"field_bandage": 2, "focus_tea": 0}
+        for body, expected in [
+            ({**action, "item_id": "field_bandage"}, 409),
+            (payload(start, "discard_item", item_id="field_bandage", quantity=1), 409),
+            (payload(live, "discard_item", item_id="field_bandage", quantity=-1), 422),
+            (payload(live, "discard_item", item_id="field_bandage", quantity=3), 409),
+            (payload(live, "discard_item", item_id="invented", quantity=1), 422),
+        ]:
+            assert c.post(path + "/actions", json=body).status_code == expected
+    with TestClient(create_app(data_dir=tmp_path)) as reopened:
+        assert reopened.get(path).json() == reopened.post(path + "/actions", json=action).json() == live
+
+
 def test_outline_covers_a_complete_long_lecture_and_flags_excess(app):
     with TestClient(app) as c:
         assert "expedition" in c.get("/health").json()["rpg_play_modes"]
