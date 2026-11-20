@@ -62,7 +62,23 @@ export async function verifyBattleNotes(page, startDemo, playTurn) {
   await page.keyboard.press('Escape');
 
   await page.setViewportSize({width: 1360, height: 900});
-  for (let turn = 0; view.phase === 'combat' && turn < 24; turn++) view = await playTurn(page, view);
+  const mastered = new Set();
+  let retried = false;
+  for (let turn = 0; view.phase === 'combat' && turn < 24; turn++) {
+    const current = view.battle.prompt;
+    expect(mastered.has(current.text)).toBe(false);
+    if (current.text === question.text) {
+      expect(turn).toBeGreaterThan(0);
+      expect(current.purpose).toBe('retry');
+      await expect(page.locator('.bf-speaker')).toContainText('错题重试');
+      await page.reload();
+      await expect(page.locator('.bf-speaker')).toContainText('错题重试');
+      retried = true;
+    }
+    mastered.add(current.text);
+    view = await playTurn(page, view);
+  }
+  expect(retried).toBe(true);
   expect(view.phase).toBe('victory');
   const final = view.battle.last_event;
   expect(final.damage_dealt).toBeGreaterThan(0);

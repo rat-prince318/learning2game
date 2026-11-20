@@ -209,9 +209,16 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null, p
   const evidence = view.mode === 'tower' ? towerEvidence(prompt) : null;
   const speakerIndex = Math.max(0, atlas.findIndex(region=>region.id === regionId(view)));
   const speaker = atlas[speakerIndex];
+  const purpose = {
+    retry: msg('错题重试', 'Retry missed question'),
+    tower_practice: msg('塔层连击练习', 'Tower streak practice'),
+    finisher: msg('最后一击', 'Finishing blow'),
+  }[prompt.purpose];
+  const task = side ? msg('修复残页','Mend the field guide') : evidence ? msg('星轨校准','Align the star seals') :
+    chain ? msg('双重刻印','Linked inscription') : msg('战技刻印','Inscribe a technique');
   return left + `<section class="bf-paper bf-quiz">${immersive ? '<div class="bf-reading">' : ''}<div class="bf-papertop">
     <div class="bf-speaker"><i class="bf-scout-face" aria-hidden="true" style="--speaker:${speakerIndex}"></i>
-      <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${side ? msg('修复残页','Mend the field guide') : evidence ? msg('星轨校准','Align the star seals') : chain ? msg('双重刻印','Linked inscription') : msg('战技刻印','Inscribe a technique')}</span></div></div>
+      <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${purpose || task}</span></div></div>
     ${immersive ? '<div class="bf-notes-actions">'+receiptButton(receipt) : ''}
     <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查阅营地笔记','Read the camp notes') : msg('翻阅手记会放弃本回合的连击暴击。','Opening the field notes forgoes a combo critical this turn.')}"
       ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button>${immersive ? '</div>' : ''}</div>

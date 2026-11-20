@@ -114,6 +114,8 @@ class BattleState(StrictModel):
     hinted: bool = False
     # Pending concept checks must each be solved before a stage can be cleared.
     pending: list[Identifier]
+    # Optional for saves written before question-specific retries were recorded.
+    retry_ids: list[Identifier] | None = None
     finishing_turn: Count = 0
     missed_this_fight: list[Identifier] = Field(default_factory=list)
     review_queue: list[Identifier] = Field(default_factory=list)
@@ -151,6 +153,7 @@ class BattlePrompt(StrictModel):
     text: StudyFeedback
     options: list[BattleOption] = Field(min_length=3, max_length=4)
     hint: StudyFeedback | None = None
+    purpose: Literal["retry", "tower_practice", "finisher"] | None = None
 
 
 class StageView(StrictModel):

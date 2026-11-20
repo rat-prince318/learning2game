@@ -16,6 +16,7 @@ from .hero_catalog import (
     stage_rewards, starter_inventory, stats_for, xp_to_next_level,
 )
 from .models import RPGGameInternal
+from .validation import challenge_key
 
 # Compatibility exports for clients of the original single-class rules.
 STARTER_ID = initial_loadout("arcanist").weapon
@@ -66,10 +67,42 @@ def _enemy_health(state, game):
     return _unit_health(state, game) * len(game.scenes[state.stage_index].challenges)
 
 
-def _set_fight(state, game, *, recover=True):
+def chapter_deck(scene):
+    questions = {q.challenge_id: q for q in scene.challenges}
+    cards = {}
+    for ident in scene.quest.challenge_ids:
+        cards.setdefault(challenge_key(questions[ident]), ident)
+    return list(cards.values())
+
+
+def _retries(state, scene):
+    if state.retry_ids is not None:
+        return state.retry_ids
+    # Older saves only tracked the underlying missed concepts.
+    return [q.challenge_id for q in scene.challenges if q.knowledge_id in state.missed_this_fight]
+
+
+def _legacy_solved(state, scene):
+    if state.retry_ids is not None:
+        return set()
+    # Old camps rebuilt the whole deck, even though the per-concept tallies
+    # survived. Respect the displayed card until its answer is submitted.
+    return {challenge_key(q) for q in scene.challenges if state.concepts[q.knowledge_id].combat_correct}
+
+
+def _set_fight(state, game, *, recover=True, resume=False):
     scene = game.scenes[state.stage_index]
     state.phase = "combat"
-    state.pending = list(scene.quest.challenge_ids)
+    if resume:
+        mastered = _legacy_solved(state, scene)
+        if mastered:
+            questions = {q.challenge_id: q for q in scene.challenges}
+            state.pending = [card for card in state.pending if challenge_key(questions[card]) not in mastered]
+        state.retry_ids = _retries(state, scene)
+    else:
+        state.pending = chapter_deck(scene)
+        state.retry_ids = []
+        state.finishing_turn = 0
     state.enemy_hp = _enemy_health(state, game)
     maximum = player_stats(state).max_hp
     state.hp = maximum if recover else min(state.hp, maximum)
@@ -80,7 +113,6 @@ def _set_fight(state, game, *, recover=True):
     state.missed_this_fight = []
     state.review_queue = []
     state.review_index = 0
-    state.finishing_turn = 0
     state.combo = 0
     state.hinted = False
 
@@ -99,7 +131,7 @@ def new_battle(session_id: str, game_id: str, game: RPGGameInternal,
         session_id=session_id, game_id=game_id, camp_key=camp_key or token_hex(24),
         hp=stats_for(hero_class, 0, loadout).max_hp, enemy_hp=0,
         hero_class=hero_class, kit=kit, inventory_ids=inventory, equipped_id=loadout.weapon,
-        loadout=loadout, pending=list(game.scenes[0].quest.challenge_ids),
+        loadout=loadout, pending=chapter_deck(game.scenes[0]), retry_ids=[],
         concepts={q.knowledge_id: BattleTally() for scene in game.scenes for q in scene.challenges},
     )
     state.enemy_hp = _enemy_health(state, game)
@@ -141,6 +173,11 @@ def view(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeIte
         level, xp_left = tactics.level_for_xp(state.xp), tactics.xp_to_next_level(state.xp)
         tactical_view = tactics.tactics_view(state, stats)
     exam = active_exam(state, game, knowledge)
+    if state.phase == "combat":
+        if not state.pending:
+            exam.prompt.purpose = "tower_practice" if state.expedition and state.expedition.tower_floor else "finisher"
+        elif exam.question.challenge_id in _retries(state, scene):
+            exam.prompt.purpose = "retry"
     sidequest = None
     if state.phase == "sidequest":
         sidequest = SideQuestView(title=f"营地修习：{scene.name}"[:120],
@@ -220,6 +257,36 @@ def _defeat(state, feedback, current_concept):
     feedback.message = "你退回营地。复盘本次交手的讲义记录，即可整队再战。"
 
 
+def _record_card(state, scene, question, correct):
+    ident = question.challenge_id
+    current = challenge_key(question)
+    questions = {q.challenge_id: q for q in scene.challenges}
+    resolved = _legacy_solved(state, scene)
+    retries = _retries(state, scene)
+    state.retry_ids = [card for card in retries if card != ident]
+    if not correct:
+        state.retry_ids.append(ident)
+    if state.pending:
+        resolved.add(current)
+        # Preserve the published turn when opening an old save. Once it is
+        # graded, its duplicate IDs cannot queue another copy of that exercise.
+        state.pending = [card for card in state.pending[1:] if challenge_key(questions[card]) not in resolved]
+        if not correct:
+            state.pending.append(ident)
+    if state.pending:
+        return
+    if state.expedition and state.expedition.tower_floor:
+        # Advance through distinct exercises and store the published index.
+        # This also honors an outstanding legacy turn that pointed at an alias.
+        deck = chapter_deck(scene)
+        old = next(i for i, card in enumerate(deck) if challenge_key(questions[card]) == current)
+        following = deck[(old + 1) % len(deck)]
+        state.finishing_turn = next(i for i, q in enumerate(scene.challenges) if q.challenge_id == following)
+    elif not correct:
+        # One previously issued finishing turn can survive a version upgrade.
+        state.pending = [ident]
+
+
 def _combat_answer(state, game, exam, action, correct):
     q = exam.question
     tally = state.concepts[q.knowledge_id]
@@ -247,10 +314,6 @@ def _combat_answer(state, game, exam, action, correct):
             power = power * 3 // 2
         if action.skill == "burst":
             power = power * stats.burst_percent // 100
-        if state.pending:
-            state.pending.pop(0)
-        else:
-            state.finishing_turn += 1
         if action.skill == "burst":
             message = f"{class_info(state.hero_class).burst_name}命中！"
         elif action.skill == "guard":
@@ -265,10 +328,6 @@ def _combat_answer(state, game, exam, action, correct):
         for kid in missed:
             if kid not in state.missed_this_fight:
                 state.missed_this_fight.append(kid)
-        if state.pending:
-            state.pending.append(state.pending.pop(0))
-        else:
-            state.finishing_turn += 1
         # A missed seal stays in the queue. Its field note offers the next
         # reasoning step without disclosing the correct option on a retry.
         needs_review = [item for item in exam.supporting if item.knowledge_id in missed] or [q]
@@ -284,6 +343,8 @@ def _combat_answer(state, game, exam, action, correct):
         refs = list(dict.fromkeys(q.source_ref for q in exam.supporting))
         joined = " / ".join(refs)
         feedback.source_ref = joined if len(joined) <= 500 else refs[0]
+    scene = game.scenes[state.stage_index]
+    _record_card(state, scene, q, correct)
     exchange = None
     if ctx is not None:
         exchange = tactics.exchange(ctx, stats, state.stage_index, correct, action.skill, power)
@@ -293,13 +354,19 @@ def _combat_answer(state, game, exam, action, correct):
         raw = (10 + 3 * state.stage_index + (3 if enraged else 0)) if not correct else 0
         divisor = 10 + stats.defense
         counter = (raw * 10 + divisor - 1) // divisor
-    # Reserve HP for concepts which have yet to be answered correctly.
+    # Protect the remaining questions; mastering the last one breaks the enemy.
     reserve = len(state.pending) * (_unit_health(state, game) // 2)
-    # Every regional keeper reveals its second pattern, even in a one-topic
-    # review book when the hero brings a fully charged high-level weapon.
-    if ctx and ctx.phase == 1 and world.encounter_for(ctx.encounter_id).tier == "boss":
-        reserve = max(reserve, _enemy_health(state, game) // 2)
-    if ctx and ctx.tower_floor and state.combo < tactics.tower_chain(ctx.tower_floor):
+    chain_needed = (ctx and ctx.tower_floor and
+                    state.combo < tactics.tower_chain(ctx.tower_floor, len(chapter_deck(scene))))
+    if correct and not state.pending and not chain_needed:
+        power = max(power, state.enemy_hp)
+    elif ctx and ctx.phase == 1 and world.encounter_for(ctx.encounter_id).tier == "boss":
+        halfway = _enemy_health(state, game) // 2
+        if correct and len(state.pending) == 1:
+            # Leave a playable second phase even in a two-question book.
+            power = max(power, state.enemy_hp - halfway)
+        reserve = max(reserve, halfway)
+    if chain_needed:
         reserve = max(1, reserve)
     feedback.damage_dealt = min(power, max(0, state.enemy_hp - reserve))
     state.enemy_hp -= feedback.damage_dealt
@@ -343,6 +410,8 @@ def _review_answer(state, game, exam, action, correct):
     tally = state.concepts[exam.question.knowledge_id]
     tally.review_attempts += 1
     if not correct:
+        # Keep the completed prefix fixed and revisit this lesson after its peers.
+        state.review_queue.append(state.review_queue.pop(state.review_index))
         return BattleEvent(kind="review_wrong", correct=False, message="翻回营地摘记，再核对这张档案卡。",
                            explanation=exam.lesson.definition, source_ref=exam.lesson.source_ref)
     tally.review_correct += 1
@@ -351,7 +420,7 @@ def _review_answer(state, game, exam, action, correct):
                            explanation=exam.question.explanation, source_ref=exam.question.source_ref)
     if state.review_index == len(state.review_queue):
         state.sidequests_completed += 1
-        _set_fight(state, game)
+        _set_fight(state, game, resume=True)
         feedback.kind = "recovered"
         feedback.message = "营地修习完成，体力已恢复。重新挑战本章守关者！"
     return feedback

@@ -293,8 +293,11 @@ def test_defeat_opens_sourced_chapter_sidequest_then_rematch(campaign):
     assert state["stage"]["scene_id"] == start["stage"]["scene_id"]
 
     count = state["sidequest"]["total"]
+    deferred = None
     for step in range(count):
         lesson = state["sidequest"]["lesson"]
+        if step == count - 1 and deferred is not None:
+            assert lesson == deferred
         assert lesson["source_ref"] in missed
         review_terms.add(lesson["term"])
         assert state["sidequest"]["completed"] == step
@@ -305,7 +308,11 @@ def test_defeat_opens_sourced_chapter_sidequest_then_rematch(campaign):
             wrong = next(o for o in prompt["options"] if o["id"] != key)
             state = move(c, state, "answer", prompt_id=prompt["prompt_id"], option_id=wrong["id"])
             assert state["phase"] == "sidequest" and state["sidequest"]["completed"] == step
-            assert state["sidequest"]["lesson"] == lesson
+            deferred = lesson
+            lesson = state["sidequest"]["lesson"]
+            if count > 1:
+                assert lesson != deferred
+            review_terms.add(lesson["term"])
             assert state["last_event"]["kind"] == "review_wrong"
             assert state["player"]["xp"] == 0 and state["cleared_stages"] == 0
             prompt = state["prompt"]

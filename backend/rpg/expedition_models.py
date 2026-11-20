@@ -129,6 +129,7 @@ class TowerState(StrictModel):
     best_floor: Count = 0
     phase: TowerPhase = "idle"
     battle: BattleState | None = None
+    last_draw_by_game: dict[Identifier, Identifier] = Field(default_factory=dict)
 
 
 class TowerView(StrictModel):

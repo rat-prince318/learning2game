@@ -122,6 +122,7 @@ test('rescue the ferry crew, master both dragon phases and reload the final orde
   const field = await page.getByTestId('battle-arena').elementHandle();
   let view = await state();
   const phases = new Set();
+  const solved = new Set();
   for (let turn = 0; view.phase === 'combat' && turn < 18; turn++) {
     await expect(page.locator('.l2g-battle')).toHaveAttribute('data-battle-busy', 'false');
     const phase = view.battle.tactics.phase;
@@ -131,6 +132,9 @@ test('rescue the ferry crew, master both dragon phases and reload the final orde
       phase === 2 ? 'ash-crown-enraged' : 'ash-crown-armored',
     );
     const option = answerForFixture(view.battle.prompt);
+    const stem = view.battle.prompt.text;
+    expect(solved.has(stem), 'A correct mechanics problem must leave the fight').toBe(false);
+    solved.add(stem);
     await page.locator(`[data-option-id="${option}"]`).click();
     const response = page.waitForResponse(
       (r) => r.request().method() === 'POST' && new URL(r.url()).pathname === endpoint + '/actions',
@@ -140,6 +144,7 @@ test('rescue the ferry crew, master both dragon phases and reload the final orde
     expect(view.battle.last_event.correct).toBe(true);
   }
   expect([...phases]).toEqual([1, 2]);
+  expect(solved.size).toBe(3);
   expect(view.phase).toBe('victory');
   const result = page.getByTestId('battle-result');
   await expect(result).toBeVisible();

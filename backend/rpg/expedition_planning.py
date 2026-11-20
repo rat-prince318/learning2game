@@ -11,7 +11,7 @@ from ..models import Count, Difficulty, Identifier, LearnerLevel, LearningGoal, 
 from ..pipeline import _knowledge
 from .models import RPGPreferences, Theme
 from .router import PlanRequest
-from .validation import eligible
+from .validation import coverage_key, eligible
 
 router = APIRouter(prefix="/rpg", tags=["RPG expeditions"])
 
@@ -54,6 +54,7 @@ class ExpeditionOutline(StrictModel):
 def outline(body: OutlineRequest, request: Request):
     """Preview exact source coverage before calling the existing plan and confirmation workflow."""
     volumes = []
+    covered = set()
     with connection(request.app) as conn:
         for source in body.sources:
             concepts = eligible(_knowledge(conn, source.material_id).knowledge)
@@ -63,12 +64,21 @@ def outline(body: OutlineRequest, request: Request):
                 if len(set(selected)) != len(selected) or any(k not in by_id for k in selected):
                     raise HTTPException(422, "请为这份资料选择互异且有出处的知识点。")
                 concepts = [by_id[k] for k in selected]
-            size = len(concepts)
-            if size < 3:
+            if len(concepts) < 3:
                 raise HTTPException(422, "每份资料至少需要三个可区分且有出处的知识点。")
+            unique = []
+            for item in concepts:
+                identity = coverage_key(item, body.question_language)
+                if identity not in covered:
+                    unique.append(item)
+                    covered.add(identity)
+            concepts = unique
+            size = len(concepts)
+            if size == 0:
+                continue
             # Spread the tail across all volumes so a nine-concept source yields
             # five and four questions, both accepted by the ordinary planner.
-            count = min(ceil(size / body.concepts_per_volume), size // 3)
+            count = max(1, min(ceil(size / body.concepts_per_volume), size // 3))
             if len(volumes) + count > 8:
                 raise HTTPException(422, "一场远征最多八卷。请缩小知识范围，或调高每卷题量。")
             offset = 0

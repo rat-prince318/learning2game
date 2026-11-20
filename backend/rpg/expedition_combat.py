@@ -38,6 +38,7 @@ class EncounterState(StrictModel):
     plating_ranks: ForgeRank = 0
     relic_ids: list[Identifier] = Field(default_factory=list)
     tower_floor: Count = 0
+    tower_questions: list[Identifier] = Field(default_factory=list, max_length=8)
     companion_id: CompanionId | None = None
     companion_level: Count = 0
     turn: Count = 0
@@ -101,9 +102,9 @@ def tower_health(floor):
     return 50 + 11 * floor + floor * floor // 15
 
 
-def tower_chain(floor):
-    # An extra linked solution every three floors. There is always another floor.
-    return 1 + (floor - 1) // 3
+def tower_chain(floor, available=None):
+    target = 1 + (floor - 1) // 3
+    return target if available is None else min(target, available)
 
 
 def unit_health(ctx: EncounterState, stage_index: int) -> int:

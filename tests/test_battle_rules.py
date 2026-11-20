@@ -71,8 +71,8 @@ def test_every_scope_has_beatable_boss_and_mandatory_learning_coverage(count, sc
     assert len(state.concepts) == count
 
 
-def test_upgraded_equipment_and_charged_skill_save_a_whole_turn():
-    state, game, course = campaign(4, 3)
+def test_equipment_and_charged_skills_change_damage_before_the_last_exercise():
+    state, game, course = campaign(6, 3)
     while state.phase == "combat":
         state = answer(state, game, course)
     assert state.focus == 2 and state.last_event.loot.id == state.equipped_id
@@ -83,10 +83,14 @@ def test_upgraded_equipment_and_charged_skill_save_a_whole_turn():
     assert normal.phase == "combat" and normal.enemy_hp > 0
     assert answer(normal, game, course).phase == "stage_clear"
     upgraded = answer(state, game, course)
-    assert upgraded.phase == "stage_clear"
+    assert upgraded.phase == "combat"
     assert upgraded.last_event.damage_dealt > normal.last_event.damage_dealt
     charged = answer(starter, game, course, skill="burst")
-    assert charged.phase == "stage_clear" and charged.last_event.skill == "burst" and charged.focus == 0
+    assert charged.last_event.damage_dealt > upgraded.last_event.damage_dealt
+    assert charged.last_event.skill == "burst" and charged.focus == 0
+    for first_hit in (normal, upgraded, charged):
+        final = answer(first_hit, game, course)
+        assert final.phase == "stage_clear" and final.last_event.damage_dealt == first_hit.enemy_hp
     assert charged.last_event.damage_dealt > normal.last_event.damage_dealt
     missed = answer(starter, game, course, correct=False, skill="burst")
     assert missed.focus == 0 and missed.hp < starter.hp and missed.enemy_hp == starter.enemy_hp

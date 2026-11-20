@@ -8,7 +8,8 @@ from ..provider import trace_tool
 from ..question_language import localized_items
 from . import authoring, offline, prompts, reviewer
 from .models import GameRecommendation, RPGGenerationResult, RPGIssue, RPGValidationReport
-from .validation import DraftError, RPGContentError, check_game, eligible, groups, reference_pool, select, source_pack
+from .validation import (DraftError, RPGContentError, check_game, eligible, groups, minimum_challenges,
+                         reference_pool, select, source_pack)
 
 
 class RPGAgent:
@@ -43,6 +44,7 @@ class RPGAgent:
 
     async def recommend(self, knowledge, preferences):
         pool = eligible(knowledge)
+        minimum = minimum_challenges(preferences, len(pool))
         supported = ["matching", "rpg_quest"]
         selected = getattr(preferences, "selected_knowledge_ids", None)
         count = getattr(preferences, "challenge_count", 6)
@@ -52,7 +54,7 @@ class RPGAgent:
             if len(selected) > count:
                 raise RPGContentError("请将题量调至至少与选中知识点数相同，或缩小选中范围。")
             pool = [k for k in pool if k.knowledge_id in selected]
-        meaningful = min(len(pool), count) >= 3
+        meaningful = min(len(pool), count) >= minimum
         warnings = [] if meaningful else ["普通 RPG 需要至少三个有明确出处的知识点，并选择至少三道题。"]
         if self.client:
             with trace_tool("recommend_game_type"):

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend.db import connection
 from backend.material_adapter import extract_material
-from backend.rpg import expedition, tower
+from backend.rpg import battle_rules, expedition, tower
 from backend.rpg.battle_content import active_exam
 from backend.rpg.battle_rules import BattleError
 from backend.rpg.expedition_models import ExpeditionState
@@ -28,7 +28,7 @@ def books():
 
 def pick(state, books, *, correct=True, skill=None):
     t = state.tower
-    course = tower.floor_course(books[t.battle.game_id], t.floor)
+    course = tower.current_course(t, books)
     exam = active_exam(t.battle, *course)
     selected = next(o for o in exam.prompt.options if (o.id == exam.answer_id) == correct)
     if not skill:
@@ -55,7 +55,7 @@ def test_every_class_can_clear_twelve_floors_with_correct_tactics(books, hero):
         assert gate.battle.enemy.max_hp > last_hp
         last_hp = gate.battle.enemy.max_hp
         assert gate.floor == floor and gate.chain_target == 1 + (floor - 1) // 3
-        course = tower.floor_course(books["book"], floor)
+        course = tower.current_course(state.tower, books)
         exam = active_exam(state.tower.battle, *course)
         if floor == 1:
             assert len(exam.prompt.options) == 3
@@ -65,7 +65,12 @@ def test_every_class_can_clear_twelve_floors_with_correct_tactics(books, hero):
             for clue in exam.supporting:
                 assert clue.prompt in exam.prompt.text
                 assert [clue.knowledge_id] in exam.missed_by_choice.values()
+        groups = set()
         for turn in range(1, 80):
+            prompt = active_exam(state.tower.battle, *course)
+            evidence = frozenset(q.challenge_id for q in prompt.supporting)
+            assert evidence not in groups, (floor, turn, evidence)
+            groups.add(evidence)
             state = pick(state, books)
             assert state.tower.phase != "sidequest", (hero, floor, turn)
             if state.tower.phase == "cleared":
@@ -95,11 +100,74 @@ def test_tower_failure_returns_to_same_floor_after_source_review(books):
     assert view.player.hp == view.player.max_hp and view.enemy.hp == view.enemy.max_hp
 
 
+def test_interleaved_volumes_exhaust_each_book_before_revisiting_it(books):
+    courses = {"first": books["book"], "second": books["book"]}
+    state = expedition.new_expedition("alternating-books", courses)
+    seen = {game_id: [] for game_id in courses}
+    for _ in range(4):
+        state = command(state, courses, "tower_enter")
+        fight = state.tower.battle
+        seen[fight.game_id].extend(fight.expedition.tower_questions)
+        while state.tower.phase == "combat":
+            state = pick(state, courses)
+        assert state.tower.phase == "cleared"
+    roster = [q.challenge_id for scene in books["book"][0].scenes for q in scene.challenges]
+    assert seen["first"] == roster
+    assert seen["second"] == roster + roster[:1]
+
+
+def test_duplicate_publications_and_short_books_have_reachable_streaks(books):
+    game, knowledge = books["book"]
+    scene = game.scenes[0].model_copy(deep=True)
+    first, duplicate, other = scene.challenges
+    duplicate.prompt = first.prompt
+    duplicate.options = [option.model_copy(update={"id": "copy_" + option.id}) for option in reversed(first.options)]
+    duplicate.correct_option_id = "copy_" + first.correct_option_id
+    course = game.model_copy(update={"scenes": [scene]}), knowledge
+    books = {"short": course}
+    state = expedition.new_expedition("short-book", books)
+    state.tower.best_floor = 15
+    state.battle.xp = 2200
+    state = command(state, books, "tower_enter")
+    gate = tower.projection(state, books)
+    assert gate.chain_target == 2 and gate.question_mode == "recall"
+    assert set(state.tower.battle.expedition.tower_questions) == {first.challenge_id, other.challenge_id}
+    state = pick(state, books)
+    restored = ExpeditionState.model_validate_json(state.model_dump_json())
+    assert tower.projection(state, books) == tower.projection(restored, books)
+    assert pick(restored, books).tower.phase == "cleared"
+
+    legacy = restored.model_copy(deep=True)
+    legacy.tower.battle.expedition.tower_questions = []
+    assert tower.projection(legacy, books).chain_target == 2
+
+
+def test_legacy_floor_keeps_issued_prompt_and_option_bindings(books):
+    state = expedition.new_expedition("pre-draw-save", books)
+    course = tower.floor_course(books["book"], 4)
+    fight = battle_rules.new_battle("pre-draw-save:tower:4", "book", *course)
+    state.tower.floor, state.tower.best_floor, state.tower.phase = 4, 3, "combat"
+    state.tower.battle = battle_rules.begin_encounter(
+        fight, course[0], "willow_lock", [], region_index=0, tower_floor=4,
+    )
+    issued = active_exam(state.tower.battle, *course)
+    data = state.model_dump()
+    del data["tower"]["last_draw_by_game"]
+    del data["tower"]["battle"]["expedition"]["tower_questions"]
+    restored = ExpeditionState.model_validate(data)
+    assert tower.projection(restored, books).battle.prompt == issued.prompt
+    answered = command(restored, books, "tower_answer", prompt_id=issued.prompt.prompt_id,
+                       option_id=issued.answer_id, skill="strike")
+    assert answered.tower.battle.last_event.correct
+
+
 @pytest.mark.parametrize("hero", ["vanguard", "ranger", "arcanist"])
 def test_mixed_accuracy_costs_health_and_allows_recovery(books, hero):
     results = []
-    for rhythm in ((True,), (True, True, True, False), (True, False), (False,)):
-        state = command(expedition.new_expedition("profile", books, hero), books, "tower_enter")
+    for rhythm in ((True,), (True, False, True, True), (True, False), (False,)):
+        start = expedition.new_expedition("profile", books, hero)
+        start.tower.best_floor = 3  # Four primary questions, a two-answer streak and a real missed turn.
+        state = command(start, books, "tower_enter")
         for i in range(40):
             state = pick(state, books, correct=rhythm[i % len(rhythm)])
             if state.tower.phase != "combat":

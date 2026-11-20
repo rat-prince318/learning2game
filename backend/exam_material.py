@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from .exam_answers import conflicts_with_solution
 from .material_processing import Material, MaterialError, TextBlock
 from .models import KnowledgeItem, MaterialResult
+from .question_identity import exercise_key
 
 _PROBLEM = re.compile(
     r"^(?:(?:question|problem|exercise)\s+(\d{1,3})\s*[.、:)]?|(\d{1,3})[.、)](?=\s|[^\x00-\x7f])\s*|第\s*(\d{1,3})\s*题\s*[.、:：]?)\s*(.*)$",
@@ -143,6 +144,7 @@ def knowledge_from_exam(material, problems, filename, *, live_provider=None):
 
     items, skipped, model_candidates = [], 0, 0
     seen = set()
+    assigned_ids = set()
     for problem in problems:
         for part in problem.parts or [Part("")]:
             # A standalone numbered question often ends in the same paragraph
@@ -170,7 +172,7 @@ def knowledge_from_exam(material, problems, filename, *, live_provider=None):
             if result is None:
                 skipped += 1
                 continue
-            match = result.en.prompt.casefold()
+            match = exercise_key(result.en.prompt, result.en.options[result.correct_index])
             if match in seen:
                 continue
             seen.add(match)
@@ -192,7 +194,12 @@ def knowledge_from_exam(material, problems, filename, *, live_provider=None):
                 else source.label
             )
             # Material IDs remain content-derived and valid after a file is renamed.
-            digest = hashlib.sha256((result.en.prompt + "|" + anchor).encode()).hexdigest()[:16]
+            id_source = result.en.prompt + "|" + anchor
+            digest = hashlib.sha256(id_source.encode()).hexdigest()[:16]
+            if digest in assigned_ids:
+                # Sections can restart numbering with a generic stem and different choices.
+                digest = hashlib.sha256((id_source + "|" + result.en.options[result.correct_index]).encode()).hexdigest()[:16]
+            assigned_ids.add(digest)
             model_solved = reviewed_by_model and not part.solution.text
             attribution = "模型独立求解与复核 (model-checked)" if model_solved else "改编练习 (adapted exercise)"
             items.append(

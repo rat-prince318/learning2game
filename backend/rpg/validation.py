@@ -8,6 +8,7 @@ from math import ceil
 from matching_agent.wording import has_unwanted_wording
 
 from ..models import KnowledgeItem
+from ..question_identity import exercise_key
 from ..question_language import accepts
 from .models import RPGGameInternal, RPGIssue, RPGPlan, RPGPreferences, RPGValidationReport
 
@@ -33,19 +34,46 @@ def _deictic_subject(item):
             and re.match(rf"^\s*{re.escape(term)}\s+(?:is|are|was|were|am)\b", item.evidence or "", re.I))
 
 
+def challenge_key(question):
+    answer = next(option.text for option in question.options if option.id == question.correct_option_id)
+    return exercise_key(question.prompt, answer)
+
+
+def coverage_key(item, language):
+    if item.exam_question:
+        wording = getattr(item.exam_question, language or "en")
+        return ("exam", *exercise_key(wording.prompt, wording.options[item.exam_question.correct_index]))
+    return ("glossary", *exercise_key(item.term, item.definition))
+
+
 def eligible(knowledge: list[KnowledgeItem]) -> list[KnowledgeItem]:
     # B owns source verification and deduplication. Recheck the stored roster
     # because older/custom factories can return missing or conflicting evidence.
     terms = Counter(key(k.term) for k in knowledge)
     definitions = Counter(key(k.definition) for k in knowledge)
     ids = Counter(k.knowledge_id for k in knowledge)
-    return [k for k in knowledge if k.evidence and key(k.evidence)
+    candidates = [k for k in knowledge if k.evidence and key(k.evidence)
             and key(k.source_ref) not in {"unknown", "n/a", "未知", "无"}
             and key(k.definition) != key(k.term) and not _deictic_subject(k)
-            and ids[k.knowledge_id] == terms[key(k.term)] == definitions[key(k.definition)] == 1
+            and ids[k.knowledge_id] == 1
+            and (k.exam_question or terms[key(k.term)] == definitions[key(k.definition)] == 1)
             and not any(has_unwanted_wording(s) for s in (k.term, k.definition, k.source_ref))
             and not any(re.search(r"<\s*/?\s*[a-zA-Z]|(?:javascript|data):|https?://", s, re.I)
                         for s in (k.term, k.definition, k.source_ref))]
+    # Verified exercises bring their own complete options. Independent numerical
+    # problems can legitimately share both the topic label and the final value.
+    distinct = {}
+    for item in candidates:
+        distinct.setdefault(coverage_key(item, "en"), item)
+    return list(distinct.values())
+
+
+def minimum_challenges(preferences, available_count, review=False):
+    # A short, explicitly scoped volume can draw distractors from its full source.
+    exact_scope = getattr(preferences, "selected_knowledge_ids", None)
+    if review or (available_count >= 3 and exact_scope and len(exact_scope) == preferences.challenge_count):
+        return 1
+    return 3
 
 
 def select(knowledge, preferences: RPGPreferences, previous_report=None):
@@ -63,7 +91,7 @@ def select(knowledge, preferences: RPGPreferences, previous_report=None):
         selected = [by_id[kid] for kid in requested]
     else:
         selected = [k for k in pool if k.knowledge_id in allowed][:preferences.challenge_count]
-    minimum = 1 if previous_report is not None else 3
+    minimum = minimum_challenges(preferences, len(pool), previous_report is not None)
     if len(selected) < minimum:
         raise RPGContentError("普通冒险需要三个有出处的知识点。请扩展范围、补充资料，或尝试配对练习。"
                               if minimum == 3 else "本轮复习范围缺少带证据的知识点，请重新选择资料。")
@@ -143,6 +171,7 @@ def _gives_mapping(paragraph, prompt, item, answer, alternatives):
 
 def check_game(game: RPGGameInternal, plan: RPGPlan, knowledge) -> RPGValidationReport:
     issues = []
+    seen_questions = set()
 
     def issue(code, message, challenge=None):
         issues.append(RPGIssue(code=code, message=message, challenge_id=challenge))
@@ -163,6 +192,10 @@ def check_game(game: RPGGameInternal, plan: RPGPlan, knowledge) -> RPGValidation
             if any(_COMBINATION.search(o.text) for o in q.options):
                 issue("combined_choice", "请使用各自独立的选项。", q.challenge_id)
             answer = next(o.text for o in q.options if o.id == q.correct_option_id)
+            identity = exercise_key(q.prompt, answer)
+            if identity in seen_questions:
+                issue("repeated_exercise", "两道挑战考查同一题面与答案，请替换为独立练习。", q.challenge_id)
+            seen_questions.add(identity)
             language = plan.question_language
             if language and (game.question_language != language or not all(accepts(t, language)
                     for t in [q.prompt, q.hint, q.explanation, *[o.text for o in q.options]])):

@@ -115,25 +115,32 @@ def _review(state, token, question, game, knowledge):
                              hint=tip if state.hinted else None), answer, tip, question, lesson)
 
 
-def question_mode(floor, width):
+def question_mode(floor, width, *, sequenced=False):
     if floor <= 1:
         return "recognition"
-    if floor <= 3 or width < 2:
+    # Keep a spare clue so successive rounds ask for different combinations.
+    # Existing saves retain their original option tuples until the next floor.
+    if floor <= 3 or width < (3 if sequenced else 2):
         return "recall"
-    if floor <= 6 or width < 3:
+    if floor <= 6 or width < (4 if sequenced else 3):
         return "paired"
     return "synthesis"
 
 
 def _tower_exam(state, token, question, scene, knowledge):
     floor = state.expedition.tower_floor
-    mode = question_mode(floor, len(scene.challenges))
+    sequenced = bool(getattr(state.expedition, "tower_questions", ()))
+    mode = question_mode(floor, len(scene.challenges), sequenced=sequenced)
     seed = (state.camp_key, token)
     fields = [question]
     records = {k.knowledge_id: k for k in knowledge if _displayable(k)}
     if mode in {"paired", "synthesis"}:
-        peers = sorted((q for q in scene.challenges if q.knowledge_id != question.knowledge_id),
-                       key=lambda q: _token(*seed, q.challenge_id))
+        if sequenced:
+            position = scene.challenges.index(question)
+            peers = scene.challenges[position + 1:] + scene.challenges[:position]
+        else:
+            peers = sorted((q for q in scene.challenges if q.knowledge_id != question.knowledge_id),
+                           key=lambda q: _token(*seed, q.challenge_id))
         fields += peers[:1 if mode == "paired" else 2]
     hints = "\n".join(q.hint for q in fields)
     right = [next(o.text for o in q.options if o.id == q.correct_option_id) for q in fields]

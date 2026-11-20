@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from backend.db import connection
 from backend.main import create_app
 from backend.pipeline import _knowledge
+from backend.question_identity import exercise_key
 from backend.rpg.games import read_rpg_internal
 from rpg_play_scenario import job_result
 
@@ -69,6 +70,46 @@ def test_outline_covers_a_complete_long_lecture_and_flags_excess(app):
         with connection(c.app) as conn:
             material = _knowledge(conn, over["material_id"])
             assert len(material.knowledge) == 64 and any("64" in w for w in material.warnings)
+
+
+def test_overlapping_exam_sources_publish_each_exercise_once_and_keep_distinct_numerical_cases(app):
+    # The first two problems even have the same answer. The givens distinguish them.
+    force_a = "An object of mass 6 kg accelerates at 4 m/s². Find the net force."
+    force_b = "An object of mass 8 kg accelerates at 3 m/s². Find the net force."
+    energy = "A cart of mass 3 kg moves at 6 m/s. What is its kinetic energy?"
+    momentum = "A particle of mass 5 kg moves at 8 m/s. Determine its momentum."
+
+    def paper(*rows):
+        return ("Mechanics Quiz\n" + "\n".join(f"{i}. {row}" for i, row in enumerate(rows, 1))).encode()
+
+    with TestClient(app) as c:
+        sources = [upload(c, filename, data)["material_id"] for filename, data in [
+            ("first.txt", paper(force_a, force_b, energy, force_a)),
+            ("practice.txt", paper(energy, force_a, momentum)),
+            ("copy.txt", paper(force_b, force_a, energy)),
+        ]]
+        response = c.post("/rpg/expedition-outline", json={
+            "sources": [{"material_id": mid} for mid in sources], "question_language": "zh",
+        })
+        assert response.status_code == 200, response.text
+        outline = response.json()
+        assert outline["concept_count"] == 4
+        assert [len(book["terms"]) for book in outline["volumes"]] == [3, 1]
+        gids = [publish(c, book["plan_request"]) for book in outline["volumes"]]
+        with connection(app) as db:
+            questions = [q for gid in gids for scene in read_rpg_internal(db, gid).scenes for q in scene.challenges]
+        assert len({q.prompt for q in questions}) == 4
+        assert "6 kg" in questions[0].prompt and "8 kg" in questions[1].prompt
+        assert questions[-1].source_ref.startswith("practice.txt")
+        assert opening(c, gids)["chapter_count"] == 4
+
+
+def test_exercise_identity_keeps_formula_case_exponents_and_code_indentation():
+    assert exercise_key("Find   F?", "24 N") == exercise_key(" Find F？ ", "24 N")
+    assert exercise_key("Find F?", "24 N") != exercise_key("Find f?", "24 N")
+    assert exercise_key("Evaluate x²", "4") != exercise_key("Evaluate x2", "4")
+    assert exercise_key("Which holds?", "Yes") != exercise_key("Which holds?", "No")
+    assert exercise_key("Run:\n    print(x)", "x") != exercise_key("Run:\nprint(x)", "x")
 
 
 def test_atomic_creation_replays_and_non_anchor_deletion(app, tmp_path):

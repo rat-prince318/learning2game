@@ -251,6 +251,23 @@
           ],
           "default": null,
           "title": "Hint"
+        },
+        "purpose": {
+          "anyOf": [
+            {
+              "enum": [
+                "retry",
+                "tower_practice",
+                "finisher"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purpose"
         }
       },
       "required": [

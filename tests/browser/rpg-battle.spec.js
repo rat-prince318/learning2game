@@ -236,11 +236,16 @@ test('defeat opens sourced camp exercises; refresh restores them and recovery re
   await expectView(page, view);
   await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story','camp');
   await expect(page.getByTestId('battle-lesson')).toContainText(first.definition);
-  // An incorrect correction keeps the same concept available for another attempt.
+  const taskCount = view.battle.sidequest.total;
   view = await playTurn(page, view, { correct: false });
-  expect(view.battle.sidequest.lesson.term).toBe(first.term);
-  for (let turn = 0; view.phase === 'sidequest' && turn < 12; turn++)
+  expect(view.battle.sidequest.completed).toBe(0);
+  const order = [];
+  for (let turn = 0; view.phase === 'sidequest' && turn < taskCount; turn++) {
+    order.push(view.battle.sidequest.lesson.term);
     view = await playTurn(page, view);
+  }
+  expect(new Set(order).size).toBe(taskCount);
+  expect(order.at(-1)).toBe(first.term);
   expect(view.phase).toBe('combat');
   expect(view.battle.sidequests_completed).toBe(1);
   expect(view.battle.tactics.encounter_id).toBe(boss);
