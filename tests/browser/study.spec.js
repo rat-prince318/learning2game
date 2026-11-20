@@ -69,8 +69,13 @@ test('an uploaded expedition publishes course math, settles a turn and shares it
       buffer: Buffer.from(lesson),
     });
   await page.locator('#lr-depart button[type=submit]').click();
-  await page.locator('.lr-travel-list summary').click();
-  await page.locator('[data-do=spot][data-key=normal]').click();
+  await page.locator('.lr-track-quest').click();
+  const story = page.locator('#story-dialog');
+  await story.getByRole('button', {name: /Continue/}).click();
+  await story.getByRole('button', {name: /Continue/}).click();
+  await story.locator('.sc-options .choice').first().click();
+  await story.getByRole('button', {name: 'Return to the field'}).click();
+  await page.locator('.lr-track-quest').click();
   await page.locator('[data-do=engage]').click();
   await expect(page.locator('.bf-quiz math').first()).toBeAttached();
   await page.locator('[data-testid=battle-option]').first().click();

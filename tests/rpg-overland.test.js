@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMap, footpath, moveFeet, CELL, HEIGHT, WIDTH } from '../public/rpg/world/overland-map.js';
+import { buildMap, footpath, moveFeet, CELL, HEIGHT, WIDTH, ROWS, COLS } from '../public/rpg/world/overland-map.js';
 
 const routes = [{ id: 'normal' }, { id: 'elite' }];
 
@@ -23,7 +23,7 @@ test('every regional keeper, mechanism, ghost ship, sentry and trap is reachable
   assert.equal(approaches.size, 8);
 });
 
-test('the swept footprint slides along buildings, stops at water, and crosses both bridges', () => {
+test('the swept footprint slides along buildings, stops at water, and crosses all bridges', () => {
   for (let i = 0; i < 8; i++) {
     const map = buildMap(i, routes);
     for (const b of map.bridges) {
@@ -51,4 +51,36 @@ test('the swept footprint slides along buildings, stops at water, and crosses bo
     assert.ok(!map.pass(-5, 40));
     assert.ok(!map.pass(WIDTH + 1, HEIGHT + 1));
   }
+});
+
+test('all eight maps connect the outer districts, field exit and four rotating encounter sites', () => {
+  assert.ok(ROWS * COLS >= 2.5 * 68 * 46);
+  const titles = new Set();
+  for (let i = 0; i < 8; i++) {
+    const dangerPositions = new Set();
+    for (let scene = 0; scene < 4; scene++) {
+      const map = buildMap(i, routes, {}, scene);
+      assert.equal(map.bridges.length, 5);
+      assert.equal(map.landmarks.length, 3);
+      assert.ok(map.landmarks.every((d) => d.name[0] && d.name[1] && d.description.every(Boolean)));
+      map.landmarks.forEach((d) => titles.add(d.name[0]));
+      const { normal, elite } = map.dots;
+      assert.equal(elite.kind, 'trap');
+      assert.ok(Math.hypot(normal.x - elite.x, normal.y - elite.y) > 60);
+      dangerPositions.add(normal.x + ',' + normal.y);
+      const escaping = { ...elite };
+      const outpost = map.dots['north-post'];
+      for (const p of footpath(map, escaping, outpost, [elite, normal]))
+        moveFeet(map, escaping, p.x - escaping.x, p.y - escaping.y);
+      assert.ok(Math.hypot(escaping.x - outpost.x, escaping.y - outpost.y) < 1, 'May pathfind away after dismissing a trap');
+      for (const [name, dest] of Object.entries(map.dots)) {
+        const avoid = [normal, elite].filter((d) => d !== dest);
+        const feet = { ...map.spawn };
+        for (const p of footpath(map, feet, dest, avoid)) moveFeet(map, feet, p.x - feet.x, p.y - feet.y);
+        assert.ok(Math.hypot(dest.x - feet.x, dest.y - feet.y) < 1, `region ${i} scene ${scene} to ${name}`);
+      }
+    }
+    assert.equal(dangerPositions.size, 4);
+  }
+  assert.equal(titles.size, 24);
 });

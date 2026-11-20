@@ -44,7 +44,7 @@ class RPGAgent:
 
     async def recommend(self, knowledge, preferences):
         pool = eligible(knowledge)
-        minimum = minimum_challenges(preferences, len(pool))
+        minimum = minimum_challenges(preferences, pool)
         supported = ["matching", "rpg_quest"]
         selected = getattr(preferences, "selected_knowledge_ids", None)
         count = getattr(preferences, "challenge_count", 6)
@@ -107,9 +107,10 @@ class RPGAgent:
         pool = await localized_items(pool, plan.question_language, self.client)
         if set(plan.knowledge_ids) - {k.knowledge_id for k in pool}:
             raise RPGContentError("请重新确认资料范围，当前方案含有缺少依据的知识点。")
-        if len(pool) < 3:
+        supplied_options = len(pool) < 3 and all(item.exam_question for item in pool)
+        if len(pool) < 3 and not supplied_options:
             raise RPGContentError("单选挑战需要可区分的选项，请补充至少三个概念及对应证据。")
-        if not self.client:
+        if not self.client or supplied_options:
             with trace_tool("rule_generate_rpg_config"):
                 draft = offline.local_game(pool, plan, previous)
                 game = offline.assemble_game(draft, plan, pool, previous)

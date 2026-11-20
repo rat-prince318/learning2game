@@ -26,7 +26,7 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
       books: [],
       startId: newId(),
     };
-    const cached = builtin && readLocal('l2g.fieldbook.2.' + locale + '.' + difficulty);
+    const cached = builtin && readLocal('l2g.fieldbook.3.' + locale + '.' + difficulty);
     if (cached?.length) task.books = cached.map((game) => ({ game }));
     tabRecords.write(jobKey, task);
   }
@@ -71,9 +71,10 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
         save();
       }
       const outline = await post('/rpg/expedition-outline', {
+        eight_chapters: true,
         sources: task.sources.map((x) => ({ material_id: x.material })),
         concepts_per_volume: task.builtin ? 4 : 8,
-        scenes_per_volume: 2,
+        scenes_per_volume: 4,
         difficulty: task.difficulty,
         question_language: task.locale,
       });
@@ -108,17 +109,19 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
   try {
     const view = await post('/rpg/expeditions', {
       game_ids: ids,
+      source_material_ids: task.sources.map((source) => source.material),
       hero_class: task.role,
       campaign_story: true,
+      eight_chapters: true,
       kit: task.role === 'vanguard' ? 'ward' : 'trail',
       request_id: task.startId,
     });
-    if (task.builtin) saveLocal('l2g.fieldbook.2.' + task.locale + '.' + task.difficulty, ids);
+    if (task.builtin) saveLocal('l2g.fieldbook.3.' + task.locale + '.' + task.difficulty, ids);
     discardBuild(locale);
     return view;
   } catch (error) {
     if (error.status === 404) {
-      if (task.builtin) saveLocal('l2g.fieldbook.2.' + task.locale + '.' + task.difficulty, null);
+      if (task.builtin) saveLocal('l2g.fieldbook.3.' + task.locale + '.' + task.difficulty, null);
       discardBuild(locale);
     }
     throw error;

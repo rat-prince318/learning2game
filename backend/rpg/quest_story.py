@@ -23,7 +23,7 @@ def decide(state, choice: str):
     if choice in ENDINGS:
         if state.phase != "victory" or state.story_ending is not None:
             raise BattleError(409, "这次旅程的结局只能在胜利后决定一次。")
-        needed = min(3, len(state.game_ids))
+        needed = 3 if state.eight_chapters else min(3, len(state.game_ids))
         if (
             choice == "wake_towns"
             and len(state.story_marks.keys() & set(state.field_signals)) < needed

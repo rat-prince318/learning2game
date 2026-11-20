@@ -48,7 +48,7 @@ def test_routes_offer_an_actual_choice_for_every_book_size_and_converge_at_the_b
             else:
                 assert len({route.encounter_id for route in routes}) == 2
                 assert all(not route.boss for route in routes)
-    for invalid in [(-1, 0, 1), (8, 0, 1), (0, -1, 1), (0, 2, 2), (0, 1, 5)]:
+    for invalid in [(-1, 0, 1), (8, 0, 1), (0, -1, 1), (0, 2, 2), (0, 5, 5)]:
         with pytest.raises(ValueError):
             world.routes_for(*invalid)
 

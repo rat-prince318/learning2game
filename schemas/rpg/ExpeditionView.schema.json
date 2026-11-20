@@ -454,6 +454,30 @@
     "ChapterMap": {
       "additionalProperties": false,
       "properties": {
+        "kind": {
+          "default": "battle",
+          "enum": [
+            "battle",
+            "exploration"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "game_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Game Id"
+        },
         "scene_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1031,6 +1055,12 @@
     "RegionMap": {
       "additionalProperties": false,
       "properties": {
+        "knowledge_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Knowledge Count",
+          "type": "integer"
+        },
         "region_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1773,6 +1803,29 @@
   },
   "additionalProperties": false,
   "properties": {
+    "eight_chapters": {
+      "default": false,
+      "title": "Eight Chapters",
+      "type": "boolean"
+    },
+    "cleared_regions": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Cleared Regions",
+      "type": "integer"
+    },
+    "knowledge_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Knowledge Count",
+      "type": "integer"
+    },
+    "covered_knowledge_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Covered Knowledge Count",
+      "type": "integer"
+    },
     "legacy_exam_cover": {
       "default": false,
       "title": "Legacy Exam Cover",

@@ -2,10 +2,26 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
+    "eight_chapters": {
+      "default": false,
+      "title": "Eight Chapters",
+      "type": "boolean"
+    },
     "campaign_story": {
       "default": false,
       "title": "Campaign Story",
       "type": "boolean"
+    },
+    "source_material_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "title": "Source Material Ids",
+      "type": "array"
     },
     "game_ids": {
       "items": {
@@ -14,7 +30,6 @@
         "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
         "type": "string"
       },
-      "maxItems": 8,
       "minItems": 1,
       "title": "Game Ids",
       "type": "array"

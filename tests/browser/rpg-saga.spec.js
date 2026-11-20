@@ -34,7 +34,7 @@ async function prepareExpedition(page) {
 
 async function walkTo(page, key) {
   await page.locator('.lr-travel-list summary').click();
-  await page.locator(`[data-do="spot"][data-key="${key}"]`).click();
+  await page.locator(`.lr-travel-list [data-do="spot"][data-key="${key}"]`).click();
 }
 
 async function expectFullField(page) {
@@ -166,4 +166,50 @@ test('rescue the ferry crew, master both dragon phases and reload the final orde
     story_marks: { willow_ferry: 'ferry_child' },
     story_ending: 'shatter_crown',
   });
+});
+
+test('take a short save into eight chapters, follow the moving guide and leave the first exploration chapter', async ({page}) => {
+  test.setTimeout(120000);
+  const original = await prepareExpedition(page);
+  const oldPath = '/rpg/expeditions/' + original.session_id;
+  const end = await page.request.post(oldPath + '/actions', {data: {
+    action: 'retreat', event_id: crypto.randomUUID(), expected_revision: original.revision,
+  }});
+  expect(end.ok()).toBe(true);
+  await page.goto('/rpg/?session=' + original.session_id);
+  await page.getByRole('button', {name: '用这份资料开始八章主线'}).click();
+  const marker = page.locator('.lr-guide');
+  await expect(marker).toBeVisible();
+  const sid = new URL(page.url()).searchParams.get('session');
+  expect(sid).not.toBe(original.session_id);
+  const state = async () => (await page.request.get('/rpg/expeditions/' + sid)).json();
+  expect((await state()).map).toHaveLength(8);
+  expect((await state()).map[0].chapters[0].kind).toBe('exploration');
+  await expect(marker).toHaveAttribute('data-target', 'ship');
+  await page.setViewportSize({width:390,height:844});
+  await expect(marker).toBeInViewport({ratio:1});
+  const initial = await marker.locator('small').innerText();
+  await page.locator('.lr-track-quest').click();
+  await expect.poll(() => marker.locator('small').innerText()).not.toBe(initial);
+  const story = page.locator('#story-dialog');
+  await expect(story).toBeVisible({timeout:20000});
+  await expect(marker).toBeHidden();
+  await story.getByRole('button', {name:/继续/}).click();
+  await story.getByRole('button', {name:/继续/}).click();
+  await story.getByRole('button', {name:/砸开船牢/}).click();
+  await story.getByRole('button', {name:'回到战场'}).click();
+  await expect(marker).toHaveAttribute('data-target', 'site');
+  await page.locator('.lr-track-quest').click();
+  await page.locator('[data-do=tune]').click({timeout:20000});
+  await page.locator('[data-do=tune]').click();
+  await page.locator('[data-do=inspect]').click();
+  await page.locator('[data-do=walk]').click();
+  await expect(marker).toHaveAttribute('data-target', 'ship');
+  await page.locator('.lr-track-quest').click();
+  await page.locator('[data-do=depart-region]').click({timeout:20000});
+  await expect.poll(async () => (await state()).region_index).toBe(1);
+  await page.reload();
+  await expect(page.locator('.lr-chapter')).toContainText('第 2 / 8 章');
+  await expect(marker).toHaveAttribute('data-target','keeper');
+  expect((await (await page.request.get(oldPath)).json()).phase).toBe('retreated');
 });

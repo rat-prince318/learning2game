@@ -68,10 +68,11 @@ def eligible(knowledge: list[KnowledgeItem]) -> list[KnowledgeItem]:
     return list(distinct.values())
 
 
-def minimum_challenges(preferences, available_count, review=False):
+def minimum_challenges(preferences, pool, review=False):
     # A short, explicitly scoped volume can draw distractors from its full source.
     exact_scope = getattr(preferences, "selected_knowledge_ids", None)
-    if review or (available_count >= 3 and exact_scope and len(exact_scope) == preferences.challenge_count):
+    independent_choices = len(pool) >= 3 or all(item.exam_question for item in pool)
+    if review or (independent_choices and exact_scope and len(exact_scope) == preferences.challenge_count):
         return 1
     return 3
 
@@ -91,7 +92,7 @@ def select(knowledge, preferences: RPGPreferences, previous_report=None):
         selected = [by_id[kid] for kid in requested]
     else:
         selected = [k for k in pool if k.knowledge_id in allowed][:preferences.challenge_count]
-    minimum = minimum_challenges(preferences, len(pool), previous_report is not None)
+    minimum = minimum_challenges(preferences, pool, previous_report is not None)
     if len(selected) < minimum:
         raise RPGContentError("普通冒险需要三个有出处的知识点。请扩展范围、补充资料，或尝试配对练习。"
                               if minimum == 3 else "本轮复习范围缺少带证据的知识点，请重新选择资料。")

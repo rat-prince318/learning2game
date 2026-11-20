@@ -29,6 +29,12 @@ class InspectLandmark(StrictModel):
     expected_revision: Count
 
 
+class AdvanceExploration(StrictModel):
+    action: Literal["advance_exploration"]
+    event_id: Identifier
+    expected_revision: Count
+
+
 class ChooseReward(StrictModel):
     action: Literal["choose_reward"]
     event_id: Identifier
@@ -70,7 +76,7 @@ class TowerEquip(Equip):
 
 
 ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | ChooseReward | Retreat |
-                             PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark,
+                             PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark | AdvanceExploration,
                              Field(discriminator="action")]
 
 
@@ -145,11 +151,13 @@ class TowerView(StrictModel):
 
 
 class ExpeditionState(StrictModel):
+    eight_chapters: bool = False
+    excluded_cards: dict[Identifier, list[Identifier]] = Field(default_factory=dict)
     campaign_story: bool = False
     story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
     story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
     session_id: Identifier
-    game_ids: list[Identifier] = Field(min_length=1, max_length=8)
+    game_ids: list[Identifier] = Field(min_length=1)
     hero_class: ClassId
     kit: KitId
     veteran: bool = False
@@ -173,6 +181,8 @@ class ExpeditionState(StrictModel):
 
 
 class ChapterMap(StrictModel):
+    kind: Literal["battle", "exploration"] = "battle"
+    game_id: Identifier | None = None
     scene_id: Identifier
     name: ShortText
     objective: Description
@@ -182,6 +192,7 @@ class ChapterMap(StrictModel):
 
 
 class RegionMap(StrictModel):
+    knowledge_count: Count = 0
     region_id: Identifier
     name: ShortText
     game_id: Identifier
@@ -190,6 +201,10 @@ class RegionMap(StrictModel):
 
 
 class ExpeditionView(StrictModel):
+    eight_chapters: bool = False
+    cleared_regions: Count = 0
+    knowledge_count: Count = 0
+    covered_knowledge_count: Count = 0
     legacy_exam_cover: bool = False
     campaign_story: bool = False
     story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)

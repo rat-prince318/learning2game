@@ -18,10 +18,11 @@ router = APIRouter(prefix="/rpg", tags=["RPG expeditions"])
 
 class OutlineSource(StrictModel):
     material_id: Identifier
-    selected_knowledge_ids: list[Identifier] | None = Field(default=None, min_length=3, max_length=64)
+    selected_knowledge_ids: list[Identifier] | None = Field(default=None, min_length=1, max_length=1000)
 
 
 class OutlineRequest(StrictModel):
+    eight_chapters: bool = False
     question_language: Literal["zh", "en"] | None = None
     sources: list[OutlineSource] = Field(min_length=1, max_length=8)
     concepts_per_volume: int = Field(default=8, strict=True, ge=3, le=8)
@@ -58,13 +59,14 @@ def outline(body: OutlineRequest, request: Request):
     with connection(request.app) as conn:
         for source in body.sources:
             concepts = eligible(_knowledge(conn, source.material_id).knowledge)
+            source_can_publish = len(concepts) >= 3 or bool(concepts) and all(k.exam_question for k in concepts)
             selected = source.selected_knowledge_ids
             if selected is not None:
                 by_id = {item.knowledge_id: item for item in concepts}
                 if len(set(selected)) != len(selected) or any(k not in by_id for k in selected):
                     raise HTTPException(422, "请为这份资料选择互异且有出处的知识点。")
                 concepts = [by_id[k] for k in selected]
-            if len(concepts) < 3:
+            if len(concepts) < 3 and not (body.eight_chapters and source_can_publish):
                 raise HTTPException(422, "每份资料至少需要三个可区分且有出处的知识点。")
             unique = []
             for item in concepts:
@@ -79,7 +81,12 @@ def outline(body: OutlineRequest, request: Request):
             # Spread the tail across all volumes so a nine-concept source yields
             # five and four questions, both accepted by the ordinary planner.
             count = max(1, min(ceil(size / body.concepts_per_volume), size // 3))
-            if len(volumes) + count > 8:
+            if body.eight_chapters:
+                # Give short uploads up to eight distinct battles, one per region.
+                # Longer lectures keep up to eight exercises per publication.
+                width = min(body.concepts_per_volume, body.scenes_per_volume) if size <= 8 else body.concepts_per_volume
+                count = ceil(size / width)
+            if not body.eight_chapters and len(volumes) + count > 8:
                 raise HTTPException(422, "一场远征最多八卷。请缩小知识范围，或调高每卷题量。")
             offset = 0
             for index in range(count):

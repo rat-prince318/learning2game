@@ -50,6 +50,20 @@ def initialize(app):
         schema = Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
         # SQLite ALTER TABLE and the data backfill must either both commit or both roll back.
         db.executescript("PRAGMA foreign_keys = ON;\nBEGIN IMMEDIATE;\n" + schema)
+        books_sql = db.execute("SELECT sql FROM sqlite_master WHERE name='expedition_books'").fetchone()[0]
+        if "book_index BETWEEN 0 AND 7" in books_sql:
+            # SQLite cannot alter CHECK in place. Rebuild the link table inside
+            # this transaction, preserving both indexes and the source cleanup trigger.
+            index_sql, trigger_sql = [db.execute("SELECT sql FROM sqlite_master WHERE name=?", (name,)).fetchone()[0]
+                                      for name in ("expedition_books_by_game", "delete_expeditions_using_game")]
+            db.execute(books_sql.replace("expedition_books", "expedition_books_new", 1)
+                       .replace("book_index BETWEEN 0 AND 7", "book_index >= 0"))
+            db.execute("INSERT INTO expedition_books_new SELECT * FROM expedition_books")
+            db.execute("DROP TRIGGER delete_expeditions_using_game")
+            db.execute("DROP TABLE expedition_books")
+            db.execute("ALTER TABLE expedition_books_new RENAME TO expedition_books")
+            db.execute(index_sql)
+            db.execute(trigger_sql)
         # Preserve uploads and sessions from earlier D checkouts.
         columns = {row[1] for row in db.execute("PRAGMA table_info(materials)")}
         if "options_json" not in columns:

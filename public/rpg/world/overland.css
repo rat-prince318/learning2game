@@ -161,6 +161,11 @@ body:has(.lr-world) {
   bottom: calc(100% + 6px);
   display: grid;
   min-width: 145px;
+  max-width: min(68vw, 290px);
+  max-height: calc(100dvh - 157px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 7px;
   gap: 4px;
   background: #182b32f5;

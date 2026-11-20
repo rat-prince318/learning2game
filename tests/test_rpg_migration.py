@@ -59,3 +59,28 @@ def test_upgrade_restarts_and_events_integrity(tmp_path):
         for table in ("plans", "games", "sessions", "reports", "rpg_events"):
             assert conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
         assert not list(conn.execute("PRAGMA foreign_key_check"))
+
+
+
+def test_old_expedition_links_survive_larger_course_library(tmp_path):
+    from pathlib import Path
+
+    path = tmp_path / "expeditions.sqlite3"
+    app = SimpleNamespace(state=SimpleNamespace(db_path=path))
+    schema = (Path(__file__).resolve().parents[1] / "backend/schema.sql").read_text(encoding="utf-8")
+    with open_database(path, write=True) as db:
+        db.executescript(schema.replace("book_index >= 0", "book_index BETWEEN 0 AND 7"))
+        for gid in ("anchor", "ninth"):
+            db.execute("INSERT INTO games(id, internal_json,public_json,card_map_json) VALUES(?,'{}','{}','{}')", (gid,))
+        db.execute("INSERT INTO expedition_runs(id,anchor_game_id,settings_json,state_json) VALUES('old','anchor','{}','{}')")
+        db.execute("INSERT INTO expedition_books VALUES('old',0,'anchor')")
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute("INSERT INTO expedition_books VALUES('old',8,'ninth')")
+    initialize(app)
+    initialize(app)
+    with open_database(path, write=True) as db:
+        assert tuple(db.execute("SELECT * FROM expedition_books").fetchone()) == ("old", 0, "anchor")
+        db.execute("INSERT INTO expedition_books VALUES('old',8,'ninth')")
+        db.execute("DELETE FROM games WHERE id='ninth'")
+        assert db.execute("SELECT count(*) FROM expedition_runs").fetchone()[0] == 0
+        assert not list(db.execute("PRAGMA foreign_key_check"))

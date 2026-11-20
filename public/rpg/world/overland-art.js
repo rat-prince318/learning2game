@@ -220,6 +220,91 @@ function localGround(c, map, p) {
     }
   }
 }
+// Footprints, workshops and work surfaces extend the illustration beyond the
+// station sprite. The same survey coordinates drive collision and interaction.
+function districtGround(c, spot, p) {
+  const x = (spot.col + 0.5) * CELL, y = (spot.row + 0.5) * CELL;
+  const stroke = (color, thickness, points) =>
+    line(c, color, thickness, points.map(([u, v]) => [x + u, y + v]));
+  if (spot.motif === 'salt' || spot.motif === 'terrace' || spot.motif === 'press') {
+    for (let row = 0; row < 3; row++)
+      for (let col = 0; col < 4; col++) {
+        const u = x - 55 + col * 26 + (row % 2) * 4, v = y + 26 + row * 11;
+        rect(c, p[5], u, v, 24, 9);
+        rect(c, spot.motif === 'salt' ? '#93b6a5' : spot.motif === 'press' ? '#dbceaa' : '#628548', u + 1, v + 1, 21, 6);
+        const light = spot.motif === 'salt' ? '#e1e6cc' : spot.motif === 'press' ? '#b28e70' : '#a2aa58';
+        rect(c, light, u + 2, v + 2, 17, 1);
+        rect(c, light, u + 5, v + 4, 12, 1);
+      }
+  } else if (spot.motif === 'rail' || spot.motif === 'kiln') {
+    for (let u = -78; u <= 78; u += 9) rect(c, '#594b43', x + u, y + 14, 4, 15);
+    for (const v of [15, 25]) {
+      stroke('#494c4d', 3, [[-85, v], [48, v], [81, v + 12]]);
+      stroke('#c0ad96', 1, [[-85, v - 1], [48, v - 1], [81, v + 11]]);
+    }
+  } else if (spot.motif === 'ring' || spot.motif === 'beacon') {
+    for (const r of [24, 40, 44]) {
+      const corners = Array.from({length: 13}, (_, i) => {
+        const a = i * Math.PI / 6;
+        return [Math.cos(a) * r, Math.sin(a) * r * 0.48 + 12];
+      });
+      stroke(r === 40 ? p[5] : p[4], 2, corners);
+    }
+    for (let i = 0; i < 12; i++) {
+      const a = i * Math.PI / 6;
+      rect(c, p[9], x + Math.cos(a) * 40 - 1, y + Math.sin(a) * 19 + 12, 2, 2);
+    }
+  } else if (spot.motif === 'cairn') {
+    for (let i = 0; i < 8; i++) {
+      const u = -72 + i * 19, v = 18 + Math.sin(i) * 10;
+      stroke(p[2], 2, [[u, v], [u + 9, v + 4], [u + 12, v + 1], [u + 18, v + 3]]);
+      stroke(p[8], 1, [[u + 1, v + 2], [u + 9, v + 6], [u + 13, v + 3]]);
+    }
+  } else {
+    for (let row = 0; row < 2; row++)
+      for (let i = -5; i < 6; i++) {
+        const u = x + i * 10, v = y + 17 + row * 10;
+        rect(c, '#625645', u, v, 9, 9);
+        rect(c, '#a78b64', u, v, 8, 8);
+        rect(c, '#bc9e75', u + 1, v + 1, 1, 6);
+      }
+  }
+}
+const terrainTints = {
+  reedbed: ['#648675', '#839a73', '#3f665e'],
+  saltflat: ['#b2b69c', '#d4dcc0', '#8da69c'],
+  slag: ['#645d59', '#a28b72', '#51494b'],
+  furrow: ['#9b915d', '#bbac69', '#767949'],
+  flagstone: ['#778388', '#9caaa8', '#606f78'],
+  ice: ['#accfd8', '#d5f0e8', '#83b5c2'],
+  cobble: ['#8a8171', '#aea18a', '#68685f'],
+  basalt: ['#595b73', '#9789a1', '#48475e'],
+};
+function regionalTile(c, kind, x, y, rng) {
+  const [base, light, shade] = terrainTints[kind];
+  rect(c, base, x, y, 16, 16);
+  if (kind === 'flagstone' || kind === 'cobble') {
+    const side = kind === 'cobble' ? 8 : 16;
+    for (let v = 0; v < 16; v += 8) {
+      rect(c, shade, x, y + v + 7, 16, 1);
+      for (let u = (v ? 0 : side / 2); u < 16; u += side) rect(c, shade, x + u, y + v, 1, 7);
+      rect(c, light, x + (v ? 2 : 8), y + v + 1, 4 + rng(v) * 3, 1);
+    }
+  } else if (kind === 'reedbed' || kind === 'furrow') {
+    for (let i = 0; i < 3; i++) {
+      const u = x + i * 5 + 1, v = y + 6 + rng(i) * 6;
+      rect(c, shade, u, v, kind === 'furrow' ? 2 : 5, 1);
+      rect(c, light, u + 2, v - 3, 1, 3);
+    }
+    if (kind === 'furrow') rect(c, shade, x, y + 14, 16, 2);
+  } else {
+    for (let i = 0; i < 3; i++) {
+      const u = x + rng(i) * 10, v = y + rng(i + 5) * 12;
+      rect(c, shade, u + 1, v + 1, 4, 1);
+      rect(c, light, u, v, kind === 'ice' || kind === 'saltflat' ? 6 : 2, 1);
+    }
+  }
+}
 function floorTexture(map, p) {
   const out = document.createElement('canvas');
   out.width = WIDTH;
@@ -303,6 +388,8 @@ function floorTexture(map, p) {
               rect(c, p[0], px, py, dx ? dep : 2, dy ? dep : 2);
             }
           }
+      } else if (terrainTints[kind]) {
+        regionalTile(c, kind, x, y, rng);
       } else {
         rect(c, p[0], x, y, 16, 16);
         const broad = Math.sin(xx * 0.46 + yy * 0.21) + Math.cos(yy * 0.47 - xx * 0.32);
@@ -347,6 +434,7 @@ function floorTexture(map, p) {
       }
     }
   localGround(c, map, p);
+  for (const spot of map.landmarks) districtGround(c, spot, p);
   return out;
 }
 function tintVillage(img, region) {
@@ -384,6 +472,63 @@ function tintVillage(img, region) {
   return off;
 }
 const villageCache = [];
+function drawWorkshopProp(c, o, t) {
+  const { x, y, w, h, variant } = o, left = x - w / 2;
+  ellipse(c, '#2134385c', x + 2, y, w * 0.46, 3);
+  const timber = '#725840', edge = '#c4a072', iron = '#485057';
+  if (variant === 'cart') {
+    for (const dx of [-10, 10]) {
+      ellipse(c, iron, x + dx, y - 3, 4, 4);
+      rect(c, '#b09d83', x + dx - 1, y - 4, 2, 2);
+    }
+    for (let j = 0; j < 3; j++) {
+      rect(c, j === 2 ? iron : timber, left + 3 + j, y - 15 + j * 4, w - 6 - j * 2, 4);
+      rect(c, j === 2 ? '#78828a' : edge, left + 3 + j, y - 15 + j * 4, w - 6 - j * 2, 1);
+    }
+    for (let i = 0; i < 5; i++) {
+      const px = x - 12 + i * 5, py = y - 15 - (i % 3) * 2;
+      rect(c, '#565865', px, py, 7, y - 14 - py + 1);
+      rect(c, '#ada19c', px + 1, py, 4, 1);
+    }
+  } else if (variant === 'paper' || variant === 'rack') {
+    for (const dx of [-w * 0.45, w * 0.45]) {
+      rect(c, timber, x + dx, y - h + 1, 3, h);
+      rect(c, edge, x + dx, y - h, 1, h - 2);
+    }
+    const ends = [[left + 2, y - h + 4], [x, y - h + 7], [x + w / 2 - 1, y - h + 4]];
+    line(c, '#5b5140', 2, ends);
+    if (variant === 'paper') {
+      for (let j = 0; j < 5; j++) {
+        const u = left + 5 + j * 7, top = y - h + 4 + (j === 2 ? 3 : 1);
+        const sway = Math.round(Math.sin(t + j));
+        rect(c, '#dfd3b7', u, top, 6, 12 + j % 3);
+        rect(c, '#c1b595', u + sway, top + 9, 6, 3);
+        rect(c, '#f0e4ca', u, top, 5, 1);
+      }
+    } else {
+      for (let j = 0; j < 8; j++) {
+        const u = left + 4 + j * 4.5, v = y - h + 6 + Math.sin(j * 0.46) * 3;
+        line(c, '#a99472', 1, [[u, v], [u + 6, v + 9], [u + 3, v + 17]]);
+        line(c, '#897d66', 1, [[u + 1, v + 13], [u + 8, v + 3]]);
+      }
+    }
+  } else if (variant === 'dial') {
+    ellipse(c, '#535164', x, y - 2, w * 0.45, 5);
+    ellipse(c, '#c1a079', x, y - 5, w * 0.45, 5);
+    ellipse(c, '#6e6c7b', x, y - 5, w * 0.36, 3);
+    line(c, '#e2c389', 2, [[x - 4, y - 6], [x + 4, y - h + 3], [x + 4, y - 6]]);
+  } else {
+    const hay = variant === 'hay', snow = variant === 'cairn';
+    const face = hay ? '#a88c4f' : snow ? '#799098' : '#686466';
+    const lip = hay ? '#d5b46c' : snow ? '#cadad5' : '#a0998a';
+    for (let j = 0; j < 3; j++) {
+      const ry = 5 - j, rx = w * (0.43 - j * 0.1), cy = y - 3 - j * (h / 4);
+      ellipse(c, face, x, cy, rx, ry);
+      ellipse(c, lip, x - 1, cy - 2, rx - 1, ry - 1);
+      if (hay) rect(c, timber, x + rx * 0.4, cy - 3, 2, 5);
+    }
+  }
+}
 function drawObject(c, o, s, t, map) {
   const { x, y, w, h } = o,
     left = x - w / 2,
@@ -391,6 +536,46 @@ function drawObject(c, o, s, t, map) {
     p = colors[map.region];
   const source = s.village;
   const shadow = '#172c3566';
+  if (o.type === 'works') return drawWorkshopProp(c, o, t);
+  if (o.type === 'landmark') {
+    // Reuse the local illustrated architecture for silhouette and materials.
+    // Moving machinery gives the facilities an identity at field scale.
+    const station = { wheel: 3, beacon: 1, press: 4, rail: 2, kiln: 2, terrace: 3, ring: 7, cairn: 5, wharf: 0, salt: 1 }[o.variant];
+    ellipse(c, shadow, x + 4, y - 1, w * 0.4, 4);
+    if (o.variant === 'wheel' && map.region === 0)
+      blit(c, s.village, 256, 80, 64, 80, left, top - 7, w * 0.88, h + 7);
+    else blit(c, s.stations, station * 112, 0, 112, 112, left, top - 7, w, h + 7);
+    switch (o.variant) {
+      case 'wheel': {
+        const cx = x + 22, cy = y - 12;
+        ellipse(c, '#473f39', cx, cy, 11, 11);
+        ellipse(c, '#ab8755', cx, cy, 9, 9);
+        ellipse(c, '#5d5546', cx, cy, 7, 7);
+        for (let i = 0; i < 6; i++) {
+          const a = t * 0.55 + i * Math.PI / 3;
+          line(c, '#c5a676', 2, [[cx, cy], [cx + Math.cos(a) * 9, cy + Math.sin(a) * 9]]);
+        }
+        rect(c, '#dfc38e', cx - 1, cy - 1, 3, 3);
+        break;
+      }
+      case 'beacon':
+      case 'kiln': {
+        const beacon = o.variant === 'beacon', cx = x + (beacon ? 2 : -4), cy = y - (beacon ? 39 : 10);
+        const pulse = (1 + Math.sin(t * 2.8)) / 2;
+        glow(c, cx, cy, beacon ? 25 : 16, beacon ? '#ffe6a6' : '#ff963f', 0.32 + pulse * 0.14);
+        rect(c, beacon ? '#fff4bc' : '#ffc067', cx - 2, cy - 1, 4, 3);
+        break;
+      }
+      case 'ring': {
+        for (let i = 0; i < 3; i++) {
+          const a = t * 0.4 + i * 2.0944;
+          rect(c, '#f2d089', x + 15 * Math.cos(a), y - 27 + 6 * Math.sin(a), 2, 2);
+        }
+        break;
+      }
+    }
+    return;
+  }
   if (o.type === 'tree' || o.type === 'prop') {
     const shrub = o.type === 'tree';
     const forestFrames = [
@@ -591,7 +776,10 @@ export function makePainter(canvas, map) {
         glow(ctx, o.x + 4, o.y - 13, 17, theme[9], 0.17);
     const site = map.dots.site;
     mark(ctx, site.x, site.y - 44, 'talk', t);
-    if (map.dots.ship) mark(ctx, map.dots.ship.x + 8, map.dots.ship.y - 16, 'talk', t);
+    for (const d of dots) {
+      if (d.kind === 'ship') mark(ctx, d.x + 8, d.y - 16, 'talk', t);
+      if (d.kind === 'landmark') mark(ctx, d.x, d.y - 56, 'talk', t);
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const weatherIndex = map.region;
     const motes = weatherIndex === 5 ? 38 : 15;

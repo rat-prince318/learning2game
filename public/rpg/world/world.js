@@ -3,7 +3,7 @@ import { msg, getLocale, setLocale } from '../../js/locale.js';
 import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController } from '../battle/controller.js';
 import { mountBattle } from '../battle/battle.js';
-import { atlas, line, regionOf } from './atlas.js';
+import { atlas, line, regionOf, fieldQuest } from './atlas.js';
 import {
   header,
   title,
@@ -11,6 +11,7 @@ import {
   scene,
   stationDialog,
   fieldLabels,
+  isExploration,
   atlasPage,
   journal,
   rewardPage,
@@ -20,6 +21,7 @@ import {
 import { commission, savedBuild, discardBuild } from './provision.js';
 import { createMusic } from './music.js';
 import { mountOverland } from './overland.js';
+import { mountGuide } from './wayfinder.js';
 import { reuploadNotice } from './exam-recovery.js';
 
 const main = document.querySelector('#journey'),
@@ -33,6 +35,7 @@ let page = 'home',
   controller = null,
   mounted = null,
   world = null,
+  guide = null,
   epoch = 0,
   locked = false;
 let pin = 0,
@@ -42,6 +45,7 @@ let pin = 0,
   files = [],
   report = null,
   notes = [],
+  coverage = null,
   dial = 0;
 let sound = readLocal('l2g.lantern.sound') === true;
 const dials = [
@@ -107,6 +111,8 @@ function drawHeader() {
   document.title = msg('灯路远征', 'The Lantern Road');
 }
 function clearField() {
+  guide?.destroy?.();
+  guide = null;
   world?.destroy();
   world = null;
 }
@@ -190,10 +196,12 @@ function draw() {
     main.innerHTML = scene(view, pick);
     signalPanel();
     const spot = main.querySelector('.lr-world');
+    guide = mountGuide(spot, fieldQuest(view));
     world = mountOverland(spot, view, {
       labels: fieldLabels(view),
       onStation: choose,
       onContact: (key) => run(() => engage(key)),
+      onGuideFrame: guide.frame,
       onLeaveDialogue: resumeField,
       canMove: () => view.phase === 'route' && !pick,
       blocked: () => locked,
@@ -204,7 +212,7 @@ function draw() {
   }
   if (page === 'atlas') main.innerHTML = atlasPage(view, pin);
   if (page === 'journal') {
-    main.innerHTML = journal(view, notes);
+    main.innerHTML = journal(view, notes, coverage);
     main.dispatchEvent(
       new CustomEvent('lantern:journal', { bubbles: true, detail: storyContext() }),
     );
@@ -258,15 +266,15 @@ async function goto(dest) {
     }
   } else {
     if (dest === 'journal') {
-      notes = [];
-      try {
-        notes = await api.request(
-          '/rpg/expeditions/' + encodeURIComponent(view.session_id) + '/notebook',
-        );
-      } catch (e) {
-        tell(errorText(e));
-      }
+      const base = '/rpg/expeditions/' + encodeURIComponent(view.session_id);
+      const [notebook, sources] = await Promise.allSettled([
+        api.request(base + '/notebook'), api.request(base + '/coverage'),
+      ]);
       if (ticket !== epoch) return;
+      notes = notebook.status === 'fulfilled' ? notebook.value : [];
+      coverage = sources.status === 'fulfilled' ? sources.value : null;
+      if (notebook.status === 'rejected') tell(errorText(notebook.reason));
+      else if (sources.status === 'rejected') tell(errorText(sources.reason));
     }
     if (dest === 'ending' && view && !report) {
       try {
@@ -296,6 +304,11 @@ async function command(fields) {
 async function engage(key) {
   const path = view.routes.find((r) => r.id === key);
   if (!path) return;
+  if (view.eight_chapters && !view.story_marks?.[regionOf(view).id]) {
+    tell(fieldQuest(view).text);
+    resumeField();
+    return;
+  }
   music.cue('danger');
   if (path.risk === 'elite') {
     const field = main.querySelector('.lr-viewport');
@@ -339,6 +352,16 @@ function resumeField() {
 }
 function choose(key) {
   music.cue('pick');
+  if (key === 'ship' && isExploration(view) && (view.region_index || view.story_marks?.[regionOf(view).id])) {
+    if (view.story_marks?.[regionOf(view).id] && view.field_signals.includes(regionOf(view).id)) {
+      pick = 'exit';
+      refreshDialogue();
+    } else {
+      tell(fieldQuest(view).text);
+      resumeField();
+    }
+    return;
+  }
   if (view.campaign_story && (key === 'keeper' || key === 'ship')) {
     main
       .querySelector('.lr-world')
@@ -406,10 +429,12 @@ async function act(action, b) {
       music.cue('pick');
       draw();
       return;
-    case 'spot':
-      return world?.navigate(b.dataset.key);
     case 'walk':
       return resumeField();
+    case 'depart-region':
+      await command({ action: 'advance_exploration' });
+      pick = '';
+      return goto(stationPhase());
     case 'engage':
       return engage(b.dataset.key);
     case 'tune':
@@ -460,11 +485,29 @@ async function act(action, b) {
       );
       return active(next.session_id);
     }
+    case 'restart-eight': {
+      const key = 'l2g.eight-chapters.' + view.session_id;
+      const id = readLocal(key) || newId();
+      saveLocal(key, id);
+      const next = await api.request('/rpg/expeditions', {
+        method: 'POST',
+        body: {
+          game_ids: [...new Set(view.map.map((r) => r.game_id))],
+          hero_class: view.player.hero_class,
+          kit: view.player.kit || 'trail',
+          eight_chapters: true,
+          campaign_story: true,
+          request_id: id,
+        },
+      });
+      return active(next.session_id);
+    }
   }
 }
 document.addEventListener('click', (event) => {
   const b = event.target.closest('[data-do]');
   if (!b) return;
+  if (b.dataset.do === 'spot' || b.dataset.do === 'follow-quest') return world?.navigate(b.dataset.key);
   if (b.dataset.do === 'sound') {
     sound = !sound;
     saveLocal('l2g.lantern.sound', sound);

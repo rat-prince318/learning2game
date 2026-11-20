@@ -17,7 +17,7 @@ const pace = 139;
 export function mountOverland(
   root,
   view,
-  { labels, onStation, onContact, onLeaveDialogue, canMove, blocked },
+  { labels, onStation, onContact, onLeaveDialogue, onGuideFrame, canMove, blocked },
 ) {
   const area = root.querySelector('.lr-viewport'),
     canvas = area.querySelector('.lr-field-canvas'),
@@ -25,7 +25,9 @@ export function mountOverland(
   const radar = area.querySelector('.lr-radar'),
     radarCtx = radar.getContext('2d');
   const region = view.region_index,
-    map = buildMap(region, view.phase === 'route' ? view.routes : [], view.story_marks);
+    map = buildMap(region, view.phase === 'route' ? view.routes : [], view.story_marks, view.scene_index);
+  radar.width = COLS;
+  radar.height = ROWS;
   const paint = makePainter(canvas, map);
   const camera = { x: 0, y: 0 },
     reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -65,7 +67,7 @@ export function mountOverland(
     storageTick = 0,
     uiTick = 0,
     cameraInit = true;
-  const masterDots = Object.entries(map.dots).map(([key, d]) => ({
+  const masterDots = Object.entries(map.dots).filter(([key]) => labels[key]).map(([key, d]) => ({
     ...d,
     key,
     boss: view.routes.find((r) => r.id === key)?.boss,
@@ -73,6 +75,15 @@ export function mountOverland(
   function liveDots() {
     return masterDots.map((d) => (d.kind === 'enemy' ? { ...d, x: d.x + Math.sin(t * 1.05) * 10 } : d));
   }
+  const hazards = masterDots.filter((d) => d.kind === 'trap' || d.kind === 'enemy');
+  const inContact = new Set();
+  function suppressNearbyContacts() {
+    for (const d of hazards)
+      if (Math.hypot(d.x - feet.x, d.y - feet.y) < 39) inContact.add(d.key);
+  }
+  // A reload, menu return or dialogue can put the player back on the same tile.
+  // A contact requires entering it on foot, rather than merely standing there.
+  suppressNearbyContacts();
   function save() {
     try {
       sessionStorage.setItem(sessionKey, JSON.stringify({ x: feet.x, y: feet.y, dir: feet.dir }));
@@ -108,21 +119,27 @@ export function mountOverland(
     camera.x += (dx - camera.x) * mix;
     camera.y += (dy - camera.y) * mix;
   }
-  function minimap() {
-    radarCtx.clearRect(0, 0, radar.width, radar.height);
-    radarCtx.fillStyle = '#334a4b';
-    radarCtx.fillRect(0, 0, COLS, ROWS);
+  const terrainRadar = document.createElement('canvas');
+  terrainRadar.width = COLS;
+  terrainRadar.height = ROWS;
+  {
+    const c = terrainRadar.getContext('2d');
+    c.fillStyle = '#334a4b';
+    c.fillRect(0, 0, COLS, ROWS);
     for (let y = 0; y < ROWS; y++)
       for (let x = 0; x < COLS; x++) {
         const type = map.cells[y][x];
         if (type === 'grass') continue;
-        radarCtx.fillStyle = type === 'water' ? '#548f9a' : type === 'road' ? '#b69f75' : '#d0b37e';
-        radarCtx.fillRect(x, y, 1, 1);
+        c.fillStyle = { water: '#548f9a', road: '#b69f75', bridge: '#d0b37e', dock: '#d0b37e' }[type] || '#546c64';
+        c.fillRect(x, y, 1, 1);
       }
     for (const d of masterDots) {
-      radarCtx.fillStyle = ['enemy', 'trap'].includes(d.kind) ? '#f48064' : '#ffdc83';
-      radarCtx.fillRect(Math.floor(d.x / CELL), Math.floor(d.y / CELL), 2, 2);
+      c.fillStyle = ['enemy', 'trap'].includes(d.kind) ? '#f48064' : d.kind === 'landmark' ? '#8ad4c0' : '#ffdc83';
+      c.fillRect(Math.floor(d.x / CELL), Math.floor(d.y / CELL), 2, 2);
     }
+  }
+  function minimap() {
+    radarCtx.drawImage(terrainRadar, 0, 0);
     radarCtx.fillStyle = '#ffeec6';
     radarCtx.fillRect(Math.floor(feet.x / CELL) - 1, Math.floor(feet.y / CELL) - 1, 3, 3);
     radarCtx.strokeStyle = '#e7efda90';
@@ -131,10 +148,10 @@ export function mountOverland(
   }
   function interact(key) {
     if (!key || pause || blocked() || modal() || !canMove()) return;
-    path = [];
-    destination = null;
-    held.clear();
-    feet.moving = false;
+    const d = masterDots.find((o) => o.key === key);
+    if (!d || Math.hypot(d.x - feet.x, d.y - feet.y) > 38) return;
+    reset();
+    suppressNearbyContacts();
     save();
     onStation(key);
   }
@@ -167,6 +184,7 @@ export function mountOverland(
     const d = keys[e.code];
     if (d) {
       e.preventDefault();
+      if (e.repeat && !held.has(e.code)) return;
       held.add(e.code);
       path = [];
       destination = null;
@@ -195,7 +213,7 @@ export function mountOverland(
     'pointerdown',
     (e) => {
       const b = e.target.closest('[data-walk-dir]');
-      if (b && !modal() && !blocked()) {
+      if (b && !pause && canMove() && !modal() && !blocked()) {
         e.preventDefault();
         path = [];
         destination = null;
@@ -204,16 +222,18 @@ export function mountOverland(
         b.classList.add('pressed');
         return;
       }
-      if (e.target === canvas && !modal() && canMove()) {
+      if (e.target === canvas && !pause && !blocked() && !modal() && canMove()) {
         area.focus({ preventScroll: true });
         const r = canvas.getBoundingClientRect();
         const target = {
           x: camera.x + ((e.clientX - r.left) * canvas.width) / r.width,
           y: camera.y + ((e.clientY - r.top) * canvas.height) / r.height,
         };
-        const poi = liveDots().find(
-          (o) => Math.abs(o.x - target.x) < 15 && Math.abs(o.y - 9 - target.y) < 20,
-        );
+        const poi = liveDots().find((o) => {
+          if (o.kind === 'landmark')
+            return Math.abs(o.x - target.x) < 29 && target.y >= o.y - 62 && target.y <= o.y + 5;
+          return Math.abs(o.x - target.x) < 15 && Math.abs(o.y - 9 - target.y) < 20;
+        });
         if (poi) {
           navigate(poi.key);
           return;
@@ -295,6 +315,9 @@ export function mountOverland(
         .map((d) => ({ d, dist: Math.hypot(d.x - feet.x, d.y - feet.y) }))
         .sort((a, b) => a.dist - b.dist)[0];
     nearest = near && near.dist < 29 ? near.d.key : '';
+    if (feet.moving && !frozen)
+      for (const d of hazards)
+        if (Math.hypot(d.x - feet.x, d.y - feet.y) > 39) inContact.delete(d.key);
     if (
       nearest &&
       (near.d.kind === 'enemy' || near.d.kind === 'trap') &&
@@ -302,12 +325,15 @@ export function mountOverland(
       feet.moving &&
       !destination &&
       !frozen &&
+      !inContact.has(nearest) &&
       !contactLock
     ) {
       contactLock = true;
       reset();
+      suppressNearbyContacts();
       save();
-      Promise.resolve(onContact(nearest)).finally(() => {
+      const notify = near.d.kind === 'trap' ? onStation : onContact;
+      Promise.resolve(notify(nearest)).finally(() => {
         contactLock = false;
       });
     }
@@ -327,6 +353,10 @@ export function mountOverland(
       root.dataset.cameraX = Math.round(camera.x);
       root.dataset.cameraY = Math.round(camera.y);
       root.dataset.facing = feet.dir;
+      onGuideFrame?.({
+        feet, camera, canvasWidth: canvas.width, canvasHeight: canvas.height,
+        dots: Object.fromEntries(dots.map((d) => [d.key, d])),
+      });
       minimap();
     }
     if (feet.moving && (storageTick += dt) > 0.7) {
@@ -351,6 +381,7 @@ export function mountOverland(
     pause(v) {
       pause = Boolean(v);
       reset();
+      suppressNearbyContacts();
     },
     position: () => ({ x: feet.x, y: feet.y }),
     focus: () => area.focus({ preventScroll: true }),

@@ -1,6 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "AdvanceExploration": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "advance_exploration",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision"
+      ],
+      "title": "AdvanceExploration",
+      "type": "object"
+    },
     "ChooseReward": {
       "additionalProperties": false,
       "properties": {
@@ -517,6 +546,7 @@
   },
   "discriminator": {
     "mapping": {
+      "advance_exploration": "#/$defs/AdvanceExploration",
       "answer": "#/$defs/ExpeditionAnswer",
       "assign_companion": "#/$defs/PartyCommand",
       "choose_reward": "#/$defs/ChooseReward",
@@ -573,6 +603,9 @@
     },
     {
       "$ref": "#/$defs/InspectLandmark"
+    },
+    {
+      "$ref": "#/$defs/AdvanceExploration"
     }
   ],
   "title": "ExpeditionAction"

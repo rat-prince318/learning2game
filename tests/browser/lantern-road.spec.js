@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function openTravel(page, key) {
   await page.locator('.lr-travel-list summary').click();
-  await page.locator('[data-do="spot"][data-key="' + key + '"]').click();
+  await page.locator('.lr-travel-list [data-do="spot"][data-key="' + key + '"]').click();
 }
 async function menu(page, action) {
   const button = page.locator('#top [data-do="' + action + '"]');
@@ -84,8 +84,10 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
   const id = new URL(page.url()).searchParams.get('session');
   const endpoint = '/rpg/expeditions/' + id;
   const read = async () => (await page.request.get(endpoint)).json();
-  expect((await read()).map).toHaveLength(8);
-  expect((await read()).chapter_count).toBe(16);
+  const itinerary = await read();
+  expect(itinerary.eight_chapters).toBe(true);
+  expect(itinerary.map).toHaveLength(8);
+  expect(itinerary.chapter_count).toBe(itinerary.map.reduce((n, region) => n + region.chapters.length, 0));
   await page.locator('.lr-viewport').focus();
   await move(page, 'w', 'y', -11);
   await move(page, 's', 'y', 13);
@@ -100,6 +102,13 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
   const landscape = await page.locator('.lr-field-canvas').boundingBox();
   expect(landscape).toMatchObject({ x: 0, y: 0, width: 844, height: 390 });
   await page.setViewportSize({ width: 1360, height: 900 });
+  await openTravel(page, 'ship');
+  const story = page.locator('#story-dialog');
+  await story.locator('.sc-options .primary').click();
+  await story.locator('.sc-options .primary').click();
+  await story.locator('.sc-options .choice').first().click();
+  await story.locator('.sc-options .primary').click();
+  await expect.poll(async () => (await read()).story_marks.willow_ferry).toBe('ferry_child');
   await openTravel(page, 'site');
   await page.locator('[data-do="inspect"]').click();
   expect((await read()).field_signals).toEqual([]);
@@ -160,10 +169,59 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
   });
   const shortcut = await alternate.json();
   await page.goto('/rpg/?session=' + shortcut.session_id);
+  const chooseRoute = [];
+  page.on('request', req => {
+    if (req.method() === 'POST' && req.url().endsWith(shortcut.session_id + '/actions') &&
+      req.postDataJSON()?.action === 'choose_route') chooseRoute.push(req.postDataJSON().route_id);
+  });
   await openTravel(page, 'elite');
-  await page.getByRole('button', { name: 'Spring the trap' }).click();
+  await expect(page.locator('[data-do="engage"][data-key="elite"]')).toBeVisible({ timeout: 20000 });
+  await page.locator('[data-do="walk"]').click();
+  await page.reload();
+  const field = page.locator('.lr-world');
+  const trap = await page.evaluate(async () => {
+    const { buildMap } = await import('/rpg/world/overland-map.js');
+    return buildMap(0, [{ id: 'normal' }, { id: 'elite' }]).dots.elite;
+  });
+  await expect(field).toHaveAttribute('data-position-x', String(trap.x));
+  await openTravel(page, 'north-post');
+  await expect(page.locator('.lr-dialog')).toContainText('Boatmen’s lookout', { timeout: 20000 });
+  await page.locator('[data-do="walk"]').click();
+  await openTravel(page, 'elite');
+  await expect(page.locator('[data-do="engage"][data-key="elite"]')).toBeVisible({ timeout: 20000 });
+  await page.locator('[data-do="walk"]').click();
+  await page.locator('.lr-viewport').focus();
+  const x = async () => Number(await field.getAttribute('data-position-x'));
+  // Shuffling inside the snare's radius after closing it must leave the
+  // player walking. Crossing its boundary again opens the same trap preview.
+  await page.keyboard.down('a');
+  try {
+    await expect.poll(x).toBeLessThan(trap.x - 45);
+  } finally {
+    await page.keyboard.up('a');
+  }
+  await expect(page.locator('.lr-dialog')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const right = page.locator('[data-walk-dir="east"]');
+  const hit = await right.boundingBox();
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [
+      { x: hit.x + hit.width / 2, y: hit.y + hit.height / 2, id: 1 },
+    ] });
+    await expect(page.locator('[data-do="engage"][data-key="elite"]')).toBeVisible();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await cdp.detach();
+  }
+  await page.locator('[data-do="walk"]').click();
+  await page.keyboard.press('e');
+  await page.locator('[data-do="engage"][data-key="elite"]').click();
   await expect(page.locator('[data-battle-phase="combat"]')).toBeVisible();
   const ambush = await (await page.request.get('/rpg/expeditions/' + shortcut.session_id)).json();
   expect(ambush.map[0].chapters[0].route_id).toBe('elite');
+  expect(chooseRoute).toEqual(['elite']);
   expect(errors).toEqual([]);
 });

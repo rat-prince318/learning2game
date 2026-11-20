@@ -405,7 +405,7 @@ test('first chapter rewards stay on the battlefield and can be handed back to th
   expect(view.phase).toBe('reward');
   expect(view.cleared_chapters).toBe(1);
   expect(view.rewards.length).toBeGreaterThan(0);
-  await expect(page.getByTestId('battle-result')).toContainText('本章胜利');
+  await expect(page.getByTestId('battle-result')).toContainText('守军已退');
   expect(await field.evaluate(node => node === document.querySelector('[data-testid="battle-arena"]'))).toBe(true);
   for (const viewport of [{width:1708,height:938}, {width:390,height:844}]) {
     await page.setViewportSize(viewport);

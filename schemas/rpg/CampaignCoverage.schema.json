@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "MaterialCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "material_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Material Id",
+          "type": "string"
+        },
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "extracted_count": {
+          "minimum": 0,
+          "title": "Extracted Count",
+          "type": "integer"
+        },
+        "scheduled_count": {
+          "minimum": 0,
+          "title": "Scheduled Count",
+          "type": "integer"
+        },
+        "needs_review_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Needs Review Count"
+        },
+        "warnings": {
+          "items": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "material_id",
+        "filename",
+        "extracted_count",
+        "scheduled_count",
+        "warnings"
+      ],
+      "title": "MaterialCoverage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/MaterialCoverage"
+      },
+      "title": "Sources",
+      "type": "array"
+    }
+  },
+  "required": [
+    "sources"
+  ],
+  "title": "CampaignCoverage",
+  "type": "object"
+}

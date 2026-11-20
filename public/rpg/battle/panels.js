@@ -22,6 +22,7 @@ export function heading(view) {
     ({normal:msg('遭遇战','Encounter'),elite:msg('精英战','Elite encounter'),boss:msg('首领战','Boss battle')}[tier] ||
       (view ? msg('远征','Expedition') : msg('首领战','Boss battle')));
   const mark = view?.mode === 'tower' ? msg('第 '+view.floor+' 层','Floor '+view.floor) :
+    view?.eight_chapters ? msg('第'+numbers[index]+'章', 'Chapter '+(index+1)) :
     msg('第'+(numbers[index] || index+1)+'卷', 'Book '+(index+1));
   return `<div class="bf-locus"><span class="bf-chapter">${mark}</span><h1>${h(regionName(view))}</h1></div><span class="bf-seal">${tag}</span>`;
 }
@@ -238,12 +239,17 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null, p
 }
 export function result(view, standalone, canReplay, {immersive, receipt} = {}) {
   const event = view.battle?.last_event, won = ['victory','reward'].includes(view.phase), tower=view.mode === 'tower';
-  const title = {victory:tower?msg('塔层突破','Floor cleared'):msg('远征通关','Expedition complete'),reward:msg('本章胜利','Chapter cleared'),
+  const title = {victory:tower?msg('塔层突破','Floor cleared'):msg('远征通关','Expedition complete'),reward:msg('守军已退', 'Encounter won'),
     route:msg('队伍已到达路口','At the crossroads'),retreated:msg('队伍已返回营地','Back at camp')}[view.phase] || msg('远征进度','Journey progress');
   const acquired = event?.loot_items ?? (event?.loot ? [event.loot] : []);
+  const nextRegion = view.eight_chapters && view.scene_index + 1 === view.map[view.region_index].chapters.length
+    ? atlas[view.region_index + 1] : null;
+  const camp = nextRegion ? msg('领补给，去' + line(nextRegion.name), 'Take supplies for ' + line(nextRegion.name)) : msg('前往营地','Visit camp');
   const next = standalone ? msg('回到主站','Return to studio') : tower ? msg('返回塔阶','Return to the stair') :
-    ({reward:msg('前往营地','Visit camp'),victory:msg('查看远征结果','View expedition'),route:msg('返回地图','Return to map')}[view.phase] || msg('结束战斗','Leave battle'));
-  const progress = tower ? msg('第 '+view.floor+' 层','Floor '+view.floor) : view.cleared_chapters+' / '+view.chapter_count+' '+msg('章','chapters');
+    ({reward:camp,victory:msg('查看远征结果','View expedition'),route:msg('返回地图','Return to map')}[view.phase] || msg('结束战斗','Leave battle'));
+  const progress = tower ? msg('第 '+view.floor+' 层','Floor '+view.floor) :
+    view.eight_chapters ? msg('主线第 '+(view.region_index+1)+' / 8 章', 'Story chapter '+(view.region_index+1)+' / 8') :
+    view.cleared_chapters+' / '+view.chapter_count+' '+msg('关','stages');
   const balance = msg('路币 ','Trail coins ')+view.coins;
   const narrative = immersive && won && event ? eventText(event,view) :
     msg(view.narrative, won ? eventText(event,view) || 'The way ahead is open.' : 'Your progress is safe in the expedition journal.');

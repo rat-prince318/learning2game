@@ -1,310 +1,383 @@
-// The order is the physical order of stations. Saved IDs are also validated by the server.
+// Choice IDs are part of the save format. Each choice also has one line to
+// bring its consequences back on the player's arrival at the following post.
 export const acts = [
   {
-    title: ['灵船征名', 'The Black Muster'],
-    art: 'ferry',
-    speaker: ['渡口刀客苇舟', 'Reed of the Ferry'],
+    title: ['把人从船上带回来', 'Bring the rowers home'],
+    art: 'saga/ferry',
+    speaker: ['守渡人苇舟', 'Reed, the ferryman'],
     arrival: [
-      '江上驶来一艘逆流的灵船。桅杆挂着三十条腕绳，船头的征名册只剩你的名字还在发光。',
-      'A ghost ship rows upstream. Thirty prisoners’ wrist cords hang from its mast. Only your name still burns on the muster roll.',
+      '你来烟柳渡接妹妹赤翎。她的马还拴在柳树下，人却上了灰冠的军船。船逆流而上，每喊出一个名字，岸上就有一人丢下家当，走去划桨。',
+      'You came to Willow Ferry to meet your sister Kestrel. Her horse is tied to the willow, but she is aboard Ashcrown’s ship. Each time a name rings out, someone on the bank drops their bags and takes an oar.',
     ],
     beats: [
       [
-        '守渡人把半块虎符拍进你手心。船舷下有人敲了三下，又敲一下。那是你们小时候约好的求救暗号。',
-        'The ferryman presses half a command seal into your hand. Three knocks, then one, sound below the hull. You invented that distress call together as children.',
+        '船底传来三长一短的敲击。小时候偷溜回家，赤翎总这么叫你开门。苇舟把母亲留下的半块虎符塞给你，横过小艇。「回她一声。我撑船。」',
+        'Three long knocks, one short. Kestrel used to knock like that when she sneaked home late. Reed slips you the half seal your mother left with him and brings his skiff alongside. “Knock back. I’ll hold her here.”',
       ],
       [
-        '「灰冠把守军的名字刻进铜册。点谁的名，谁就得给他拉船。」苇舟砍断缆绳。「我把船拦一刻。你上！」',
-        '“Ashcrown binds soldiers on that roll. When he calls, they row.” Reed cuts the towline. “I can hold her a moment. Board her!”',
+        '赤翎隔着木板说：「舱里还有人。锁在你脚下，盖军令的帅印在船头。你够得着哪个？」',
+        '“Got people down here,” Kestrel calls through the planks. “Lock at your feet. Up on the prow there’s a seal they stamp the orders with. Take your pick!”',
       ],
     ],
     choices: [
-      [
-        'ferry_child',
-        '砸开船牢',
-        'Break the brig',
-        '你一脚踹开舱门。斥候赤翎扶着最后一名俘虏上岸，把一面血红的小旗塞给你：「城弩连，随旗听令！」',
-        'You kick the hatch open. Kestrel, the scout captain, carries the last prisoner ashore and hands you a red pennant. “My crossbows answer to that flag.”',
-      ],
-      [
-        'ferry_decree',
-        '夺帅印，令全船弃桨',
-        'Seize the seal and order the oars down',
-        '你踩着橹杆登上船楼，当着船尉的面给自己盖了个「阵亡」。亡兵齐齐弃桨。苇舟笑出了声：「死人当先锋？那更好！」',
-        'You vault an oar, seize the seal, and stamp yourself FALLEN. Every dead oarsman ships his oar. Reed laughs. “A dead vanguard? Good luck collecting its pay!”',
-      ],
+      {
+        id: 'ferry_child',
+        label: ['砸开船牢', 'Break open the brig'],
+        outcome: [
+          '锁掉进水里。赤翎把被铐在一起的桨手一个个推上小艇，最后才把手伸给你。「下游白汐港。那口钟一响，他们还得回船。」',
+          'The lock splashes overboard. Kestrel helps each shackled rower into the skiff before she reaches for your hand. “Salt Harbor. If that bell rings again, they’ll walk right back.”',
+        ],
+        echo: [
+          '渡口救下的桨手认得水路，趁落潮把你们送到钟楼脚下。',
+          'The rowers you freed know these shoals. They bring you to the bell tower at low tide.',
+        ],
+      },
+      {
+        id: 'ferry_decree',
+        label: ['夺下帅印，命令停船', 'Seize the seal and halt the ship'],
+        outcome: [
+          '你在停船令上重重一按。桨手齐刷刷松开了手。赤翎爬上来，袖口还滴着水。「留着这玩意儿。下游还有座水寨要过。」',
+          'You stamp the order to halt. Every oar drops at once. Kestrel climbs out, water running from her sleeves. “Hang on to that seal. There’s a harbor gate downstream.”',
+        ],
+        echo: [
+          '水寨的哨兵一见船头那枚帅印，立刻给你们开了闸。',
+          'One look at the seal on your prow and the watchman opens the harbor gate.',
+        ],
+      },
     ],
   },
   {
-    title: ['盐港断钟', 'The Drowned Bell'],
-    art: 'ferry',
-    speaker: ['盐港弩长', 'Captain of the Salt Watch'],
+    title: ['让港口的钟停下来', 'Silence the harbor bell'],
+    art: 'region-art/salt_harbor',
+    speaker: ['盐港弩长', 'The harbor bow captain'],
     arrival: [
-      '潮水涌进盐仓，城门却紧闭着。敌军把第一口点名钟沉在港底，每响一次，守港弩手便向自己人转过一寸。',
-      'The harbor gates are barred against a rising tide. A muster bell on the seabed makes the defenders’ crossbows turn toward their own people, inch by inch.',
+      '港钟响了一下。码头上的弩手同时转身，把弩口对准了来接他们的家人。钟楼空着，声音是从浮标下面传来的。',
+      'The bell tolls once. Every bow on the pier swings toward the families waiting to take the watchmen home. The bell tower is empty. The sound rises from beneath a buoy.',
     ],
     beats: [
       [
-        '老弩长用牙咬住坏指头，把弩臂重新扳回去。「下次钟响，我这只手就要叛变。你决定先救人，还是先夺钟。」',
-        'The old captain bites his numb fingers and cranks the bow back. “Next bell, this hand deserts. Save the crew or seize the bell. Your call.”',
+        '老弩长一脚踩住自己的弩。「拿绳子绑我。等会儿手一松，对面站的是我儿子。」他的靴尖在石板上磨出了一道白印。',
+        'The captain plants a boot on his own bow. “Tie me up. That lad across the wharf is my son. Can’t have this thing slipping.” His heel scrapes a white line in the stone.',
       ],
       [
-        '潮泵换向只需一拍。白浪露出铜链时，潜卫的头盔和钟锤会同时露出水面。',
-        'The pump reverses for a single beat. When white water exposes the chain, the diver’s helm and the bell hammer surface together.',
+        '浮标忽然抬高，水面下露出钟锤。赤翎已经把绳刀咬在嘴里。一个人够得着弩手的腕索，另一个得守在链边。',
+        'The buoy lifts and the hammer breaks the surface. Kestrel holds a rigging knife in her teeth. One of you can reach the bowmen’s wrist lines while the other holds the chain.',
       ],
     ],
     choices: [
-      [
-        'harbor_choir',
-        '解开弩手腕索',
-        'Free the crossbow crews',
-        '弩手们一齐把弦转向港外。第一排箭擦过你的肩，准确钉死了敌船的舵。',
-        'Freed hands swing the bows seaward. A volley grazes your shoulder on its way to pin the enemy rudder.',
-      ],
-      [
-        'harbor_bell',
-        '抢钟锤截断号令',
-        'Capture the bell hammer',
-        '你卸下铜锤。来援的敌船还在按旧钟声转舵，结结实实地撞上了自己的锁链。',
-        'You wrench the hammer free. Following the old cadence, the relief galley turns straight into its own chain.',
-      ],
+      {
+        id: 'harbor_choir',
+        label: ['割断弩手的腕索', 'Cut the bowmen loose'],
+        outcome: [
+          '弩长收起弩，把儿子抱得两脚离了地。军械员从水里拖出一截钟链，上面打着赤铆车场的厂记。',
+          'The captain slings his bow and hugs his boy clean off the ground. His armorer drags a length of bell chain from the water. It carries the Copper Yard stamp.',
+        ],
+        echo: [
+          '盐港弩长亲自领路。他在车场干过学徒，还记得运煤的小门。',
+          'The bow captain leads you through the coal gate. He was an apprentice here once.',
+        ],
+      },
+      {
+        id: 'harbor_bell',
+        label: ['卸下钟锤', 'Take the hammer off the bell'],
+        outcome: [
+          '你们把铜锤吊上码头。钟彻底哑了。赤翎拿袖子擦掉锤头的盐，下面露出四个字「赤铆车场」。',
+          'You haul the hammer onto the wharf and the bell falls quiet. Kestrel rubs the salt off its head. Stamped underneath are the words COPPER YARD.',
+        ],
+        echo: [
+          '盐港的钟锤还搁在你肩上。一个满脸煤灰的人一眼认出了自己的铸记。',
+          'You still have the harbor hammer over your shoulder. A man streaked with soot spots his own casting mark.',
+        ],
+      },
     ],
   },
   {
-    title: ['熔炉诈降', 'False Surrender'],
-    art: 'forge',
-    speaker: ['铁匠铆青', 'Flint the Smith'],
+    title: ['截住灰冠的军械车', 'Stop the arms train'],
+    art: 'saga/forge',
+    speaker: ['铁匠铆青', 'Flint, the smith'],
     arrival: [
-      '车场挂出了降旗。受降官给每个俘虏发了一枚金币，铆青把他的金币按在炉边，金皮下露出一只窃听的铜虫。',
-      'Surrender flags hang over the yard. Each prisoner has been given a gold coin. Flint heats his at the forge. A listening beetle crawls from its gilding.',
+      '车场的矿车正往山上运一批新钟。轨道两边全是空饭盒，炉工们被赶进了最后一节车厢。灰冠打算给沿路每座城都挂一口点名钟。',
+      'Ore cars packed with new bells are heading uphill. Empty lunch tins line the track. The smiths have been locked in the rear car. Ashcrown means to put a muster bell in every town along the road.',
     ],
     beats: [
       [
-        '铆青冲铜虫大声说：「左翼全是醉鬼，今夜集体睡懒觉。」他用炭条在你袖上写了三个字：打、中、军。',
-        'Flint shouts into the beetle: “Left flank drunk. Sleeping late.” On your sleeve he writes: HIT THEIR CENTER.',
+        '铆青指了指守卫胸前亮闪闪的甲片。「我的手艺。左腋下面少钉了一颗铆钉。」他把锤子递给你，「故意的。」',
+        'Flint points at a guard’s polished armor. “My work. Missing a rivet under the left arm.” He hands you his hammer. “On purpose.”',
       ],
       [
-        '铆翼炉龙合翼时，热铆缝能被战技扎穿。铆青提着锤往前走：「被他们打了三天铁，今天换我收工钱。」',
-        'The drake’s folded wings expose hot rivets to a burst. Flint hefts his hammer. “Three days forging their armor. Time to collect my fee.”',
+        '军械车冒起白汽，炉工正在车门上拍出人数。铆青能替你扳一次岔道。把尾车送回站台，或让军械车撞开存图的铁柜。',
+        'Steam curls off the train. The smiths tap their headcount against the door. Flint can throw the switch once. Bring the rear car back to the platform, or ram the cabinet that holds the plans.',
       ],
     ],
     choices: [
-      [
-        'forge_knight',
-        '放出矿车营救炉工',
-        'Roll the ore cars to extract the smiths',
-        '炉工们跳上矿车冲出火场。傍晚，新铸的臂盾在你的阵前排成一线。',
-        'Smiths ride the ore cars out of the fire. By dusk a rank of newly forged shields stands before your column.',
-      ],
-      [
-        'forge_mask',
-        '假传调令，夺攻城图',
-        'Spoof the order and steal siege plans',
-        '铆青学受降官的嗓子学得太像，连自己人也立了正。图上标红的地方，正是灰冠胸炉的装甲接缝。',
-        'Flint mimics the magistrate so well your own troops salute. The stolen drawing marks a seam across Ashcrown’s chest furnace.',
-      ],
+      {
+        id: 'forge_knight',
+        label: ['接回装着炉工的尾车', 'Bring the smiths’ car home'],
+        outcome: [
+          '尾车撞进煤堆，车门弹开。最年长的炉工拎起空饭盒就跑。「悬帆梯田还有人等粮，快跟我来！」',
+          'The rear car hits the coal heap and its doors spring open. The oldest smith grabs his lunch tin. “They’re waiting on grain at the Sail Terraces. Come on!”',
+        ],
+        echo: [
+          '炉工用饭盒敲出船工熟悉的节奏。山脊上的粮船朝你们放下了一根绳。',
+          'A smith taps a deckhand’s rhythm on his lunch tin. A rope drops from the grain ship overhead.',
+        ],
+      },
+      {
+        id: 'forge_mask',
+        label: ['撞开铁柜，抢军械图', 'Ram the cabinet and take the plans'],
+        outcome: [
+          '铁柜倒地，铺开半屋图纸。你卷起灰冠的胸甲图。车票背面还有一条调令，叫飞骑扣下梯田的粮船。',
+          'The cabinet scatters plans across the floor. You roll up the drawing of Ashcrown’s breastplate. An order on the back of a waybill sends riders to seize the terraces’ grain ship.',
+        ],
+        echo: [
+          '照着抢来的调令，你们先一步赶到了粮船换帆的地方。',
+          'The order you seized tells you exactly where the grain ship stops to change sails.',
+        ],
+      },
     ],
   },
   {
-    title: ['风帆斩索', 'Raid Above the Terraces'],
-    art: 'forge',
-    speaker: ['飞骑领航员', 'Sky Cavalry Navigator'],
+    title: ['夺回山上的粮船', 'Take back the grain ship'],
+    art: 'region-art/sail_terraces',
+    speaker: ['领航员阿帆', 'Reef, the navigator'],
     arrival: [
-      '龙翼拖着满载种粮的飞船压过山脊，梯田下的村庄只剩一夜口粮。船上挂起了请求登舰的红旗。',
-      'A winged raider hauls the seed ship over the ridge. The villages have food for one more night. A red boarding pennant rises from the captive ship.',
+      '悬帆梯田的人已经生了火，锅里还是清水。满载种粮的帆船就飘在他们头顶，拖船的巨鸢正往敌营转向。',
+      'At the Sail Terraces, cooking fires are lit under pots of plain water. The seed ship hangs directly overhead. The kite towing it banks toward the enemy camp.',
     ],
     beats: [
       [
-        '领航员把最后一副翼装递过来。「跳早了落敌舰，跳晚了落敌舰厨房。都是敌舰，别挑。」',
-        'The navigator hands over the last glider. “Jump early, you hit the deck. Jump late, you hit the galley. Both belong to the enemy.”',
+        '领航员把绳子在手腕上绕了两圈。「我姑娘刚学会做饭。她说今晚她掌勺。你看，底下最小那一堆火。」',
+        'The navigator loops a line twice around his wrist. “My girl’s just learned to cook. Said supper was on her tonight. See that little fire down there?”',
       ],
       [
-        '山风把桅杆压弯，你从主帆滑落，正好踩断敌旗。船上第一声欢呼，比弩炮还响。',
-        'The mast bows under the wind. You slide down the mainsail and land on the enemy standard. The cheer from the deck drowns out the ballista.',
+        '船头擦着山脊转过来。粮舱的门和舵手的图匣都在手边。底下有人喊：「风要转了，趁现在！」',
+        'The bow scrapes past the ridge. The grain hatch and the pilot’s chart case are both within reach. Someone on the ground shouts, “Wind’s turning. Now!”',
       ],
     ],
     choices: [
-      [
-        'sail_seed',
-        '守住粮舱',
-        'Hold the grain deck',
-        '粮船顺风落进河谷。村民把空粮车改成担架，沿路接走了断后的伤兵。',
-        'The ship lands in the valley. Villagers turn grain carts into stretchers and carry the rearguard home.',
-      ],
-      [
-        'sail_chart',
-        '夺取敌军航图',
-        'Capture the enemy flight chart',
-        '敌军为躲山风标出了所有背风口。你的飞骑在图上圈出一条直通天台背后的航线。',
-        'Every sheltered approach is marked on the chart. Your riders circle a route straight behind the observatory.',
-      ],
+      {
+        id: 'sail_seed',
+        label: ['守粮舱，放下第一袋粮', 'Hold the hatch and lower the grain'],
+        outcome: [
+          '粮袋落地，一个孩子赶紧拿碗去舀。袋底缝着运粮人的名牌，每块都被盖上了复写馆的红印。',
+          'The first sack lands and a child runs up with her bowl. The grain carriers’ name tags are sewn into the sacking. Each bears the red archive seal.',
+        ],
+        echo: [
+          '姑娘用装过种粮的布给你包了两个饭团。布角的红印，和馆门上的一模一样。',
+          'The navigator’s daughter packs you two rice balls in a scrap of sacking. Its red stamp matches the seal on the archive door.',
+        ],
+      },
+      {
+        id: 'sail_chart',
+        label: ['登上驾驶台，夺航图', 'Board the wheelhouse and take the chart'],
+        outcome: [
+          '你推开舵手，把船头扳向谷地。航图背面密密麻麻写满了名字，赤翎一下就认出了自己的笔迹。图是从复写馆送来的。',
+          'You shove the pilot aside and bring the bow round toward the valley. Names cover the back of the chart. Kestrel spots her own signature at once. The chart came from the archive.',
+        ],
+        echo: [
+          '拿航图去对门口的调令，连墨水洇开的地方都一样。有人在馆里一张张地印。',
+          'You hold the flight chart against the notice on the door. Even the inkblots match. Someone inside has been printing them by the stack.',
+        ],
+      },
     ],
   },
   {
-    title: ['没有名字的连队', 'The Unnamed Company'],
-    art: 'mirror',
-    speaker: ['档案守门人', 'Keeper of the War Archive'],
+    title: ['找到第一份征名册', 'Find the first muster roll'],
+    art: 'region-art/palimpsest',
+    speaker: ['编目员阿简', 'Wren, the archivist'],
     arrival: [
-      '复写馆的荣誉墙上，所有战死者都被写成了同一个名字：灰冠。地窖里，一支失踪十九年的连队仍在站岗。',
-      'Every name on the archive’s wall of honor has been replaced with Ashcrown’s. Below it a company missing for nineteen years still stands watch.',
+      '复写馆藏着灰冠的底册。每印一页，就有一船人听他号令。守着底册的二十七名老兵，胸牌上刻的都是你母亲那支连队的番号。',
+      'Here is the master roll. Every copy printed puts another ship’s worth of people under Ashcrown’s orders. Twenty-seven veterans guard it. Every badge carries the number of your mother’s old company.',
     ],
     beats: [
       [
-        '老兵摸到你手里的半块虎符，突然敬礼。十九年前，你母亲率这支连队封住星门。她的战报一直夹在投降书里。',
-        'A veteran touches your half seal and salutes. Nineteen years ago your mother led this company into the star gate. Her dispatch was hidden inside the surrender papers.',
+        '阿简认出了你腰间的半块虎符，把灯挪到一封旧战报下面。「她是我连长。这一页，她折了个角。你们俩看看。」',
+        'Wren sees the half seal at your belt and slides a lamp under an old dispatch. “She was my captain. See where she folded the corner? You two should read this.”',
       ],
       [
-        '战报最后一行写着：「铁冠可以再铸。先毁胸炉，再碎冠。我的位置由活人接。」纸角钉着半枚熔穿的箭头。',
-        'The last line reads: “A crown can be reforged. Break the furnace first, then the crown. A living soldier takes my post.” A half-melted arrowhead pins the corner.',
+        '你母亲写道：「我在镜雪山口给后队留了路。灰冠胸口那座炉子一开，铁冠就护不住他。来换班的人，记得多带麻绳。」',
+        'Your mother wrote, “I left a trail for the rearguard at Mirror Pass. When the furnace in Ashcrown’s chest opens, you have a clear shot. Whoever comes to relieve me, bring extra rope.”',
       ],
     ],
     choices: [
-      [
-        'archive_names',
-        '给连队恢复军籍',
-        'Restore the company roll',
-        '你按原册逐一点名。十九年前失踪的第一连，今天答到二十七人。',
-        'You call the original roll. After nineteen years, twenty-seven voices answer for First Company.',
-      ],
-      [
-        'archive_pact',
-        '撕下敌方铸冠密令',
-        'Seize the crown-forging order',
-        '你从密令中找到了换炉的时辰。军需官将它抄给每一支准备突击的分队。',
-        'The order gives the hour of furnace change. The quartermaster copies it for every assault unit.',
-      ],
+      {
+        id: 'archive_names',
+        label: ['按原册给老兵点名', 'Call the veterans by their own names'],
+        outcome: [
+          '头一个名字才出口，一个白头兵便站得笔直。二十七个人答了二十七声到。阿简收起墨笔，去仓库取绳。',
+          'At the first name a white-haired soldier snaps to attention. Twenty-seven names, twenty-seven replies. Wren puts down his pen and goes for the rope.',
+        ],
+        echo: [
+          '你叫回来的老兵摸了摸山口木桩，手比眼睛先认出了老连长留下的绳结。',
+          'One of the veterans runs a hand along a trail post. His fingers recognize his captain’s knot before his eyes do.',
+        ],
+      },
+      {
+        id: 'archive_pact',
+        label: ['取走灰冠的换炉令', 'Take the furnace orders'],
+        outcome: [
+          '赤翎把换炉的时刻抄在护腕内侧。你掀起印板，底下压着一张去山口运人的名单。母亲那一栏还空着。',
+          'Kestrel writes the furnace changeover times inside her bracer. Under the printing plate you find a list of soldiers evacuated from the pass. Your mother’s line is blank.',
+        ],
+        echo: [
+          '按换炉令上的时辰出发，你们在山口守军换岗的空当进了山。',
+          'The changeover time in the stolen orders lets you slip into the pass between watches.',
+        ],
+      },
     ],
   },
   {
-    title: ['雪岭留锋', 'The Blade in the Pass'],
-    art: 'mirror',
-    speaker: ['雪岭斥候', 'Ridge Scout'],
+    title: ['把雪岭的斥候接下山', 'Bring the scouts off the ridge'],
+    art: 'saga/mirror',
+    speaker: ['斥候队长赤翎', 'Kestrel, scout captain'],
     arrival: [
-      '镜壁映出一队走散的士兵。领头的人披着你母亲的红披风。她一遍遍走向裂隙，把追兵引离还活着的人。',
-      'A lost company marches in the ice. Its leader wears your mother’s red cloak. Her echo still leads the pursuit away from the living.',
+      '镜雪山口有十几条一模一样的脚印。雪底传来三长一短。赤翎立刻趴下去，把耳朵贴在冰上。「这回是我的人。还活着。」',
+      'A dozen identical sets of tracks cross Mirror Pass. Three long knocks, one short, come from beneath the snow. Kestrel drops to the ice. “My scouts this time. Still alive.”',
     ],
     beats: [
       [
-        '崖侧有两排鞋钉印，一排深一排浅。深的还在渗水。这一次，有活人被困在雪下面。',
-        'Two sets of bootprints cross the cliff. Meltwater seeps into the deeper ones. This time there are living soldiers under the snow.',
+        '一面冰壁里映着母亲当年撤退的背影。她把军刀插进崖缝，把绳头绕在刀柄上。十九年过去，那根绳还绷着。',
+        'The ice holds an image of your mother on the retreat. She drives her sword into a crack and loops a rope around the hilt. Nineteen years later the rope is still taut.',
       ],
       [
-        '赤翎把绳子绕过你的肩。「你来选。给人拉一把，或把那把能开城门的剑拔出来。我守绳。」',
-        'Kestrel slings a rope over your shoulder. “Your call. Pull the soldiers out, or take the blade that opens the gate. I hold the rope.”',
+        '冰下的人已经抓住绳子。赤翎喊道：「我拉左边，你去接人。也可以换个绳桩，把娘的刀带走。钟城的闸锁就是她用这把刀劈开的。」',
+        'Hands close around the rope below. “I’ve got this end,” Kestrel says. “Help them out, or rig a new anchor and bring Mum’s sword. She cut the bridge lock with it once.”',
       ],
     ],
     choices: [
-      [
-        'pass_echo',
-        '从冰崩里拖出斥候营',
-        'Haul the scouts out of the avalanche',
-        '最后一名斥候出洞时背着战鼓。进攻号响前，你的队伍多了一面能穿过暴风雪的鼓。',
-        'The last scout carries a drum. When the attack begins, its beat will reach through the blizzard.',
-      ],
-      [
-        'pass_blade',
-        '拔出破门刃',
-        'Draw the gatebreaker',
-        '刀刃离冰，镜中那道披风终于停下。你接住了它，沿山脊向真正的城门前进。',
-        'The blade comes free. The reflected cloak finally stops marching. You shoulder it and turn toward the real gate.',
-      ],
+      {
+        id: 'pass_echo',
+        label: ['拉斥候上来', 'Pull the scouts up'],
+        outcome: [
+          '一个，两个，最后一个背着队里的战鼓。他坐在雪地里缓了口气，手里的鼓槌已经敲出了七桥守军的接应鼓点。',
+          'One scout, two, then the drummer with his drum still on his back. He sits in the snow to catch his breath. His hands are already beating the Seven Bridges signal.',
+        ],
+        echo: [
+          '获救的鼓手敲响了接应鼓。隔着河，守城人跟着敲了最后两拍。',
+          'The drummer you pulled from the ice beats the signal. Across the river, someone answers with the last two strokes.',
+        ],
+      },
+      {
+        id: 'pass_blade',
+        label: ['换好绳桩，取回军刀', 'Set a new anchor and take the sword'],
+        outcome: [
+          '木桩吃住绳劲，军刀顺着崖缝滑进你手里。赤翎拉着斥候们爬上来，看了一眼刀柄。「上面那圈皮，还是我给她缠的。」',
+          'The post takes the strain. The sword slides free into your hand. As the scouts climb out, Kestrel glances at the hilt. “I put that leather wrap on.”',
+        ],
+        echo: [
+          '母亲的刀楔进第一道桥锁。赤翎踩着刀背翻过去，从里面开了闩。',
+          'Your mother’s blade slips into the first bridge lock. Kestrel steps on its spine, vaults over, and lifts the latch.',
+        ],
+      },
     ],
   },
   {
-    title: ['七桥总攻', 'The Seven-Bridge Offensive'],
-    art: 'orrery',
-    speaker: ['七桥守将', 'Marshal of Seven Bridges'],
+    title: ['放下通往天台的七座桥', 'Lower the seven bridges'],
+    art: 'region-art/bell_bridges',
+    speaker: ['修钟匠阿铜', 'Copper, the bell tender'],
     arrival: [
-      '七座桥在午夜同时升起。留给平民的撤离通道，只够一辆车通过。对岸的龙骑正在重整方阵。',
-      'Seven bridges rise at midnight. Just one cart fits through the civilian corridor. Across the river the dragoons form up again.',
+      '七座桥全吊在半空。桥下挤着出城的车，桥头站着灰冠铸出的钟师，锤子每落一下，吊索就收紧一圈。天台就在对岸。',
+      'All seven bridges hang in the air. Carts are jammed along the banks. Ashcrown’s iron Bellfounder stands over the winch. Every fall of his hammer takes up another turn of cable. The Orrery is on the far side.',
     ],
     beats: [
       [
-        '铸钟师把三只钟锤摆在桥中央：「两响落桥，第三响总攻。谁替我敲第三下？」你从他手里接过最重的锤。',
-        'The bellfounder sets out three hammers. “Two strokes lower the bridge. The third starts the assault. Who strikes three?” You take the heaviest hammer.',
+        '修钟匠踮起脚，勉强把音叉塞进你手里。「认准第三响。它拉索，我松簧，桥一落你就走。」他转身钻进了齿轮底下。',
+        'The bell tender stands on tiptoe to press a tuning fork into your palm. “Listen for the third stroke. When it pulls the cable, I’ll trip the spring. The instant that bridge drops, go.” He crawls under the gears.',
       ],
       [
-        '第一响落下，车队开始动。第二响落下，两岸举起红旗。第三响之前，你还有一次调兵的机会。',
-        'One stroke, the carts roll. Two, red flags rise on both banks. Before the third you can still move one division.',
+        '桥板砸在岸边。头一辆车的轮子卡住了，另一头，敌兵正在拽升桥的铁链。你的人都在等你先迈那一步。',
+        'The bridge slams onto the bank. The first cart catches a wheel. On the far side, soldiers haul at the chain to raise the span again. Your company waits for you to move.',
       ],
     ],
     choices: [
-      [
-        'bell_feast',
-        '以盾墙护送车队',
-        'Form a shield wall for the convoy',
-        '最后一辆车过桥，炊事兵把整锅热汤扛回阵地。伤员能端起碗了。',
-        'As the last cart crosses, the cooks haul their kettle back to the line. The wounded sit up to eat.',
-      ],
-      [
-        'bell_duel',
-        '率尖兵反夺吊桥',
-        'Lead the countercharge on the drawbridge',
-        '你带头撞上第一列长盾，后队从缺口涌入。第三响落下时，天台的城门已经开了一半。',
-        'You hit the first shield rank; your column pours through the breach. At the third stroke, the observatory gate is already halfway open.',
-      ],
+      {
+        id: 'bell_feast',
+        label: ['举盾护送车队', 'Escort the carts under shields'],
+        outcome: [
+          '你把盾塞到轴下，把车抬过了缝。最后一辆是军医的车。过了桥，他连马都没解就调头来接伤员。',
+          'You wedge your shield under the axle and lift the wheel over the gap. The surgeon drives the last cart. Once across, he turns straight back for the wounded.',
+        ],
+        echo: [
+          '桥上那辆军医的车一路跟到天台脚下，伤员刚包扎好就有人接过他们的旗。',
+          'The surgeon’s cart follows you to the foot of the Orrery. Fresh hands take the standards while he dresses the wounded.',
+        ],
+      },
+      {
+        id: 'bell_duel',
+        label: ['冲过桥去夺绞盘', 'Rush the winch across the span'],
+        outcome: [
+          '你顺着晃动的桥板跑到底，把绞盘卡在最低一格。赤翎一挥旗，后面的队伍踩着你的脚印直奔天台。',
+          'You sprint the swaying span and jam the winch in its lowest notch. Kestrel waves her flag. The column follows your tracks straight toward the Orrery.',
+        ],
+        echo: [
+          '你夺下的绞盘还咬在最低一格。最后一队增援跑过七桥，在城坡上追上了你。',
+          'The captured winch still holds. The last reinforcements run across Seven Bridges and catch you on the slope.',
+        ],
+      },
     ],
   },
   {
-    title: ['破晓攻城战', 'Assault at Daybreak'],
-    art: 'orrery',
-    speaker: ['前锋统领赤翎', 'Vanguard Captain Kestrel'],
+    title: ['打碎灰冠的征名炉', 'Break Ashcrown’s muster furnace'],
+    art: 'region-art/orrery',
+    speaker: ['斥候队长赤翎', 'Kestrel, scout captain'],
     arrival: [
-      '黎明迟了整整一刻。灰冠现出龙身，把整座观测台扣在胸口当护甲。城下八面军旗同时转向你。',
-      'Dawn is a quarter hour late. Ashcrown sheds his human shape and locks the observatory around his chest as armor. Eight standards turn toward you.',
+      '星门大开，成堆的征名册被推向炉口。灰冠低下龙首，甲片合拢，整座天台随他的呼吸一起一伏。你们一路追来的炉子，就在他胸前。',
+      'The star gate swings open. Carts tip their muster rolls into a furnace. Ashcrown lowers his dragon head and closes his armor. The whole observatory rises and falls with his breathing. The furnace is in his chest.',
     ],
     beats: [
       [
-        '灰冠把断旗掷进阵前：「谁担得起这八座城？」你把旗杆重新钉进石台。身后八个方向都有人应声。',
-        'Ashcrown hurls a broken standard before the line. “Who carries eight cities?” You drive its shaft back into the stone. Voices answer from every side.',
+        '你摊开母亲留下的战报。赤翎用手指敲了敲那一行。「听见他吸气就举盾。等他那一下落空，你看我旗子。」',
+        'You unfold your mother’s dispatch. Kestrel taps the line with one finger. “Shield up when he draws breath. When his blow misses, watch my flag.”',
       ],
       [
-        '赤翎念出战报：「他蓄势，格挡破甲。他露出胸炉，全队出击。」你扣好最后一道护臂。天光压上城垛。',
-        'Kestrel reads your orders: “Guard through his charge. When the furnace opens, every unit strikes.” You fasten your last bracer. Dawn reaches the battlements.',
+        '龙翼刮过石台，后队被隔在坡下。灰冠胸前有片甲还挂在军械架上。你有时间把后队接进来，也来得及让那片甲永远挂在那里。',
+        'A sweep of the dragon’s wing cuts off your rearguard. One plate from his chest still hangs on the armory rack. There’s time to bring the rearguard in, or to make sure that plate stays where it is.',
       ],
     ],
     choices: [
-      [
-        'star_girl',
-        '接应断后的赤翎',
-        'Extract Kestrel’s rearguard',
-        '赤翎率最后一队弩手冲进护阵。全营高喊她的番号，你们一起踏上攻城坡道。',
-        'Kestrel’s final squad dives into the shield ring. The ranks shout her unit number. Together you mount the siege ramp.',
-      ],
-      [
-        'star_key',
-        '突袭敌方军械台',
-        'Raid the enemy armory',
-        '你用半块虎符卡住铸冠机，敌军的备用铠甲全锁死在架上。进攻号响了。',
-        'You jam the crown forge with your half seal. Every spare suit of armor locks to its rack. The assault horn sounds.',
-      ],
+      {
+        id: 'star_girl',
+        label: ['接应赤翎的后队', 'Bring Kestrel’s rearguard through'],
+        outcome: [
+          '你举盾走回坡口。赤翎最后一个进阵，把红旗插在盾沿。「这下好了。你抬头就看得见。」',
+          'You walk back to the ramp with your shield raised. Last through the gap, Kestrel plants her red flag on its rim. “There. Just look up and you’ll see it.”',
+        ],
+      },
+      {
+        id: 'star_key',
+        label: ['卡住敌军的铸甲机', 'Jam the armor press'],
+        outcome: [
+          '你把半块虎符塞进齿缝。铸甲机咬住了，灰冠侧过胸口，露出一线橙红的炉光。赤翎的旗子猛地挥下。',
+          'You drive your half seal between the teeth of the press. It seizes. Ashcrown turns sideways and a line of furnace light shows. Kestrel drops the flag.',
+        ],
+      },
     ],
   },
 ];
 
 export const endings = [
   {
-    id: 'shatter_crown',
-    title: ['斩冠凯旋', 'Smash the crown'],
-    text: [
-      '龙将倒下。你一锤砸碎铁冠，令八城将碎铁熔进城门的门闩。从此每一次开门，都由城里的人自己决定。',
-      'The warlord falls. You smash the crown and order its iron forged into eight gate bolts. Henceforth the people inside each city decide when it opens.',
-    ],
+    id: 'shatter_crown', title: ['斩冠凯旋', 'Shatter the crown'],
+    text: ['赤翎用刀尖把铁冠从灰里拨出来。你抄起锤子，把它砸成八块。几个月后，你又回来坐苇舟的船。艄公把门闩一抽，说那截铁就是你亲手砸下来的。', 'Kestrel prises the crown out of the ash with her sword. You hammer it into eight pieces. Months later you take Reed’s ferry again. He pulls back the cabin bolt and tells you which piece of iron it used to be.'],
+    short: ['你把铁冠放在石阶上，一锤砸扁。灰冠的残兵撤走时，守军已经在替你们修回程的船。', 'You put the crown on a stone step and hammer it flat. As the last enemy soldiers retreat, the watch sets to work repairing your boat home.'],
   },
   {
-    id: 'keep_watch',
-    title: ['留守星门', 'Hold the star gate'],
-    text: [
-      '你把得胜旗交给赤翎，率亲卫驻守裂隙。第一夜的点名在晨光中结束。远方响起八城的换岗号，终于轮到你母亲那班人休息。',
-      'You entrust the victory standard to Kestrel and garrison the rift. Your first roll call ends at dawn. Eight cities sound the relief. At last your mother’s watch is over.',
-    ],
+    id: 'keep_watch', title: ['留下镇守星门', 'Stand watch at the gate'],
+    shortTitle: ['留下守第一班岗', 'Take the first watch'],
+    text: ['赤翎带大伙儿回家，你带一班人接下星门的岗哨。交班册的最后一栏，母亲的字迹已经很淡了。你紧挨着签下自己的名字，写上今天的日子。', 'Kestrel leads the others home. You take a squad to relieve the watch at the star gate. Your mother’s handwriting has faded on the last page of the duty book. You sign next to her and put down today’s date.'],
+    short: ['你把回程的船让给伤员，自己留下值第一班岗。天亮时，赤翎提着早饭来换你。', 'You give the wounded your places on the boat and stay for first watch. At dawn Kestrel comes to relieve you, breakfast in hand.'],
   },
   {
-    id: 'wake_towns',
-    title: ['八城反攻', 'Lead the allied counteroffensive'],
-    text: [
-      '你举起驿站的信物。援军沿着亲手修好的烽线越过星门，拆掉敌境最后一座征名炉。归来那天，军籍上每个人都保留着自己的名字。',
-      'You raise the station signals. The allies advance along the beacon line you repaired and storm the last muster forge beyond the gate. Every returning soldier still carries their own name.',
-    ],
+    id: 'wake_towns', title: ['举旗追击残军', 'Raise the flag and give chase'],
+    text: ['你发出约好的信号。河灯亮了，山下有人敲钟，七桥上的铁索跟着松开。各站赶来的队伍越过星门，一路拆掉了最后一座征名炉。这回点名，人人都能用自己的名字答到。', 'You give the signal. River lamps flare, a bell rings below, and chains pay out along Seven Bridges. Troops from the posts cross the gate and dismantle the last muster forge. At roll call each soldier answers to their own name.'],
+    short: ['你举起沿途收下的信物。守站的盟友从侧路包过来，把追兵堵在河弯。回程的船终于可以放心离岸。', 'You raise the signals gathered along the road. Your allies come down the side trail and cut off the pursuit at the river bend. The homeward boats can leave in peace.'],
   },
 ];
+
+export function arrivalEcho(view) {
+  const previous = view.map?.[view.region_index - 1];
+  const mark = view.story_marks?.[previous?.region_id];
+  if (!mark) return null;
+  const prior = acts[view.region_index - 1]?.choices.find((choice) => choice.id === mark);
+  return prior?.echo || null;
+}

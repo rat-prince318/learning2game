@@ -71,8 +71,12 @@ class KnowledgeItem(StrictModel):
     exam_question: ExamQuestion | None = None
 
 
+MAX_MATERIAL_POINTS = 1000
+
+
 class MaterialResult(StrictModel):
-    knowledge: list[KnowledgeItem] = Field(min_length=1, max_length=1000)
+    needs_review_count: Count | None = None
+    knowledge: list[KnowledgeItem] = Field(min_length=1, max_length=MAX_MATERIAL_POINTS)
     warnings: list[SourceRef] = Field(default_factory=list, max_length=24)
 
     @model_validator(mode="after")

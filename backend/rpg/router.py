@@ -111,7 +111,8 @@ def _make_plan(job, material_id, material, prefs, scope, practice_session_id, pr
 def _queue_plan(app, tasks, conn, material_id, prefs, session_id=None, report=None):
     _require_rpg(app)
     material = _knowledge(conn, material_id)
-    available = [item.knowledge_id for item in eligible(material.knowledge)]
+    pool = eligible(material.knowledge)
+    available = [item.knowledge_id for item in pool]
     scope = [key for key in available if key in report.weak_knowledge_ids] if report else available
     if prefs.selected_knowledge_ids is not None:
         if not set(prefs.selected_knowledge_ids).issubset(scope):
@@ -119,7 +120,7 @@ def _queue_plan(app, tasks, conn, material_id, prefs, session_id=None, report=No
         scope = prefs.selected_knowledge_ids
         if len(scope) > prefs.challenge_count:
             raise HTTPException(422, "请将题量调至选中知识点的数量，或减少选中的知识点。")
-    minimum = minimum_challenges(prefs, len(available), report is not None)
+    minimum = minimum_challenges(prefs, pool, report is not None)
     if min(len(scope), prefs.challenge_count) < minimum:
         raise HTTPException(422, "常规 RPG 需要至少三个有出处的知识点。请扩大范围、补充资料或选择配对练习。")
     job_id = insert_job(conn, "practice" if report else "planning", session_id or material_id, app.state.mode, GAME)

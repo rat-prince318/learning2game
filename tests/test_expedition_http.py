@@ -69,7 +69,12 @@ def test_outline_covers_a_complete_long_lecture_and_flags_excess(app):
         over = upload(c, "large.txt", extra.encode())
         with connection(c.app) as conn:
             material = _knowledge(conn, over["material_id"])
-            assert len(material.knowledge) == 64 and any("64" in w for w in material.warnings)
+            assert len(material.knowledge) == 65
+        campaign = c.post("/rpg/expedition-outline", json={
+            "eight_chapters": True, "sources": [{"material_id": over["material_id"]}]}).json()
+        assert campaign["concept_count"] == 65 and len(campaign["volumes"]) == 9
+        keys = [key for v in campaign["volumes"] for key in v["plan_request"]["preferences"]["selected_knowledge_ids"]]
+        assert keys == [k.knowledge_id for k in material.knowledge]
 
 
 def test_overlapping_exam_sources_publish_each_exercise_once_and_keep_distinct_numerical_cases(app):
@@ -201,3 +206,116 @@ def test_victory_unlocks_a_new_archive_with_one_earned_relic(app):
         assert new["relics"][0]["relic"]["id"] == heirloom and new["session_id"] != state["session_id"]
         assert c.post(path + "/encore", json=choices).json() == new
         assert c.get(path + "/report").json() == final
+
+
+def finish_campaign(client, current, books):
+    from backend.rpg.quest_story import CHOICES
+
+    with connection(client.app) as db:
+        published = {gid: read_rpg_internal(db, gid) for gid in books}
+    solutions = {(gid, q.prompt): (q.knowledge_id, q.correct_option_id) for gid, g in published.items()
+                 for scene in g.scenes for q in scene.challenges}
+    path = BASE + "/" + current["session_id"]
+    reached = set()
+    questions = set()
+    while current["phase"] != "victory":
+        phase = current["phase"]
+        region = current["map"][current["region_index"]]
+        reached.add(region["region_id"])
+        if phase == "route":
+            if region["region_id"] not in current["story_marks"]:
+                action = payload(current, "story_choice", choice=CHOICES[region["region_id"]][0])
+            elif not current["routes"]:
+                action = (payload(current, "advance_exploration") if region["region_id"] in current["field_signals"]
+                          else payload(current, "inspect_landmark"))
+            else:
+                action = payload(current, "choose_route", route_id=current["routes"][0]["id"])
+        elif phase == "reward":
+            action = payload(current, "choose_reward", reward_id="purse")
+        else:
+            assert phase == "combat", current
+            prompt = current["battle"]["prompt"]
+            item = (current["game_id"], prompt["text"])
+            kid, correct = solutions[item]
+            assert kid not in questions
+            questions.add(kid)
+            action = payload(current, "answer", prompt_id=prompt["prompt_id"], option_id=correct,
+                             skill="guard")
+        reply = client.post(path + "/actions", json=action)
+        assert reply.status_code == 200, reply.text
+        current = reply.json()
+    return current, reached, questions
+
+
+@pytest.mark.parametrize("size", [1, 65])
+def test_eight_regions_cover_the_entire_upload_in_battle_or_on_foot(app, size):
+    paper = "Mechanics Quiz\n1. An object of mass 6 kg accelerates at 4 m/s². Find the net force."
+    paper += "\n2. Sketch the curve in the missing diagram and label its turning points."
+    data = (paper.encode() if size == 1 else
+            COURSE.read_bytes() + "\n循环缓冲区：在固定容量内按环形位置读写数据。".encode())
+    with TestClient(app) as client:
+        material = upload(client, "course.txt", data)
+        request = {"eight_chapters": True, "sources": [{"material_id": material["material_id"]}]}
+        outline = client.post("/rpg/expedition-outline", json=request)
+        assert outline.status_code == 200, outline.text
+        assert outline.json()["concept_count"] == size
+        books = [publish(client, v["plan_request"]) for v in outline.json()["volumes"]]
+        current = opening(client, books, eight_chapters=True, campaign_story=True)
+        path = BASE + "/" + current["session_id"]
+        counts = client.get(path + "/coverage").json()["sources"]
+        assert len(counts) == 1 and counts[0]["filename"] == "course.txt"
+        assert counts[0]["extracted_count"] == counts[0]["scheduled_count"] == size
+        assert isinstance(counts[0]["warnings"], list)
+        assert counts[0]["needs_review_count"] == (1 if size == 1 else None)
+        assert len(current["map"]) == 8
+        assert current["region_index"] == current["cleared_regions"] == current["covered_knowledge_count"] == 0
+        assert sum(region["knowledge_count"] for region in current["map"]) == size
+        if size == 65:
+            assert all(region["knowledge_count"] > 0 for region in current["map"])
+            assert len(books) > 8
+        else:
+            assert current["map"][0]["chapters"][0]["kind"] == "exploration"
+            assert client.post(path + "/actions", json=payload(current, "advance_exploration")).status_code == 409
+        current, reached, questions = finish_campaign(client, current, books)
+        assert current["region_index"] == 7 and current["battle"]["tactics"]["encounter_id"] == "ash_crown"
+        assert current["covered_knowledge_count"] == current["knowledge_count"] == len(questions) == size
+        assert len(reached) == current["cleared_regions"] == 8
+        assert client.get(path).json() == current
+        assert client.get(path + "/report").json()["completion_rate"] == 1
+        pages = client.get(path + "/notebook").json()
+        assert sum(len(page["entries"]) for page in pages) == size
+        for page in pages:
+            assert len(page["entries"]) == current["map"][page["region_index"]]["knowledge_count"]
+
+
+def test_reusing_overlapping_published_books_keeps_progress_and_sources_separate(app):
+    with TestClient(app) as client:
+        data = b"\n".join(COURSE.read_bytes().splitlines()[:6])
+        source_a = upload(client, "A.txt", data)
+        source_b = upload(client, "B.txt", data)
+        with connection(app) as db:
+            concepts = [k.knowledge_id for k in _knowledge(db, source_a["material_id"]).knowledge]
+
+        def selected(source, ids):
+            return publish(client, {"material_id": source["material_id"], "preferences": {
+                "selected_knowledge_ids": ids, "challenge_count": len(ids), "scene_count": len(ids)}})
+
+        first = selected(source_a, concepts[:3])
+        overlap = selected(source_b, concepts[2:5])
+        copy = selected(source_b, concepts[:3])
+        original = opening(client, [first, overlap, copy], campaign_story=True)
+        assert original["chapter_count"] == 9 and original["knowledge_count"] == 5
+        duplicate = upload(client, "C.txt", data)
+        v = opening(client, [first, overlap, copy], eight_chapters=True,
+                    source_material_ids=[r["material_id"] for r in [source_a, source_b, duplicate]])
+        path = BASE + "/" + v["session_id"]
+        assert v["chapter_count"] == len(v["map"]) == 8
+        assert v["knowledge_count"] == 5
+        assert [chapter["game_id"] for region in v["map"] for chapter in region["chapters"]
+                if chapter["kind"] == "battle"] == [first] * 3 + [overlap] * 2
+        counts = client.get(path + "/coverage").json()["sources"]
+        assert [(row["filename"], row["scheduled_count"]) for row in counts] == [("A.txt", 3), ("B.txt", 2), ("C.txt", 0)]
+        assert client.get(BASE + "/" + original["session_id"]).json() == original
+        assert client.get(path).json() == v
+        finished, _, attempted = finish_campaign(client, v, [first, overlap, copy])
+        assert finished["covered_knowledge_count"] == finished["knowledge_count"] == len(attempted) == 5

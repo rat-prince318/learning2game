@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from .exam_answers import conflicts_with_solution
 from .material_processing import Material, MaterialError, TextBlock
-from .models import KnowledgeItem, MaterialResult
+from .models import MAX_MATERIAL_POINTS, KnowledgeItem, MaterialResult
 from .question_identity import exercise_key
 
 _PROBLEM = re.compile(
@@ -216,9 +216,10 @@ def knowledge_from_exam(material, problems, filename, *, live_provider=None):
                     exam_question=result,
                 )
             )
-            if len(items) == 64:
+            if len(items) == MAX_MATERIAL_POINTS:
                 break
-        if len(items) == 64:
+        if len(items) == MAX_MATERIAL_POINTS:
+            material.warn(f"本次试卷已收录 {MAX_MATERIAL_POINTS} 道题，其余内容可分章上传。")
             break
     if not items:
         raise MaterialError(
@@ -228,4 +229,4 @@ def knowledge_from_exam(material, problems, filename, *, live_provider=None):
         material.warn(
             f"已识别试卷，收录 {len(items)} 道可核验的题目。另有 {skipped} 个题项需要更清晰的条件、解答或图示。"
         )
-    return MaterialResult(knowledge=items, warnings=material.warnings[:12])
+    return MaterialResult(knowledge=items, warnings=material.warnings[:12], needs_review_count=skipped)

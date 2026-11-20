@@ -1,5 +1,5 @@
 import { getLocale, msg } from '../../../js/locale.js';
-import { acts, endings } from './chapters.js';
+import { acts, endings, arrivalEcho } from './chapters.js';
 
 const story = document.querySelector('#story-dialog');
 const t = (pair) => pair[getLocale() === 'en' ? 1 : 0];
@@ -42,6 +42,15 @@ function open(detail, kind) {
   context.world?.pause(true);
   paint();
 }
+function shortCampaign(view) {
+  return !view.eight_chapters && view.map.length < acts.length;
+}
+function endingTitle(end, view) {
+  return t(shortCampaign(view) && end.shortTitle ? end.shortTitle : end.title);
+}
+function endingCopy(end, view) {
+  return t(shortCampaign(view) ? end.short : end.text);
+}
 function witnessCount(v) {
   return v.field_signals.filter((id) => v.story_marks?.[id]).length;
 }
@@ -60,8 +69,8 @@ async function commit(id) {
     resultId = id;
   } catch {
     error = msg(
-      '进度已变化或保存中断。返回地图重新打开，可查看当前记录。',
-      'The save changed or the connection was lost. Reopen the event to read the current record.',
+      '这一步还没确认。请回到地图，再打开这里查看存档。',
+      'This choice is still unconfirmed. Return to the map and reopen this scene to check your save.',
     );
   } finally {
     busy = false;
@@ -78,17 +87,20 @@ function paint() {
   const art = new Image();
   art.className = 'sc-image';
   art.alt = '';
-  art.src = '/rpg/world/saga/' + (last ? 'orrery' : act.art) + '.webp';
+  art.src = '/rpg/world/' + (last ? 'saga/orrery' : act.art) + '.webp';
   card.append(art);
   const text = make('section', 'sc-text'),
     choiceLine = make('div', 'sc-options');
-  const section = last ? msg('决战之后', 'After the battle') : msg('战地纪事', 'War chronicle');
+  const station = v.map[v.region_index];
+  const section = last
+    ? shortCampaign(v) ? msg('短途远征结束', 'Short expedition complete') : msg('决战之后', 'After the battle')
+    : msg('第 ' + (v.region_index + 1) + ' 章', 'Chapter ' + (v.region_index + 1));
   const result = last
     ? endings.find((e) => e.id === resultId)
-    : act.choices.find((c) => c[0] === resultId);
+    : act.choices.find((c) => c.id === resultId);
   const heading = last
     ? result
-      ? t(result.title)
+      ? endingTitle(result, v)
       : msg('灰冠已落', 'The crown has fallen')
     : t(act.title);
   const title = make('h2', '', heading);
@@ -97,39 +109,27 @@ function paint() {
   let copy;
   if (last) {
     copy = result
-      ? t(result.text)
-      : msg(
-          '两段铁冠砸进胸炉。龙将跪倒，星门后的敌军还在撤退。先锋队等着你下达战后的第一道命令。',
-          'The broken crown falls into the furnace. The warlord drops to his knees. Beyond the star gate his army is retreating. The vanguard awaits your first order.',
-        );
+      ? endingCopy(result, v)
+      : shortCampaign(v)
+        ? msg('这趟短途远征走到了终点。灰冠败退，铁冠滚到你脚边。赤翎扶着剑坐下：「这一仗打完了。咱们怎么收尾？」', 'Your short expedition ends here. Ashcrown retreats and his crown rolls to your feet. Kestrel sits down beside her sword. “We won this one. What shall we do with it?”')
+        : msg('灰冠的胸炉熄了。铁冠从石阶上一路滚到你脚边。赤翎按住它，抬头问你：「砸了它？还是先带人去星门看看？」', 'Ashcrown’s furnace goes dark. His crown rolls down the steps and stops at your feet. Kestrel puts a boot on it. “Smash it? Or take a squad to the gate first?”');
     if (!result)
       for (const end of endings) {
         const locked = end.id === 'wake_towns' && witnessCount(v) < needed;
         const title =
-          t(end.title) +
+          endingTitle(end, v) +
           (end.id === 'wake_towns'
             ? '　' + msg('联军烽台', 'Allied beacons') + ' ' + witnessCount(v) + '/' + needed
             : '');
         choiceLine.append(btn(title, () => commit(end.id), 'choice', busy || locked));
       }
   } else if (result) {
-    copy = t(result.slice(3));
+    copy = t(result.outcome);
   } else {
     const lines = [act.arrival, ...act.beats];
     copy = t(lines[beat]);
-    const origin = v.story_marks?.willow_ferry;
-    if (v.region_index === 1 && beat === 0 && origin) {
-      copy +=
-        origin === 'ferry_child'
-          ? msg(
-              ' 获救的弩手把船舷搭成了通往盐仓的桥。',
-              ' The bow crews you freed lash the boats into a bridge.',
-            )
-          : msg(
-              ' 你亮出缴获的帅印，骗开了第一道水寨。',
-              ' Your captured seal gets the party through the first blockade.',
-            );
-    }
+    const echo = beat === 0 && arrivalEcho(v);
+    if (echo) copy = t(echo) + (getLocale() === 'en' ? ' ' : '') + copy;
     if (beat < lines.length - 1)
       choiceLine.append(
         btn(
@@ -146,14 +146,14 @@ function paint() {
         const cost =
           i === 0
             ? msg(
-                '现场救护，最多回复 4 HP。决战时派出军医。',
-                'Restore up to 4 HP. Send medics to the final battle.',
+                '回复最多 4 点生命，军医将支援决战。',
+                'Recover up to 4 HP. Medics will support the final battle.',
               )
             : msg(
-                '缴获 2 枚路币。决战时派出破甲队。',
-                'Capture 2 coins. Send sappers to the final battle.',
+                '拿到 2 枚路币，工兵将支援决战。',
+                'Take 2 coins. Sappers will support the final battle.',
               );
-        const choice = btn(t(c.slice(1, 3)), () => commit(c[0]), 'choice', busy);
+        const choice = btn(t(c.label), () => commit(c.id), 'choice', busy);
         choice.append(make('small', '', cost));
         choiceLine.append(choice);
       });
@@ -162,10 +162,10 @@ function paint() {
   body.setAttribute('aria-live', 'polite');
   text.append(body);
   if (!last && !result)
-    text.append(make('small', 'sc-speaker', t(act.speaker) + '　' + (beat + 1) + '/3'));
+    text.append(make('small', 'sc-speaker', (beat === 0 ? msg('抵达' + station.name, 'Arrival') : t(act.speaker)) + '　' + (beat + 1) + '/' + (act.beats.length + 1)));
   if (result && !last)
     text.append(
-      make('small', 'sc-speaker', msg('抉择已记入战地手记', 'Recorded in the war chronicle')),
+      make('small', 'sc-speaker', msg('已写入手记', 'Saved in your field journal')),
     );
   if (result)
     choiceLine.append(
@@ -175,8 +175,14 @@ function paint() {
         'primary',
       ),
     );
+  if (last && shortCampaign(v)) {
+    const restart = btn(msg('用这份资料开始八章主线', 'Start eight chapters with this course'), close, 'choice', busy);
+    restart.dataset.do = 'restart-eight';
+    restart.dataset.action = 'restart-eight';
+    choiceLine.append(restart);
+  }
   if (result && !last && context.openParty && [0, 2].includes(v.region_index)) {
-    const rally = btn(msg('召集同行者', 'Rally the party'), () => {
+    const rally = btn(msg('邀请同伴', 'Invite a companion'), () => {
       const openParty = context.openParty;
       close();
       openParty();
@@ -207,8 +213,8 @@ document.addEventListener('lantern:ending', (e) => {
   if (!panel) return;
   const action = btn(
     view.story_ending
-      ? msg('重读战后命令', 'Read your final order')
-      : msg('下达战后命令', 'Issue your final order'),
+      ? msg('重看结局', 'Revisit the ending')
+      : msg('决定战后去向', 'Choose what happens next'),
     () => open(e.detail, 'ending'),
     'primary',
   );
@@ -220,13 +226,13 @@ window.addEventListener('learning2game:locale', paint);
 export function chronicle(view) {
   const rows = Object.values(view.story_marks || {})
     .map((id) => {
-      const act = acts.find((a) => a.choices.some((c) => c[0] === id));
-      const choice = act?.choices.find((c) => c[0] === id);
-      return choice ? [t(act.title), t(choice.slice(1, 3)), t(choice.slice(3))] : null;
+      const act = acts.find((a) => a.choices.some((c) => c.id === id));
+      const choice = act?.choices.find((c) => c.id === id);
+      return choice ? [t(act.title), t(choice.label), t(choice.outcome)] : null;
     })
     .filter(Boolean);
   const end = endings.find((e) => e.id === view.story_ending);
-  if (end) rows.push([msg('战后命令', 'Final order'), t(end.title), t(end.text)]);
+  if (end) rows.push([msg('战后命令', 'Final order'), endingTitle(end, view), endingCopy(end, view)]);
   return rows;
 }
 document.addEventListener('lantern:journal', (event) => {
