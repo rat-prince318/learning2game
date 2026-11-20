@@ -1,6 +1,6 @@
 import { test as base, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { verifyCampContinuation } from './rpg-battle-camp.js';
+import { meetEnemy, verifyCampContinuation, verifyRegionalExit } from './rpg-battle-camp.js';
 import { verifyBattleNotes } from './rpg-battle-notes.js';
 
 const battlePath = '/rpg/battle/';
@@ -21,10 +21,21 @@ const notes = readFileSync(new URL('../../public/examples/cell-notes.txt', impor
 function chooseOption(view, correct) {
   const { text, options } = view.battle.prompt;
   const clue = compact(text);
-  const record = notes.find(([term, definition]) =>
-    clue.includes('「' + term + '」') || clue.includes(definition));
-  expect(record, 'The public lecture must cover the displayed question: ' + text).toBeTruthy();
-  const answers = options.filter((option) => record.includes(compact(option.text)));
+  let expected;
+  if (text.includes('\n甲：') && text.includes('\n乙：')) {
+    const ordered = text.split(/\n[甲乙]：/u).slice(1).map(definition => {
+      const record = notes.find(row => row[1] === compact(definition));
+      expect(record, 'The lecture must identify ' + definition).toBeTruthy();
+      return record[0];
+    });
+    expected = [ordered.join('/')];
+  } else {
+    const record = notes.find(([term, definition]) =>
+      clue.includes('「' + term + '」') || clue.includes(definition));
+    expect(record, 'The public lecture must cover the displayed question: ' + text).toBeTruthy();
+    expected = record;
+  }
+  const answers = options.filter(option => expected.includes(compact(option.text)));
   expect(answers).toHaveLength(1);
   return options.find((option) => (option.id === answers[0].id) === correct);
 }
@@ -368,9 +379,7 @@ test('a scrolling embedded host briefly brings its offscreen fight to a phone re
   }
 });
 
-test('first chapter rewards stay on the battlefield and can be handed back to the traveling party', async ({
-  page, request, startDemo,
-}) => {
+async function twoStageCourse(page, request, startDemo) {
   const uploaded = page.waitForResponse((r) => r.request().method() === 'POST' && pathOf(r) === '/materials');
   await startDemo();
   const material = await (await uploaded).json();
@@ -390,14 +399,18 @@ test('first chapter rewards stay on the battlefield and can be handed back to th
     material_id: material.material_id, preferences: { scene_count: 2, challenge_count: 6 },
   }, 'awaiting_confirmation');
   const game = await publishJob('/rpg/games', { plan_id: plan.plan_id, confirmed: true }, 'completed');
-  const created = await request.post('/rpg/expeditions', { data: { game_ids: [game.game_id], hero_class: 'ranger' } });
+  return game.game_id;
+}
+
+test('first chapter rewards stay on the battlefield and can be handed back to the traveling party', async ({
+  page, request, startDemo,
+}) => {
+  const course = await twoStageCourse(page, request, startDemo);
+  const created = await request.post('/rpg/expeditions', { data: { game_ids: [course], hero_class: 'ranger' } });
   expect(created.status()).toBe(201);
-  let view = await created.json();
+  const start = await created.json();
+  let {view, origin} = await meetEnemy(page, start, start.routes[0].id);
   const path = '/rpg/expeditions/' + view.session_id;
-  view = await (await request.post(path + '/actions', { data: {
-    action: 'choose_route', route_id: view.routes[0].id, event_id: 'first-chapter', expected_revision: view.revision,
-  } })).json();
-  await page.goto('/rpg/?session=' + view.session_id);
   await expectView(page, view);
   const arena = page.getByTestId('battle-arena');
   const field = await arena.elementHandle();
@@ -421,7 +434,31 @@ test('first chapter rewards stay on the battlefield and can be handed back to th
   const saved = await (await request.get(path)).json();
   expect(saved.phase).toBe('reward');
   expect(saved.revision).toBe(view.revision);
-  await verifyCampContinuation(page, view);
+  await verifyCampContinuation(page, view, origin);
+});
+
+test('a chapter boss returns the party to the encounter and the player chooses when to leave', async ({
+  page, request, startDemo,
+}) => {
+  test.setTimeout(120000);
+  const course = await twoStageCourse(page, request, startDemo);
+  const created = await request.post('/rpg/expeditions', {data: {game_ids:[course], eight_chapters:true}});
+  expect(created.ok()).toBe(true);
+  const start = await created.json();
+  const order = await request.post('/rpg/expeditions/' + start.session_id + '/actions', {data:{
+    action:'story_choice', choice:'ferry_child', expected_revision:start.revision, event_id:'ferry-order',
+  }});
+  expect(order.ok()).toBe(true);
+  let {view, origin} = await meetEnemy(page, await order.json(), 'boss_steady');
+  const prompts = new Set();
+  for (let i = 0; view.phase === 'combat' && i < 24; i++) {
+    expect(prompts.has(view.battle.prompt.text)).toBe(false);
+    prompts.add(view.battle.prompt.text);
+    view = await playTurn(page, view);
+  }
+  expect(prompts.size).toBeGreaterThanOrEqual(4);
+  expect(view.phase).toBe('reward');
+  await verifyRegionalExit(page, view, origin);
 });
 
 test('read a counterhit and the finishing blow on the battlefield, reopen after saving, return keyboard focus', async ({

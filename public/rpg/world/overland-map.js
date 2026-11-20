@@ -1,60 +1,43 @@
 // Coordinates are in map pixels. Actors stand at x/y with their feet on the ground.
+import { buildChapterMap } from './chapter-map.js';
 import { landmarksFor } from './overland-districts.js';
 
-export const CELL = 16;
-export const COLS = 112;
-export const ROWS = 72;
-export const WIDTH = COLS * CELL;
-export const HEIGHT = ROWS * CELL;
-export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-export function noise(x, y, seed = 0) {
-  let h = Math.imul(x + 713, 374761393) + Math.imul(y + seed * 331, 668265263);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-const layouts = [
-  [24, 11, 16, 24, 24, 17, 48, 25, 55, 12],
-  [29, 13, 14, 29, 25, 20, 52, 29, 47, 10],
-  [23, 9, 17, 23, 24, 14, 49, 24, 55, 13],
-  [27, 15, 15, 27, 23, 17, 48, 26, 54, 11],
-  [24, 13, 16, 24, 25, 17, 47, 24, 53, 13],
-  [26, 12, 16, 26, 25, 14, 48, 27, 54, 11],
-  [25, 14, 14, 25, 23, 18, 48, 24, 55, 12],
-  [22, 12, 16, 22, 24, 15, 49, 22, 53, 11],
-];
-const worldPoint = (x, y) => ({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL });
+import { CELL, COLS, ROWS, noise, worldPoint, collisionTest } from './overland-grid.js';
+export { CELL, COLS, ROWS, WIDTH, HEIGHT, noise, clamp } from './overland-grid.js';
+
 export function buildMap(region, routes = [], marks = {}, scene = 0) {
-  const [cross, upper, sx, sy, lx, ly, ex, ey, tx, ty] = layouts[region] || layouts[0];
-  const seed = region + 1;
+  if (region > 0) return buildChapterMap(region, routes, scene);
+  const cross = 24, upper = 11;
+  const [sx, sy] = [16, 24], [lx, ly] = [24, 17];
+  const [ex, ey] = [48, 25], [tx, ty] = [55, 12];
+  const seed = 1;
   const cells = Array.from({ length: ROWS }, () => Array(COLS).fill('grass'));
   const objects = [],
     reefs = [],
     solids = [];
   const center = (y) =>
-    34 + Math.round(Math.sin(y * 0.165 + region * 0.8) * 2 + Math.sin(y * 0.32 + region) * 1.4);
+    34 + Math.round(Math.sin(y * 0.165) * 2 + Math.sin(y * 0.32) * 1.4);
   const easternStream = (y) =>
-    73 + Math.round(Math.sin(y * 0.086 + region * 0.9) * 5 + Math.sin(y * 0.21) * 1.8);
-  const landmarks = landmarksFor(region);
+    73 + Math.round(Math.sin(y * 0.086) * 5 + Math.sin(y * 0.21) * 1.8);
+  const landmarks = landmarksFor(0);
   const [south, north, east] = landmarks;
-  const ground = ['reedbed', 'saltflat', 'slag', 'furrow', 'flagstone', 'ice', 'cobble', 'basalt'][region];
-  // Each lower valley has its own outline and working ground. A narrow lane
-  // curves out of the woods before opening into the outer neighborhoods.
+  // Reed beds frame the lane from the woods to the river wharf.
   const parcels = [
     [south.col, south.row - 1, 11, 6],
     [north.col, north.row + 1, 10, 7],
     [east.col - 3, east.row + 1, 13, 8],
-    [54 + (region % 4), 42 - (region % 3), 7, 4],
+    [54, 42, 7, 4],
   ];
-  const eastCross = cross + 2 + (region % 3);
+  const eastCross = cross + 2;
   const southCross = south.row - 6;
   for (let y = 0; y < ROWS; y++)
     for (let x = 0; x < COLS; x++) {
-      const river = Math.abs(x - center(y)) <= (region === 1 ? 4 : 3);
-      const stream = Math.abs(x - easternStream(y)) <= (region === 1 || region === 6 ? 3 : 2);
+      const river = Math.abs(x - center(y)) <= 3;
+      const stream = Math.abs(x - easternStream(y)) <= 2;
       if (river || stream) cells[y][x] = 'water';
       else if (parcels.some(([ox, oy, rx, ry]) =>
-        ((x - ox) / rx) ** 2 + ((y - oy) / ry) ** 2 < 1 + 0.16 * Math.sin(y * 0.81 + region))) {
-        cells[y][x] = ground;
+        ((x - ox) / rx) ** 2 + ((y - oy) / ry) ** 2 < 1 + 0.16 * Math.sin(y * 0.81))) {
+        cells[y][x] = 'reedbed';
       }
     }
   function tile(x, y, kind) {
@@ -123,9 +106,8 @@ export function buildMap(region, routes = [], marks = {}, scene = 0) {
     berthLeft = center(berthY) - 6,
     berthEnd = center(berthY);
   road(25, cross + 6, berthLeft, berthY);
-  if (region === 0)
-    for (let y = berthY - 1; y <= berthY; y++)
-      for (let x = berthLeft; x <= berthEnd; x++) cells[y][x] = 'dock';
+  for (let y = berthY - 1; y <= berthY; y++)
+    for (let x = berthLeft; x <= berthEnd; x++) cells[y][x] = 'dock';
   function object(type, x, y, w, h, foundation, variant = 0) {
     const p = worldPoint(x, y);
     objects.push({ ...p, type, w, h, variant });
@@ -137,17 +119,22 @@ export function buildMap(region, routes = [], marks = {}, scene = 0) {
   const dots = {
     keeper: { ...worldPoint(sx + 2, sy - 0.4), kind: 'keeper' },
     site: { ...worldPoint(lx, ly), kind: 'site' },
-    ship: { ...(region === 0 ? worldPoint(berthEnd - 0.4, berthY) : worldPoint(east.col + 4, east.row + 1)), kind: 'ship' },
+    ship: { ...worldPoint(berthEnd - 0.4, berthY), kind: 'ship' },
   };
   const battleSites = [
     [[ex, ey], [tx, ty]],
     [[east.col - 6, east.row], [north.col - 2, north.row + 1]],
     [[north.col, north.row + 4], [south.col + 6, south.row + 1]],
     [[south.col + 5, southCross], [east.col, east.row + 5]],
-  ][scene % 4];
-  for (const [i, route] of routes.entries()) {
+  ];
+  function encounterSpot(stage, routeId) {
+    if (!['normal', 'elite', 'boss_steady', 'boss_daring'].includes(routeId)) return null;
+    const lane = routeId === 'elite' || routeId === 'boss_daring' ? 1 : 0;
+    return worldPoint(...battleSites[stage % battleSites.length][lane]);
+  }
+  for (const route of routes) {
     const kind = route.risk === 'elite' || route.id === 'elite' ? 'trap' : 'enemy';
-    dots[route.id] = { ...worldPoint(...battleSites[i]), kind, encounter: route.encounter_id };
+    dots[route.id] = { ...encounterSpot(scene, route.id), kind, encounter: route.encounter_id };
   }
   for (const spot of landmarks) {
     dots[spot.key] = { ...worldPoint(spot.col, spot.row), kind: 'landmark' };
@@ -156,108 +143,59 @@ export function buildMap(region, routes = [], marks = {}, scene = 0) {
     object('landmark', spot.col, spot.row - 0.75, 66, 48, [34, 9], spot.motif);
     object('lantern', spot.col - 2, spot.row + 0.5, 10, 26, [5, 4]);
   }
-  if (region !== 0) {
-    road(east.col + 3, east.row, east.col + 5, east.row + 1);
-    object('war-post', east.col + 5.7, east.row - 0.3, 38, 45, [14, 8], 0);
-  }
-  object('station', sx + 1, sy - 3.4, 96, 95, [68, 23], region);
+  object('station', sx + 1, sy - 3.4, 96, 95, [68, 23], 0);
   object('house', 5.8, cross - 3.8, 53, 53, [39, 18], 1);
   object('house', 8, cross + 9.5, 54, 58, [38, 18], 0);
-  object('house', 43, upper - 3.1, 54, 50, [39, 18], region % 2);
-  object('station', 56, cross + 9.3, 67, 66, [46, 17], (region + 5) % 8);
-  const treeStyle = [0, 0, 3, 3, 1, 2, 3, 2][region];
-  const market = [
-    [4, -6, -2.7, 46, 47],
-    [10, -4.8, 3.7, 46, 39],
-    [7, -5.0, -2.7, 42, 40],
-    [4, -6, -2.7, 46, 47],
-    [5, -5.2, -2.5, 45, 44],
-    [10, -6, 3.3, 41, 35],
-    [6, -5.2, -3.6, 42, 39],
-    [11, -5.4, -2.2, 46, 54],
-  ][region];
-  object(
-    'prop',
-    sx + market[1],
-    sy + market[2],
-    market[3],
-    market[4],
-    [region === 7 ? 8 : 21, 10],
-    market[0],
-  );
-  object(
-    'prop',
-    sx + 5.1,
-    sy - 2.6,
-    25,
-    25,
-    [11, 6],
-    region === 0 || region === 2 ? 7 : region === 3 ? 9 : 10,
-  );
-  const framing = [1, 0, 3, 3, 1, 2, 3, 2][region];
-  if (region !== 2 && region !== 7) object('prop', sx - 3.7, sy - 3.8, 58, 62, [7, 5], framing);
-  if (region === 2) object('war-post', sx - 3.7, sy - 3.8, 48, 55, [12, 7], 0);
-  if (region === 7) object('war-post', sx - 3.7, sy - 4.5, 38, 48, [10, 8], 2);
+  object('house', 43, upper - 3.1, 54, 50, [39, 18], 0);
+  object('station', 56, cross + 9.3, 67, 66, [46, 17], 5);
+  object('prop', sx - 6, sy - 2.7, 46, 47, [21, 10], 4);
+  object('prop', sx + 5.1, sy - 2.6, 25, 25, [11, 6], 7);
+  object('prop', sx - 3.7, sy - 3.8, 58, 62, [7, 5], 1);
   object('prop', sx + 3.9, sy - 4.4, 20, 17, [6, 4], 9);
-  object('prop', sx + 6.7, sy + 3.4, 40, 45, [7, 5], treeStyle);
+  object('prop', sx + 6.7, sy + 3.4, 40, 45, [7, 5], 0);
   object('prop', sx - 4.6, sy + 3.5, 23, 19, [8, 4], 9);
-  object('prop', lx - 2, ly - 1.3, 34, 31, [18, 8], region === 0 ? 6 : 5);
+  object('prop', lx - 2, ly - 1.3, 34, 31, [18, 8], 6);
   object('prop', 42, cross - 2.3, 45, 54, null, 11);
   object('prop', 10, 33, 37, 33, [20, 7], 10);
-  object('prop', 53, upper + 2.5, 36, 33, [18, 7], region === 2 ? 7 : 6);
-  if (region === 0) object('prop', berthLeft - 0.9, berthY + 1.2, 25, 21, [10, 4], 10);
+  object('prop', 53, upper + 2.5, 36, 33, [18, 7], 6);
+  object('prop', berthLeft - 0.9, berthY + 1.2, 25, 21, [10, 4], 10);
   for (let yy = 2; yy < ROWS - 2; yy += 3) {
     const xx = center(yy) - 4.4;
     if (
       Math.abs(yy - cross) < 3 ||
       Math.abs(yy - upper) < 3 ||
-      (region === 0 && Math.abs(yy - berthY) < 2)
+      Math.abs(yy - berthY) < 2
     )
       continue;
     object('prop', xx, yy, 22, 22, null, 8);
   }
-  if ([0, 2, 5].includes(region)) object('war-post', 44.2, cross + 4.8, 45, 54, [24, 10], 0);
+  object('war-post', 44.2, cross + 4.8, 45, 54, [24, 10], 0);
   // Give the junctions between town and the outer sites recognizable silhouettes.
   // The landmarks themselves remain clear on both sides for walking past them.
-  object('war-post', 62, eastCross - 2.8, 51, 55, [18, 9], region === 7 ? 2 : 0);
+  object('war-post', 62, eastCross - 2.8, 51, 55, [18, 9], 0);
   object('house', 48, southCross - 2.8, 47, 49, [29, 12], 1);
-  object('prop', 61, 41, 43, 42, [21, 11], region === 2 ? 7 : 4);
+  object('prop', 61, 41, 43, 42, [21, 11], 4);
   object('house', 102.6, 38, 49, 55, [31, 11], 0);
   object('war-post', 85.5, 60.5, 38, 36, [19, 9], 1);
   for (const [x, y] of [[26, southCross - 1.7], [43, southCross - 1.7], [65, eastCross - 1.7],
     [84, eastCross - 1.7], [66, east.row - 1.7], [84, east.row - 1.7]]) {
     object('lantern', x, y, 10, 26, [5, 4]);
   }
-  // Side structures follow their trade. A salt pan is enclosed by barrels and
-  // a sluice, while print shops have hanging paper and rail yards have wagons.
+  // Equipment around the mill, lookout and wharf reflects the work done there.
   const yards = {
     wheel: [['house', -4, -2.1, 47, 49, 0], ['prop', 3.2, 2.8, 38, 32, 7], ['prop', -3.8, 3.6, 37, 40, 0]],
     beacon: [['war-post', 4.3, -2.0, 43, 46, 0], ['prop', -2.9, 2.9, 33, 25, 10], ['prop', -4.4, -2.8, 48, 51, 1]],
-    rail: [['works', -3.9, 1.8, 39, 22, 'cart'], ['works', 3.4, 2.3, 39, 22, 'cart'], ['prop', 3.5, -2.8, 43, 36, 7]],
-    salt: [['works', -3.2, -1.8, 44, 29, 'rack'], ['prop', 3.5, -1.6, 42, 35, 10], ['prop', 3.1, 3.6, 28, 25, 10]],
     wharf: [['works', -3.4, -1.7, 44, 29, 'rack'], ['prop', 3.1, -2.8, 54, 44, 10], ['works', -3.3, 2.8, 37, 22, 'cart']],
-    kiln: [['works', -3.4, 2.7, 38, 21, 'ore'], ['works', 3.8, 1.9, 39, 22, 'cart'], ['prop', 3.9, -2.8, 36, 30, 7]],
-    terrace: [['prop', -4.4, -2.6, 50, 42, 4], ['prop', 3.7, -3.1, 52, 53, 3], ['works', 3.5, 2.7, 40, 26, 'hay']],
-    press: [['works', -3.8, -0.7, 44, 30, 'paper'], ['works', -3.2, 2.4, 44, 30, 'paper'], ['house', 3.7, -2.4, 46, 51, 1]],
-    ring: [['war-post', -3.2, -1.9, 36, 46, 2], ['works', 4.2, -2.7, 40, 28, 'dial'], ['works', 2.6, 3.6, 28, 18, 'dial']],
-    cairn: [['works', -3.2, -1.8, 39, 25, 'cairn'], ['works', 3.5, 2.2, 45, 29, 'cairn'], ['prop', 3.9, -2.6, 49, 57, 2]],
   };
   for (const spot of landmarks) {
     for (const [type, dx, dy, w, h, variant] of yards[spot.motif]) {
       object(type, spot.col + dx, spot.row + dy, w, h, [Math.floor(w * 0.48), 6], variant);
     }
-    if (spot.motif === 'terrace' || spot.motif === 'salt' || spot.motif === 'rail') {
-      for (let i = -3; i < 4; i++) {
-        if (i === 0) continue;
-        object('fence', spot.col + i, spot.row + 4.5, 16, 12, [14, 4]);
-      }
-    }
   }
-  if (region === 3 || (region === 0 && marks.willow_ferry === 'ferry_child'))
+  if (marks.willow_ferry === 'ferry_child')
     object('war-post', 25.4, 33.6, 51, 49, [27, 12], 1);
-  if (region === 7 || region === 4) object('war-post', lx + 4.2, ly - 1.2, 45, 53, [20, 10], 2);
-  object('mechanism', lx, ly - 0.75, 30, 34, [15, 7], region);
-  if (region === 0) object('ship', berthEnd + 2.6, berthY + 0.7, 88, 58, null);
+  object('mechanism', lx, ly - 0.75, 30, 34, [15, 7], 0);
+  object('ship', berthEnd + 2.6, berthY + 0.7, 88, 58, null);
   for (const [x, y] of [
     [sx - 2, sy - 2.2],
     [lx + 1.6, ly],
@@ -276,27 +214,17 @@ export function buildMap(region, routes = [], marks = {}, scene = 0) {
     for (let xx = bridge.left + 3; xx < bridge.right; xx += 24)
       objects.push({ x: xx, y: bridge.bottom - 1, type: 'rail', w: 24, h: 9, variant: 0 });
   }
-  if (region === 0 || region === 3) {
-    // Both sides of the paddock have openings onto the lane.
-    for (let xx = 15; xx <= 22; xx++) {
-      object('fence', xx, 32, 16, 12, [15, 4]);
-      if (xx !== 19 && xx !== 20) object('fence', xx, 36.7, 16, 12, [15, 4]);
-    }
-    for (let yy = 33; yy < 36; yy++)
-      for (let xx = 16; xx <= 21; xx++) object('crop', xx, yy, 13, 13, null, (xx + yy + region) % 3);
-  } else {
-    const stationYards = {
-      1: [['rack', -2.5, 2.8], ['rack', 1.0, 4.2], ['cart', 6.3, 5.5]],
-      2: [['cart', 4.1, 2.2], ['ore', 6.1, 2.9], ['cart', -1.0, 5.4]],
-      4: [['paper', -3.8, 1.8], ['paper', -0.8, 3.7], ['paper', 4.4, 5.1]],
-      5: [['cairn', -3.9, 2.6], ['cairn', 1.5, 4.8], ['cairn', 5.9, 3.5]],
-      6: [['dial', -2.3, 3.7], ['cart', 2.4, 4.6], ['ore', 5.6, 2.5]],
-      7: [['dial', -3.0, 2.8], ['dial', 2.6, 3.3], ['dial', 6.2, 3.8]],
-    };
-    for (const [type, x, y] of stationYards[region])
-      object('works', sx + x, sy + y, 40, 26, [20, 6], type);
+  // Both sides of the paddock have openings onto the lane.
+  for (let xx = 15; xx <= 22; xx++) {
+    object('fence', xx, 32, 16, 12, [15, 4]);
+    if (xx !== 19 && xx !== 20) object('fence', xx, 36.7, 16, 12, [15, 4]);
   }
+  for (let yy = 33; yy < 36; yy++)
+    for (let xx = 16; xx <= 21; xx++) object('crop', xx, yy, 13, 13, null, (xx + yy) % 3);
   const scenery = [...objects];
+  // The landscape stays fixed when a defeated patrol disappears or the next
+  // encounter moves to another district. Keep every possible landing clear.
+  const clearings = [...Object.values(dots), ...battleSites.flat().map(([x, y]) => worldPoint(x, y))];
   for (let x = 0; x < COLS; x++)
     for (let y = 0; y < ROWS; y++) {
       if (cells[y][x] !== 'grass') continue;
@@ -306,7 +234,7 @@ export function buildMap(region, routes = [], marks = {}, scene = 0) {
       if (!forest || r > 0.2 || cells[y].slice(Math.max(0, x - 1), x + 2).includes('road')) continue;
       const p = worldPoint(x, y);
       const clear =
-        Object.values(dots).some((o) => Math.hypot(o.x - p.x, o.y - p.y) < 54) ||
+        clearings.some((o) => Math.hypot(o.x - p.x, o.y - p.y) < 54) ||
         scenery.some(
           (o) =>
             o.type !== 'tree' &&
@@ -324,27 +252,7 @@ export function buildMap(region, routes = [], marks = {}, scene = 0) {
       if (cells[y][x] === 'water' && noise(x, y, seed) > 0.66) reefs.push(worldPoint(x, y));
     }
   const spawn = worldPoint(sx, sy);
-  // A walk-to command checks thousands of tile edges. Index foundations so
-  // those checks stay local even in the denser neighborhoods.
-  const footprints = new Map();
-  for (const rect of solids) {
-    for (let y = Math.floor((rect.y - 1) / CELL); y <= Math.floor((rect.y + rect.h + 4) / CELL); y++)
-      for (let x = Math.floor((rect.x - 4) / CELL); x <= Math.floor((rect.x + rect.w + 4) / CELL); x++) {
-        const slot = y * COLS + x;
-        if (!footprints.has(slot)) footprints.set(slot, []);
-        footprints.get(slot).push(rect);
-      }
-  }
-  function water(x, y) {
-    return cells[Math.floor(y / CELL)]?.[Math.floor(x / CELL)] === 'water';
-  }
-  function pass(x, y) {
-    if (x < 12 || x > WIDTH - 12 || y < 16 || y > HEIGHT - 9) return false;
-    for (const dx of [-4, 4]) for (const dy of [-4, 1]) if (water(x + dx, y + dy)) return false;
-    const near = footprints.get(Math.floor(y / CELL) * COLS + Math.floor(x / CELL));
-    return !near?.some((o) => x + 4 > o.x && x - 4 < o.x + o.w && y + 1 > o.y && y - 4 < o.y + o.h);
-  }
-  return { region, cells, objects, reefs, dots, bridges, landmarks, spawn, pass };
+  return { region, cells, objects, reefs, dots, bridges, landmarks, spawn, pass:collisionTest(cells, solids), encounterSpot };
 }
 export function moveFeet(map, p, dx, dy) {
   const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 3));

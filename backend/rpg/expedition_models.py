@@ -151,6 +151,7 @@ class TowerView(StrictModel):
 
 
 class ExpeditionState(StrictModel):
+    used_drills: list[Identifier] = Field(default_factory=list)
     eight_chapters: bool = False
     excluded_cards: dict[Identifier, list[Identifier]] = Field(default_factory=dict)
     campaign_story: bool = False

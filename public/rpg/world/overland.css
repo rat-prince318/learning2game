@@ -200,6 +200,25 @@ body:has(.lr-world) {
 .lr-dialog-layer:empty {
   display: none;
 }
+.lr-field-instrument {
+  display: grid; gap: 7px; padding: 10px; max-width: 30rem;
+  color: #f4eed8; border: 1px solid #a69370; background: #172d31;
+}
+.lr-field-instrument .lr-controls { display: flex; flex-wrap: wrap; gap: 5px; }
+.lr-field-instrument button {
+  background: #28444a; color: #fff2d2; border: 1px solid #84948b;
+  padding: 6px 9px; border-radius: 3px; min-height: 40px; cursor: pointer; font: inherit;
+}
+.lr-field-instrument button[aria-pressed='true'] { border-color: #f4d085; background: #5b543a; }
+.lr-field-instrument button:disabled { opacity: .52; cursor: default; }
+.lr-field-instrument small { display: block; font: 600 12px/1.3 system-ui; color: #c5e4e7; }
+.lr-dialog-layer .lr-field-instrument p { margin: 0; font: 500 13px/1.45 system-ui; }
+.lr-field-instrument p:empty { display: none; }
+.lr-buoys { border-top: 3px solid #72b9c1; }
+.lr-winch { border-top: 3px solid #c99d61; }
+.lr-light-table p { padding: 7px; color: #422f26; background: #c9ad87; }
+.lr-light-table[data-light='1'] p { background: #ffdf9b; }
+.lr-dialog-layer:has(.lr-field-instrument) { max-height: 72dvh; overflow-y: auto; }
 .lr-dialog-layer .lr-dialog {
   padding: 16px;
   gap: 14px;
@@ -340,3 +359,47 @@ body:has(.lr-world) {
     grid-column: 3;
   }
 }
+/* Field instruments show the same evidence available in the text reading. */
+.lr-tool-display {
+  display: grid; place-items: center; height: 43px; overflow: hidden;
+  border: 1px solid #506763; background: #132428;
+}
+.lr-rail-plan, .lr-line-trace, .lr-bridge-signals, .lr-orbit-sight {
+  position: relative; width: 88%; max-width: 235px; height: 36px;
+}
+.lr-rail-plan::before, .lr-rail-plan i, .lr-rail-plan b {
+  content: ""; position: absolute; height: 4px; background: #b79569; top: 19px;
+}
+.lr-rail-plan::before { width: 33%; left: 2%; }
+.lr-rail-plan i, .lr-rail-plan b { width: 54%; left: 34%; transform-origin: left; }
+.lr-rail-plan i { transform: rotate(-6deg); }
+.lr-rail-plan b { transform: rotate(6deg); }
+.lr-rail-plan[data-track="hopper"] i { background: #ec9a66; }
+.lr-rail-plan[data-track="cooling"] b { background: #a4e2dc; }
+.lr-rail-plan span {
+  position: absolute; width: 15px; height: 8px; top: 8px; left: 20%;
+  background: #f19c60; border-bottom: 3px solid #7c5a50; box-shadow: 0 2px #171f24;
+}
+.lr-rail-plan[data-track="hopper"] span { left: 67%; top: 3px; }
+.lr-rail-plan[data-track="cooling"] span { left: 54%; top: 13px; }
+.lr-rail-plan[data-stop="true"] span { left: 77%; top: 16px; background: #85cfc9; }
+.lr-line-trace, .lr-bridge-signals { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.lr-line-trace::before { content: ""; width: 100%; height: 1px; position: absolute; background: #7c9b9e; }
+.lr-line-trace i { width: calc(var(--length) * 10px); height: 8px; background: #e6c687; z-index: 1; }
+.lr-bridge-signals i {
+  font: 700 14px/1 Georgia, serif; width: 24px; height: 23px; display: grid; place-items: center;
+  border: 1px solid #88938f; color: #a2b2ac; background: #28363b;
+}
+.lr-bridge-signals i[data-lit="true"] { color: #261e13; background: #e9b960; }
+.lr-bridge-signals i:last-child[data-lit="true"] { background: #86d399; border-radius: 50%; }
+.lr-orbit-sight { display: flex; align-items: center; justify-content: center; gap: 25px; }
+.lr-orbit-sight i, .lr-orbit-sight b { position: relative; width: 30px; height: 30px; border: 1px solid #bfa778; border-radius: 50%; }
+.lr-orbit-sight i::before, .lr-orbit-sight b::before {
+  position: absolute; content: ""; left: calc(50% - 1px); top: 2px; height: 12px; width: 2px;
+  background: #f1d08c; transform-origin: bottom; transform: rotate(var(--turn));
+}
+.lr-orbit-sight b::before { transform: rotate(calc(90deg - var(--tilt))); }
+.lr-orbit-sight i::after, .lr-orbit-sight b::after {
+  content: ""; position: absolute; top: 13px; right: -4px; width: 6px; height: 2px; background: #f6aa72;
+}
+.lr-orbit-sight[data-aligned="true"] i, .lr-orbit-sight[data-aligned="true"] b { box-shadow: 0 0 7px #f3cb74; }

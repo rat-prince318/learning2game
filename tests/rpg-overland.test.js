@@ -8,7 +8,7 @@ test('every regional keeper, mechanism, ghost ship, sentry and trap is reachable
   const approaches = new Set();
   for (let i = 0; i < 8; i++) {
     const map = buildMap(i, routes);
-    approaches.add(map.spawn.x + ',' + map.spawn.y + '-' + map.bridges[1].top);
+    approaches.add([map.spawn.x,map.spawn.y,map.dots.site.x,map.dots.site.y].join('/'));
     for (const [name, contact] of Object.entries(map.dots)) {
       const feet = { ...map.spawn };
       const path = footpath(map, feet, contact);
@@ -26,28 +26,29 @@ test('every regional keeper, mechanism, ghost ship, sentry and trap is reachable
 test('the swept footprint slides along buildings, stops at water, and crosses all bridges', () => {
   for (let i = 0; i < 8; i++) {
     const map = buildMap(i, routes);
-    for (const b of map.bridges) {
+    for (const b of map.bridges || []) {
       const mid = (b.top + b.bottom) / 2;
       const feet = { x: b.left + 1, y: mid };
       moveFeet(map, feet, b.right - b.left - 2, 0);
       assert.equal(Math.round(feet.x), b.right - 1);
       assert.ok(map.pass(feet.x, feet.y));
     }
-    const row = 3,
-      river = map.cells[row].indexOf('water') * CELL,
-      y = (row + 0.5) * CELL;
-    const feet = { x: river - 8, y };
-    if (map.pass(feet.x, y)) {
-      moveFeet(map, feet, 3 * CELL, 0);
-      assert.ok(feet.x < river);
+    const obstacle = map.objects.find(o => o.type === (i ? 'monument' : 'station'));
+    assert.ok(!map.pass(obstacle.x, obstacle.y - 7));
+    const blocked = map.blockedTerrain || new Set(['water']);
+    let samples = 0;
+    for (let y = 1; y < ROWS - 1; y++) {
+      const x = map.cells[y].findIndex((tile, col) => col > 1 && blocked.has(tile));
+      if (x < 0) continue;
+      assert.equal(map.pass((x + .5) * CELL, (y + .5) * CELL), false);
+      samples++;
     }
-    const house = map.objects.find((o) => o.type === 'station');
-    assert.ok(!map.pass(house.x, house.y - 10));
-    const along = { x: house.x - 16, y: house.y + 8 };
-    assert.ok(map.pass(along.x, along.y));
-    moveFeet(map, along, 25, -19);
-    assert.ok(along.x > house.x);
-    assert.ok(along.y >= house.y + 3 && map.pass(along.x, along.y));
+    assert.ok(samples > 1);
+    if (!i) {
+      const along = {x:obstacle.x-16,y:obstacle.y+8};
+      moveFeet(map,along,25,-19);
+      assert.ok(along.x>obstacle.x && along.y>=obstacle.y+3 && map.pass(along.x,along.y));
+    }
     assert.ok(!map.pass(-5, 40));
     assert.ok(!map.pass(WIDTH + 1, HEIGHT + 1));
   }
@@ -60,7 +61,7 @@ test('all eight maps connect the outer districts, field exit and four rotating e
     const dangerPositions = new Set();
     for (let scene = 0; scene < 4; scene++) {
       const map = buildMap(i, routes, {}, scene);
-      assert.equal(map.bridges.length, 5);
+      if (i === 0) assert.equal(map.bridges.length, 5);
       assert.equal(map.landmarks.length, 3);
       assert.ok(map.landmarks.every((d) => d.name[0] && d.name[1] && d.description.every(Boolean)));
       map.landmarks.forEach((d) => titles.add(d.name[0]));
@@ -83,4 +84,19 @@ test('all eight maps connect the outer districts, field exit and four rotating e
     assert.equal(dangerPositions.size, 4);
   }
   assert.equal(titles.size, 24);
+});
+
+test('each chapter has a distinct coastline, trail network and approach to its first objective', () => {
+  const plans = Array.from({length:8}, (_, i) => buildMap(i, routes));
+  const masks = plans.map(map => {
+    const blocked = map.blockedTerrain || new Set(['water']);
+    return map.cells.flat().map(tile => blocked.has(tile));
+  });
+  for (let i=1;i<plans.length;i++) for(let j=0;j<i;j++) {
+    const different = masks[i].filter((a,k)=>a!==masks[j][k]).length / masks[i].length;
+    assert.ok(different>.10, 'Walkable silhouettes are too similar: '+i+' / '+j+' ('+different+')');
+  }
+  assert.equal(plans[1].cells[55][55], 'water');
+  assert.ok(plans[4].cells.some(row=>row.includes('wall')) && plans[4].objects.some(o=>o.type==='shelf'));
+  assert.ok(plans[7].plan.orbits.length===2);
 });

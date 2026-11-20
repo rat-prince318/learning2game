@@ -623,3 +623,12 @@
 
 .l2g-battle .bf-cargo { position:relative; }
 .l2g-battle .bf-travel-crate { position:absolute; top:0; left:0; z-index:2; pointer-events:none; }
+
+.l2g-battle .bf-round-counter {
+  margin-inline-start: .45em;
+  padding-inline-start: .65em;
+  border-inline-start: 1px solid #9e977c;
+  color: #ffe0a0;
+  font: 650 .72rem/1.15 system-ui, sans-serif;
+  white-space: nowrap;
+}

@@ -1,6 +1,6 @@
 import { msg, getLocale } from '../../js/locale.js';
 import { h } from '../../js/utils.js';
-import { line, atlas, regionOf, fieldQuest, checkpointAftermath } from './atlas.js';
+import { line, atlas, regionOf, fieldQuest, checkpointAftermath, atChapterExit } from './atlas.js';
 import { landmarksFor } from './overland-districts.js';
 import { gearName, heroNames } from '../battle/words.js';
 import { studyMarkup } from '../../js/study.js';
@@ -110,6 +110,7 @@ const traps = [
   ['星环光栅', 'Solar tripwire'],
 ];
 export function stationDialog(view, selection) {
+  if (!selection && atChapterExit(view)) return '';
   const reg = regionOf(view),
     done = view.field_signals?.includes(reg.id),
     i = view.region_index,
@@ -119,6 +120,7 @@ export function stationDialog(view, selection) {
   let speaker = line(reg.keeper),
     copy = line(reg.opening),
     action = '';
+  if (selection === 'await-signal') copy = line(reg.needSignal);
   const stop = landmarksFor(i).find((landmark) => landmark.key === selection);
   if (stop) {
     speaker = line(stop.name);
@@ -163,7 +165,7 @@ export function stationDialog(view, selection) {
   }
   if (!selection)
     action = button('talk-local', msg('和守站人交谈', 'Speak to the keeper') + '　→', 'lr-glass');
-  if (phase === 'reward' || phase === 'victory') {
+  if ((phase === 'reward' && !atChapterExit(view)) || phase === 'victory') {
     copy = checkpointAftermath(view);
     action = button(
       phase === 'reward' ? 'reward' : 'ending',
@@ -175,7 +177,7 @@ export function stationDialog(view, selection) {
     );
   }
   if (!selection && phase === 'route') return '';
-  return `<div class="lr-dialog" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${plate(i)}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div>${phase === 'route' ? button('walk', chosen?.risk === 'elite' ? msg('绕开陷阱', 'Leave the trap') : msg('继续赶路', 'Back to the trail'), 'lr-glass lr-dismiss') : ''}</div>`;
+  return `<div class="lr-dialog" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${plate(i)}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div>${phase === 'route' || atChapterExit(view) ? button('walk', chosen?.risk === 'elite' ? msg('绕开陷阱', 'Leave the trap') : msg('继续赶路', 'Back to the trail'), 'lr-glass lr-dismiss') : ''}</div>`;
 }
 export function fieldLabels(view) {
   const reg = regionOf(view);
@@ -183,6 +185,10 @@ export function fieldLabels(view) {
   if (!view.region_index) labels.ship = msg('灵船船首', 'Ghost ship prow');
   if (isExploration(view) && (view.region_index || view.story_marks?.[reg.id]))
     labels.ship = msg('驿路出口', 'Road out');
+  if (atChapterExit(view)) {
+    labels.ship = msg('出口补给车', 'Convoy at the exit');
+    if (!view.field_signals?.includes(reg.id)) delete labels.site;
+  }
   for (const stop of landmarksFor(view.region_index)) labels[stop.key] = line(stop.name);
   for (const r of view.routes)
     labels[r.id] = r.risk === 'elite' ? line(traps[view.region_index]) : routeName(r, view);
@@ -216,7 +222,7 @@ export function scene(view, selection) {
    )
    .join('')}</div>
  ${
-   view.phase === 'route'
+   view.phase === 'route' || atChapterExit(view)
      ? `<details class="lr-travel-list"><summary>${msg('寻路', 'Wayfinder')}</summary><div>${Object.entries(
          labels,
        )
@@ -234,6 +240,7 @@ export function atlasPage(view, idx) {
   const battles = district && district.chapters.filter((c) => c.kind === 'battle').length;
   const assignment = district ? '<p>' + (battles
     ? msg('本章有 ' + battles + ' 场遭遇，涉及 ' + district.knowledge_count + ' 个知识点。', 'This chapter has ' + battles + ' encounters covering ' + district.knowledge_count + ' course concepts.')
+    : reg.scoutFirst ? line(reg.landmark) + (getLocale() === 'en' ? '. ' : '。') + line(reg.meet) + (getLocale() === 'en' ? '.' : '。')
     : msg('本章任务是打探军情、修好驿站机关，再从出口前往下一站。', 'Speak to the keeper, repair the station mechanism and take the road out.')) + '</p>' : '';
   return `<section class="lr-atlas-page"><div class="lr-atlas"><img src="${asset('atlas')}" alt="${msg('八座驿站沿河谷、山路与海港分布的地图', 'Illustrated map of eight posts along river valleys, mountains and harbors')}">
  ${atlas.map((r, i) => button('pin', `<b>${String(i + 1).padStart(2, '0')}</b><span>${line(r.name)}</span>`, 'lr-pin ' + (i === idx ? 'selected ' : '') + (i === pos ? 'current' : ''), `data-index="${i}" style="--x:${r.at[0]}%;--y:${r.at[1]}%" aria-label="${line(r.name)}" aria-pressed="${idx === i}"`)).join('')}</div>
@@ -299,7 +306,7 @@ export function rewardPage(v) {
   return `<section class="lr-sheet"><div class="lr-kicker">${line(regionOf(v).name)}　/　${ico('coin')} ${v.coins}</div><h1>${msg('驿站补给', 'Wayside supplies')}</h1><p>${onward || line(regionOf(v).end)}</p><div class="lr-grid">${v.rewards
     .map((r) => {
       const [name, desc] = supply(r);
-      return `<article><h2>${name}</h2><p>${desc}</p>${r.requires_replacement ? `<label>${msg('交还遗物', 'Trade in a relic')} <select data-swap="${h(r.id)}">${v.relics.map((item) => `<option value="${h(item.relic.id)}">${relicName(item.relic)} ×${item.stacks}</option>`).join('')}</select></label>` : ''}${button('claim', (r.cost ? ico('coin') + ' ' + r.cost + '　' : '') + msg('领取', 'Claim'), 'lr-glass', `data-key="${h(r.id)}" ${r.affordable ? '' : 'disabled'}`)}</article>`;
+      return `<article><h2>${name}</h2><p>${desc}</p>${r.requires_replacement ? `<label>${msg('交还遗物', 'Trade in a relic')} <select data-swap="${h(r.id)}">${v.relics.map((item) => `<option value="${h(item.relic.id)}">${relicName(item.relic)} ×${item.stacks}</option>`).join('')}</select></label>` : ''}${button('claim', (r.cost ? ico('coin') + ' ' + r.cost + '　' : '') + (atChapterExit(v) ? msg('领取并出发', 'Take and depart') : msg('领取', 'Claim')), 'lr-glass', `data-key="${h(r.id)}" ${r.affordable ? '' : 'disabled'}`)}</article>`;
     })
     .join('')}</div></section>`;
 }

@@ -5,11 +5,11 @@ from secrets import token_hex
 from ..models import KnowledgeItem
 from . import expedition_combat as tactics
 from . import expedition_world as world
-from .battle_content import Exam, active_exam
+from .battle_content import Exam, active_exam, encounter_scene, round_kind
 from .companions import PartnerAssist
 from .battle_models import (
     BattleAction, BattleEvent, BattleState, BattleTally, BattleView, EnemyView, ExpeditionAnswer,
-    Equip, Hint, NextStage, PlayerView, Retreat, SideQuestView, StageView,
+    Equip, Hint, NextStage, PlayerView, Retreat, RoundProgress, SideQuestView, StageView,
 )
 from .hero_catalog import (
     ClassId, Gear, KitId, class_info, equipment as catalog_equipment, initial_loadout, level_for_xp,
@@ -64,7 +64,9 @@ def _unit_health(state, game):
 def _enemy_health(state, game):
     if state.expedition and state.expedition.tower_floor:
         return tactics.tower_health(state.expedition.tower_floor)
-    return _unit_health(state, game) * len(game.scenes[state.stage_index].challenges)
+    scene = encounter_scene(state, game)
+    size = len(chapter_deck(scene)) if state.encounter_drills is not None else len(scene.challenges)
+    return _unit_health(state, game) * size
 
 
 def chapter_deck(scene):
@@ -91,7 +93,7 @@ def _legacy_solved(state, scene):
 
 
 def _set_fight(state, game, *, recover=True, resume=False):
-    scene = game.scenes[state.stage_index]
+    scene = encounter_scene(state, game)
     state.phase = "combat"
     if resume:
         mastered = _legacy_solved(state, scene)
@@ -104,6 +106,8 @@ def _set_fight(state, game, *, recover=True, resume=False):
         state.retry_ids = []
         state.finishing_turn = 0
     state.enemy_hp = _enemy_health(state, game)
+    if resume and state.encounter_drills is not None:
+        state.enemy_hp = min(state.enemy_hp, _unit_health(state, game) * len(state.pending))
     maximum = player_stats(state).max_hp
     state.hp = maximum if recover else min(state.hp, maximum)
     if state.expedition is not None:
@@ -141,9 +145,10 @@ def new_battle(session_id: str, game_id: str, game: RPGGameInternal,
 def begin_encounter(state: BattleState, game: RPGGameInternal, encounter_id: str, relic_ids: list[str],
                     *, region_index: int, stage_index: int | None = None, veteran: bool = False,
                     edge_ranks: int = 0, plating_ranks: int = 0, tower_floor=0,
-                    companion_id=None, companion_level=0) -> BattleState:
+                    companion_id=None, companion_level=0, drills=None) -> BattleState:
     """Enter a chosen map node. World navigation owns the enclosing action revision."""
     result = state.model_copy(deep=True)
+    result.encounter_drills = drills
     if stage_index is not None:
         result.stage_index = stage_index
     result.expedition = tactics.EncounterState(encounter_id=encounter_id, region_index=region_index,
@@ -159,7 +164,7 @@ def begin_encounter(state: BattleState, game: RPGGameInternal, encounter_id: str
 
 
 def view(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeItem]) -> BattleView:
-    scene = game.scenes[state.stage_index]
+    scene = encounter_scene(state, game)
     boss = _is_boss(game, state.stage_index)
     name, sprite = _BOSS if boss else _ENEMIES[state.stage_index]
     maximum = _enemy_health(state, game)
@@ -183,7 +188,13 @@ def view(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeIte
         sidequest = SideQuestView(title=f"营地修习：{scene.name}"[:120],
                                   completed=state.review_index, total=len(state.review_queue),
                                   lesson=exam.lesson)
+    rounds = None
+    if state.encounter_drills is not None:
+        total = len(chapter_deck(scene))
+        rounds = RoundProgress(completed=total-len(state.pending), total=total,
+                               kind=round_kind(state, exam.question) if state.phase == "combat" else None)
     return BattleView(
+        rounds=rounds,
         session_id=state.session_id, game_id=state.game_id, title=game.title, phase=state.phase,
         revision=state.revision, cleared_stages=state.cleared_stages, defeats=state.defeats,
         sidequests_completed=state.sidequests_completed, last_event=state.last_event, prior_answer=state.prior_answer,
@@ -289,6 +300,7 @@ def _record_card(state, scene, question, correct):
 
 def _combat_answer(state, game, exam, action, correct):
     q = exam.question
+    kind = round_kind(state, q)
     tally = state.concepts[q.knowledge_id]
     stats = player_stats(state)
     ctx = state.expedition
@@ -298,13 +310,15 @@ def _combat_answer(state, game, exam, action, correct):
         if state.focus < stats.focus_max:
             raise BattleError(409, f"蓄满 {stats.focus_max} 格能量即可释放职业战技。")
         state.focus = 0
-    if tally.combat_attempts == 0:
-        tally.first_attempt_correct = correct
-    tally.combat_attempts += 1
+    if kind != "tactics":
+        if tally.combat_attempts == 0:
+            tally.first_attempt_correct = correct
+        tally.combat_attempts += 1
 
     power = 0
     if correct:
-        tally.combat_correct += 1
+        if kind != "tactics":
+            tally.combat_correct += 1
         state.combo += 1
         if action.skill == "strike":
             state.focus = min(stats.focus_max, state.focus + 1)
@@ -326,7 +340,7 @@ def _combat_answer(state, game, exam, action, correct):
         state.combo = 0
         missed = exam.missed_by_choice[action.option_id] if exam.missed_by_choice else [q.knowledge_id]
         for kid in missed:
-            if kid not in state.missed_this_fight:
+            if kind != "tactics" and kid not in state.missed_this_fight:
                 state.missed_this_fight.append(kid)
         # A missed seal stays in the queue. Its field note offers the next
         # reasoning step without disclosing the correct option on a retry.
@@ -343,7 +357,8 @@ def _combat_answer(state, game, exam, action, correct):
         refs = list(dict.fromkeys(q.source_ref for q in exam.supporting))
         joined = " / ".join(refs)
         feedback.source_ref = joined if len(joined) <= 500 else refs[0]
-    scene = game.scenes[state.stage_index]
+    feedback.round_kind = kind
+    scene = encounter_scene(state, game)
     _record_card(state, scene, q, correct)
     exchange = None
     if ctx is not None:
@@ -356,14 +371,20 @@ def _combat_answer(state, game, exam, action, correct):
         counter = (raw * 10 + divisor - 1) // divisor
     # Protect the remaining questions; mastering the last one breaks the enemy.
     reserve = len(state.pending) * (_unit_health(state, game) // 2)
+    if correct and state.encounter_drills is not None:
+        # In long high-level encounters even an ordinary cast should move the
+        # health bar visibly. Guard trades some progress for a safer exchange.
+        share = state.enemy_hp // (len(state.pending) + 1)
+        power = max(power, share * (70 if action.skill == "guard" else 90) // 100)
     chain_needed = (ctx and ctx.tower_floor and
                     state.combo < tactics.tower_chain(ctx.tower_floor, len(chapter_deck(scene))))
     if correct and not state.pending and not chain_needed:
         power = max(power, state.enemy_hp)
     elif ctx and ctx.phase == 1 and world.encounter_for(ctx.encounter_id).tier == "boss":
         halfway = _enemy_health(state, game) // 2
-        if correct and len(state.pending) == 1:
-            # Leave a playable second phase even in a two-question book.
+        phase_two_rounds = max(1, len(chapter_deck(scene)) // 2) if state.encounter_drills is not None else 1
+        if correct and len(state.pending) <= phase_two_rounds:
+            # Reserve time to play the boss's second attack pattern before the finisher.
             power = max(power, state.enemy_hp - halfway)
         reserve = max(reserve, halfway)
     if chain_needed:
@@ -400,7 +421,7 @@ def _combat_answer(state, game, exam, action, correct):
         feedback.damage_blocked = raw - counter
         state.hp -= feedback.damage_received
         if state.hp == 0:
-            _defeat(state, feedback, q.knowledge_id)
+            _defeat(state, feedback, q.challenge_id if kind == "tactics" else q.knowledge_id)
     return feedback
 
 
@@ -408,15 +429,18 @@ def _review_answer(state, game, exam, action, correct):
     if action.skill != "strike":
         raise BattleError(409, "职业战技可在战斗回合释放。")
     tally = state.concepts[exam.question.knowledge_id]
-    tally.review_attempts += 1
+    kind = round_kind(state, exam.question)
+    if kind != "tactics":
+        tally.review_attempts += 1
     if not correct:
         # Keep the completed prefix fixed and revisit this lesson after its peers.
         state.review_queue.append(state.review_queue.pop(state.review_index))
-        return BattleEvent(kind="review_wrong", correct=False, message="翻回营地摘记，再核对这张档案卡。",
+        return BattleEvent(kind="review_wrong", round_kind=kind, correct=False, message="翻回营地摘记，再核对这张档案卡。",
                            explanation=exam.lesson.definition, source_ref=exam.lesson.source_ref)
-    tally.review_correct += 1
+    if kind != "tactics":
+        tally.review_correct += 1
     state.review_index += 1
-    feedback = BattleEvent(kind="review_correct", correct=True, message="档案修复成功，继续下一条营地记录。",
+    feedback = BattleEvent(kind="review_correct", round_kind=kind, correct=True, message="档案修复成功，继续下一条营地记录。",
                            explanation=exam.question.explanation, source_ref=exam.question.source_ref)
     if state.review_index == len(state.review_queue):
         state.sidequests_completed += 1
@@ -469,10 +493,11 @@ def advance(state: BattleState, action: BattleAction | ExpeditionAnswer, game: R
                 raise BattleError(409, "本回合的提示已展开。")
             result.hinted = True
             tally = result.concepts[exam.question.knowledge_id]
-            if result.phase == "sidequest":
-                tally.review_hints += 1
-            else:
-                tally.hints += 1
+            if round_kind(result, exam.question) != "tactics":
+                if result.phase == "sidequest":
+                    tally.review_hints += 1
+                else:
+                    tally.hints += 1
             feedback = BattleEvent(kind="hint", message=(exam.help_text if len(exam.help_text) <= 600
                                                         else "本回合的讲义提示已展开。"))
         else:

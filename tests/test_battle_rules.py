@@ -40,6 +40,63 @@ def answer(state, game, course, correct=True, skill="strike"):
     return command(state, game, course, "answer", prompt_id=exam.prompt.prompt_id, option_id=choice.id, skill=skill)
 
 
+def test_sparse_encounter_tracks_retries_and_keeps_tactical_turns_out_of_study_scores():
+    from backend.rpg.battle_rules import begin_encounter
+    from backend.rpg.encounter_drills import build_drills
+    from backend.rpg.expedition_world import region_at
+
+    state, game, course = campaign(1, 1)
+    scene = game.scenes[0]
+    monster = region_at(0).normal_encounters[0]
+    # A publication can lack the richer extracted profile for application drills.
+    drills = build_drills(scene, [], "en", monster)
+    state = begin_encounter(state, game, monster, [], region_index=0, drills=drills)
+    study_id = scene.challenges[0].knowledge_id
+    assert view(state, game, course).rounds.model_dump() == {"completed": 0, "total": 3, "kind": "source"}
+    state = answer(state, game, course)
+    assert state.phase == "combat" and state.enemy_hp > 0 and state.concepts[study_id].combat_correct == 1
+    pending = view(state, game, course)
+    assert pending.rounds.kind == "tactics" and pending.rounds.completed == 1
+    state = command(state, game, course, "hint", prompt_id=pending.prompt.prompt_id)
+    state.hp = 1
+    state = answer(state, game, course, correct=False)
+    assert state.phase == "sidequest"
+    source_score = state.concepts[study_id].model_dump()
+    assert source_score["combat_attempts"] == 1 and source_score["hints"] == 0
+    saved = BattleState.model_validate_json(state.model_dump_json())
+    assert view(saved, game, course) == view(state, game, course)
+    state = answer(saved, game, course)
+    assert state.phase == "combat" and state.concepts[study_id].model_dump() == source_score
+    assert view(state, game, course).rounds.completed == 1
+    state = answer(state, game, course)
+    retry = view(state, game, course)
+    assert retry.rounds.completed == 2 and retry.prompt.purpose == "retry"
+    state = answer(state, game, course)
+    assert state.phase == "victory" and state.concepts[study_id].model_dump() == source_score
+    assert view(state, game, course).rounds.model_dump() == {"completed": 3, "total": 3, "kind": None}
+
+
+def test_mid_battle_legacy_save_keeps_issued_turn_and_a_long_scene_keeps_every_source_card():
+    from backend.rpg.battle_rules import begin_encounter
+    from backend.rpg.encounter_drills import build_drills
+    from backend.rpg.expedition_world import region_at
+
+    monster = region_at(0).normal_encounters[0]
+    state, game, course = campaign(1, 1)
+    old = begin_encounter(state, game, monster, [], region_index=0)
+    raw = old.model_dump(exclude={"encounter_drills"})
+    restored = BattleState.model_validate(raw)
+    assert view(restored, game, course).rounds is None
+    assert active_exam(restored, game, course).prompt == active_exam(old, game, course).prompt
+    assert answer(restored, game, course).phase == "victory"
+
+    state, game, course = campaign(5, 1)
+    drills = build_drills(game.scenes[0], course, game.question_language, monster)
+    state = begin_encounter(state, game, monster, [], region_index=0, drills=drills)
+    assert not drills
+    assert view(state, game, course).rounds.total == len(state.pending) == 5
+
+
 @pytest.mark.parametrize("count,scenes", [(1, 1), (2, 1), (3, 3), (4, 2),
                                          (5, 4), (6, 3), (7, 1), (8, 4)])
 @pytest.mark.parametrize("hero_class", ["arcanist", "vanguard", "ranger"])

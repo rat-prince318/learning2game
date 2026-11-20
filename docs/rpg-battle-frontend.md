@@ -16,9 +16,9 @@
 
 烟柳渡有专属场景与首领造型。其他七个地区各有独立场景，按图鉴类别选择敌方立绘。打开 [/rpg/](../public/rpg/index.html) 可从世界地图开始远征，独立入口适合展示渡口一战。
 
-主线、回声塔和独立入口的战场都铺满浏览器视口。左右血条各自对应桥上的角色，底部显示本回合的题干和选项。选项中的短公式随文字排版，超宽公式支持触屏横移与键盘阅读。手机上的长题可以在底部区域内滚动，角色和血条始终留在原位。
+主线、回声塔和独立入口的战场都铺满浏览器视口。左右血条对应场上的敌我双方，底部显示题目、刻印选项和当前可用招式。八章主线另显示本场已攻克的回合数和当前任务类型。短公式随文字排版，超宽公式可触屏横移或用键盘阅读。手机上的长题可在底部滚动，角色和血条始终留在原位。
 
-结算后点 **回合解析** 或 **最后一击解析** 可查看服务器确认的伤害、当前解题思路及材料出处，按 Esc 或关闭按钮即可返回。点击 **前往营地** 可在原景挑选本章补给。主线使用右上菜单调节战斗音效和简化动效，独立入口使用右上设置。
+点击 **回合解析** 或 **最后一击解析** 可查看实际伤害、解题思路和出处。八章主线的普通胜利点 **前往营地** 并领取补给，角色会回到触发遇敌的地方。章末若还有下一站，胜利按钮会写 **回到烟柳渡** 等当前地区名。玩家回到交手处，跟着箭头走到出口补给车，领补给后才切到下一张地图。最终首领胜利后进入结局。主线使用右上菜单调节音效和简化动效，独立入口使用右上设置。
 
 ## 让知识决定这一击
 
@@ -40,10 +40,11 @@
 <div id="encounter"></div>
 ```
 
-地图负责将 `choose_route` 的回包交给战场。下面的 `renderMap`、`renderCamp` 与 `renderReport` 是宿主自己的页面函数。战场挂载时会读取最新进度，刷新进入战斗或巩固状态时也走这个入口。
+接敌时，宿主保留角色的脚下坐标和朝向，将已选路线交给 `choose_route`。下面的 `renderMap`、`renderCamp` 与 `renderReport` 是宿主自定义函数。战场挂载时读取最新进度，刷新后仍能进入同一战斗或巩固场景。地图恢复和出口补给的完整实现见 [world.js](../public/rpg/world/world.js) 与 [overland.js](../public/rpg/world/overland.js)。
 
 ```js
 import { mountBattle } from '/rpg/battle/battle.js';
+import { atChapterExit } from '/rpg/world/atlas.js';
 
 function enterEncounter(sessionId) {
   const container = document.querySelector('#encounter');
@@ -52,6 +53,7 @@ function enterEncounter(sessionId) {
     immersive: true,
     onExit(current) {
       battle.destroy();
+      if (atChapterExit(current)) return renderMap(current);
       if (current.phase === 'reward') return renderCamp(current);
       if (['victory', 'retreated'].includes(current.phase)) {
         return renderReport(current.session_id);
@@ -74,19 +76,19 @@ function enterEncounter(sessionId) {
 | `battle-exit` | 嵌入时如未传 `onExit`，玩家点击结束按钮会从容器冒泡此事件，`event.detail` 为当前视图。 |
 | `standalone`、`savedEntry` | 独立入口内部选项。地图嵌入传 `sessionId` 即可。 |
 
-`phase` 使用**远征顶层**的字段。`combat` 与 `sidequest` 继续在组件内游玩。`reward` 显示本章所得，玩家读完后由宿主选择补给。`route` 交回地图。`victory` 与 `retreated` 交回结果页面，宿主可调用 `GET /rpg/expeditions/{session_id}/report`。在多卷远征中，一卷胜利时嵌套的 `battle.phase` 可能已是 `victory`，整段旅程仍在继续。
+`phase` 使用远征顶层的字段。`combat` 与 `sidequest` 在组件内游玩，`route` 回到地图。`reward` 表明战后补给待领取，宿主可用 `atChapterExit(view)` 判断补给车是否设在地区出口。`victory` 与 `retreated` 交给结果页面，可读 `GET /rpg/expeditions/{session_id}/report`。多卷远征中，嵌套的 `battle.phase` 可能先于整趟旅程进入 `victory`。
 
 ## 一个回合怎样走完
 
 | 时刻 | 客户端动作 | 服务端依据 |
 | --- | --- | --- |
-| 读招 | 显示敌方意图、阶段、生命与架势，面板显示职业、生命与蓄力 | `battle.tactics`、`battle.enemy`、`player` |
+| 读招 | 显示敌方意图、生命、架势及玩家蓄力。若本场有回合记录，显示已攻克轮数及讲义题、应用题或战术判断 | `battle.tactics`、`battle.enemy`、`player`、`battle.rounds` |
 | 选招与作答 | 两项选择先留在本页，点确认才提交。营地巩固回合固定使用 `strike` | `battle.prompt.prompt_id`、`options[].id`、`player.burst_ready` |
 | 提交 | 向 `POST /rpg/expeditions/{session_id}/actions` 提交 `answer`、招式、答案、一次性的 `event_id` 与远征顶层 `expected_revision` | 服务端判题、扣血、破势并结算 |
 | 呈现 | 锁定输入，敌方中招时先更新敌方生命和架势，我方受到反击时再更新我方生命。动作收束后显示下一题或结算。打开“上一回合”可读讲义解释与出处 | `battle.last_event` 与下一份公开视图中的生命、架势和蓄力 |
 | 提示与补课 | 点“查看提示”提交 `hint`。失利后打开营地讲义，完成后原存档进入同一遭遇 | `battle.prompt.hint`、`battle.sidequest.lesson`、顶层 `phase` |
 
-同一标签页在发送前保存待确认的事件。点击两次只发送一次；断线重连先读服务端版本，仍待结算时使用原事件号与原参数。另一窗口已推进或服务返回 409 时，读取最新状态。独立试玩单独记住上次的会话，嵌入时以宿主提供的编号为准。浏览器存储只用于保存接口编号、设置和未确认动作。战斗真值、判题、奖励、学习记录由后端维护。
+发送前在当前标签页保存未确认的事件。断线重连先读取服务端版本，待结算的动作使用原事件号和参数。另一窗口已推进或服务返回 409 时，读取最新状态。独立试玩记住上次的会话，嵌入时以宿主提供的编号为准。八章地图还在浏览器按存档、地区和关卡保存站位与朝向。跨设备读档缺少本机坐标时，按服务端已击败的路线恢复到对应敌人的地图位置。战况、判题、奖励和学习记录由后端维护。
 
 ## 文件与接手边界
 
@@ -97,10 +99,10 @@ function enterEncounter(sessionId) {
 | 题目、意图、血条、学习记录、结算面板 | [panels.js](../public/rpg/battle/panels.js)、[battle.css](../public/rpg/battle/battle.css) |
 | 展示动作、镜头、音效、像素角色 | [stage.js](../public/rpg/battle/stage.js)、[stage.css](../public/rpg/battle/stage.css)、[素材来源和许可](../public/rpg/battle/art/ASSETS.md) |
 | 请求、重连、幂等与版本 | [controller.js](../public/rpg/battle/controller.js)、[公共视图样例](rpg-fixtures/battle-ui/willow-boss.public.json)、[视图 Schema](../schemas/rpg/ExpeditionView.schema.json) |
-| 地图、补给、课程、战报的后端约定 | [八卷远征](rpg-expedition.md)、[RPG 后端交接](rpg-backend-handoff.md) |
+| 地图、补给、课程、战报的后端约定 | [八章远征](rpg-expedition.md)、[RPG 后端交接](rpg-backend-handoff.md) |
 
 1. 主站先在地图页接通一个真实 `session_id`，跑完一章，检查接手的 `revision` 与服务端相同。
-2. 地图负责选路，营地负责 `choose_reward`。进入下一章沿用同一存档。不要在主站重复计算伤害或发放装备。
+2. 地图负责选路，营地或出口补给车负责 `choose_reward`。在章中领补给后复用上一场的站位。地区守关战结束时先挂回原地图，引导玩家前往出口，再领取补给并进入新章。战斗回包给出的实际伤害与奖励可直接展示。
 3. 新地区先按 `map[region_index].region_id` 扩展背景。专属敌人按 `battle.tactics.encounter_id` 选图，其余使用 `battle.enemy.sprite` 的类别。新动效优先接 `last_event.tactics`，同时给简化动效模式保留文字结果。
 4. 新增文案可沿用 `displayText` 和安全转义。用户资料与题面作为文本处理，重要判题措辞如果无法原样呈现，界面会要求回课程页调整。静音默认开启，简化动效初始值跟随系统，玩家可随时切换。
 
@@ -149,4 +151,4 @@ python -m pytest -q
 
 [首领战浏览器验收](../tests/browser/rpg-battle.spec.js)使用公开讲义作答，与真实 HTTP 回包、存档和战报核对。试跑时可主动失败一次，检查营地笔记里的课程出处，刷新后完成巩固，再挑战同一首领。[控制器测试](../tests/rpg-battle-controller.test.js)可以单独复核重试、并发和独立开局逻辑。
 
-回归覆盖主线和独立入口的完整视口、攻防、胜利与营地，跨章继承装备和经验，以及单独嵌入其他页面时的手机战斗小窗。缩放和触摸测试检查短分式的实际滚动宽度、长公式的阅读与选项点击。[主线游玩](../tests/browser/rpg-saga.spec.js) | [跨章节验收](../tests/browser/rpg-battle-camp.js) | [公式回归](../tests/browser/formula-overflow.spec.js)
+回归覆盖视口、攻防、胜利与营地，普通战后还原交手位置，地区首领胜利后步行到出口换章，以及手机战场和跨章继承。缩放和触摸测试检查短分式的实际滚动宽度、长公式的阅读与选项点击。[主线游玩](../tests/browser/rpg-saga.spec.js) | [跨章节验收](../tests/browser/rpg-battle-camp.js) | [公式回归](../tests/browser/formula-overflow.spec.js)

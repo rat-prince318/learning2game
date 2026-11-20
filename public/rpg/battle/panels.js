@@ -3,7 +3,7 @@ import { partnerNote, receiptButton } from './field-notes.js';
 import { displayText, escapeHtml, h, sourceCitation } from '../../js/utils.js';
 import { msg } from '../../js/locale.js';
 import { studyMarkup } from '../../js/study.js';
-import { atlas, line } from '../world/atlas.js';
+import { atlas, line, atChapterExit } from '../world/atlas.js';
 import { reuploadNotice } from '../world/exam-recovery.js';
 import { enemyName, eventText, gearName, heroNames, intentCopy, lessonText, regionId, regionName } from './words.js';
 
@@ -215,11 +215,20 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null, p
     tower_practice: msg('塔层连击练习', 'Tower streak practice'),
     finisher: msg('最后一击', 'Finishing blow'),
   }[prompt.purpose];
+  const rounds = !side && battle.rounds;
+  const roundLabel = rounds && {
+    source: msg('讲义题', 'Course question'),
+    application: msg('应用题', 'Application'),
+    tactics: msg('战术判断', 'Tactics'),
+  }[rounds.kind];
+  const marker = roundLabel
+    ? '<small class="bf-round-counter" data-testid="battle-round">' +
+      msg('已攻克 ', 'Cleared ') + rounds.completed + ' / ' + rounds.total + '</small>' : '';
   const task = side ? msg('修复残页','Mend the field guide') : evidence ? msg('星轨校准','Align the star seals') :
     chain ? msg('双重刻印','Linked inscription') : msg('战技刻印','Inscribe a technique');
   return left + `<section class="bf-paper bf-quiz">${immersive ? '<div class="bf-reading">' : ''}<div class="bf-papertop">
     <div class="bf-speaker"><i class="bf-scout-face" aria-hidden="true" style="--speaker:${speakerIndex}"></i>
-      <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${purpose || task}</span></div></div>
+      <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${purpose || roundLabel || task} ${marker}</span></div></div>
     ${immersive ? '<div class="bf-notes-actions">'+receiptButton(receipt) : ''}
     <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查阅营地笔记','Read the camp notes') : msg('翻阅手记会放弃本回合的连击暴击。','Opening the field notes forgoes a combo critical this turn.')}"
       ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button>${immersive ? '</div>' : ''}</div>
@@ -242,9 +251,7 @@ export function result(view, standalone, canReplay, {immersive, receipt} = {}) {
   const title = {victory:tower?msg('塔层突破','Floor cleared'):msg('远征通关','Expedition complete'),reward:msg('守军已退', 'Encounter won'),
     route:msg('队伍已到达路口','At the crossroads'),retreated:msg('队伍已返回营地','Back at camp')}[view.phase] || msg('远征进度','Journey progress');
   const acquired = event?.loot_items ?? (event?.loot ? [event.loot] : []);
-  const nextRegion = view.eight_chapters && view.scene_index + 1 === view.map[view.region_index].chapters.length
-    ? atlas[view.region_index + 1] : null;
-  const camp = nextRegion ? msg('领补给，去' + line(nextRegion.name), 'Take supplies for ' + line(nextRegion.name)) : msg('前往营地','Visit camp');
+  const camp = atChapterExit(view) ? msg('回到' + line(atlas[view.region_index].name), 'Return to ' + line(atlas[view.region_index].name)) : msg('前往营地','Visit camp');
   const next = standalone ? msg('回到主站','Return to studio') : tower ? msg('返回塔阶','Return to the stair') :
     ({reward:camp,victory:msg('查看远征结果','View expedition'),route:msg('返回地图','Return to map')}[view.phase] || msg('结束战斗','Leave battle'));
   const progress = tower ? msg('第 '+view.floor+' 层','Floor '+view.floor) :

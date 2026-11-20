@@ -9,6 +9,7 @@ from . import battle_rules, companions, expedition_combat, quest_story, tower
 from .battle_models import BattleState, Equip, Retreat
 from .battle_reports import concept_rows
 from .battle_rules import BattleError
+from .encounter_drills import build_drills, drill_key
 from .expedition_models import (
     AdvanceExploration, BountySeal, ChapterMap, ChooseReward, ChooseRoute, ExpeditionAction, ExpeditionReport, ExpeditionState,
     ExpeditionView, HeldRelic, InspectLandmark, PartyCommand, RegionMap, RewardChoice, StoryChoice, Visit, VolumeStudy,
@@ -206,7 +207,16 @@ def _enter(state, courses, selected):
                                         hero_class=state.hero_class, kit=state.kit, camp_key=previous.camp_key)
         _transfer_hero(previous, fresh)
         state.battle = fresh
-    fight = battle_rules.begin_encounter(state.battle, game, route.encounter_id, state.relic_ids,
+    drills = None
+    if state.eight_chapters:
+        # Reserve future source questions too, so an earlier exercise can never
+        # spoil the exact question that the next teacher-authored scene will ask.
+        occupied = set(state.used_drills)
+        occupied.update(drill_key(q) for publication, _ in courses.values()
+                        for scene in publication.scenes for q in scene.challenges)
+        drills = build_drills(game.scenes[stage], knowledge, game.question_language, route.encounter_id, occupied)
+        state.used_drills.extend(drill_key(d.card) for d in drills)
+    fight = battle_rules.begin_encounter(state.battle, game, route.encounter_id, state.relic_ids, drills=drills,
                                          region_index=state.region_index, stage_index=stage,
                                          veteran=state.veteran, edge_ranks=state.edge_ranks,
                                          plating_ranks=state.plating_ranks, companion_id=state.active_companion,

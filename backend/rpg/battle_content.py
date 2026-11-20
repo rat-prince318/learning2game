@@ -29,6 +29,21 @@ def _token(*components: str) -> str:
     return sha256("\x00".join(components).encode("utf-8")).hexdigest()[:28]
 
 
+def encounter_scene(state, game):
+    scene = game.scenes[state.stage_index]
+    if not state.encounter_drills:
+        return scene
+    extra = [d.card for d in state.encounter_drills]
+    quest = scene.quest.model_copy(update={"challenge_ids": scene.quest.challenge_ids + [q.challenge_id for q in extra]})
+    return scene.model_copy(update={"challenges": scene.challenges + extra, "quest": quest})
+
+
+def round_kind(state, question):
+    if state.encounter_drills is None:
+        return None
+    return next((d.kind for d in state.encounter_drills if d.card.challenge_id == question.challenge_id), "source")
+
+
 def _displayable(item: KnowledgeItem) -> bool:
     try:
         for value in (item.term, item.definition, item.source_ref):
@@ -188,9 +203,18 @@ def _tower_exam(state, token, question, scene, knowledge):
 def active_exam(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeItem]) -> Exam | None:
     if state.phase not in {"combat", "sidequest"}:
         return None
-    questions = game.scenes[state.stage_index].challenges
+    questions = encounter_scene(state, game).challenges
     if state.phase == "sidequest":
         kid = state.review_queue[state.review_index]
+        training = next((d.card for d in state.encounter_drills or []
+                         if d.kind == "tactics" and d.card.challenge_id == kid), None)
+        if training is not None:
+            token = "turn_" + _token(state.session_id, state.phase, str(state.prompt_serial), kid)
+            options = [BattleOption(id=o.id, text=o.text) for o in training.options]
+            return Exam(BattlePrompt(prompt_id=token, text=training.prompt, options=options,
+                                     hint=training.hint if state.hinted else None),
+                        training.correct_option_id, training.hint, training,
+                        lesson=StudyLesson(term=training.source_ref, definition=training.hint, source_ref=training.source_ref))
         q = next(q for q in questions if q.knowledge_id == kid)
     elif state.pending:
         q = next(q for q in questions if q.challenge_id == state.pending[0])

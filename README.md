@@ -1,6 +1,6 @@
 # Learning2Game 课程工坊与灯路远征
 
-**灯路远征**是一款俯视像素 RPG。启动项目后，在首页点击 **进入远征 RPG**。用 WASD 穿过渡桥、调查灵船，带领先锋队迎战灰冠龙将。每趟主线走过八章。跟着地图上的金色路标找接应人、修机关、打守军。自带手册有 32 个知识点，也可以上传自己的课程，沿途的战斗会按资料编排。上传带评分解答的试卷后，可用有出处的改编题出战，建档时可选中文或英文。[玩法与实机录像](docs/lantern-road.md) | [物理试卷验收与支持范围](docs/exam-question-quality.md)
+**灯路远征**是一款俯视像素 RPG。在首页点 **进入远征 RPG**，用 WASD 从烟柳渡的木桥一路走到日轨天台。跟着金色箭头找人、修机关、打守军。你可以带自己的讲义和试卷上路，或用含 32 个知识点的驿站手册。建档时可选中英文。普通巡逻战至少三轮，灰冠龙将至少五轮。打完一仗可以回到交手的位置，章末走到出口领补给，再前往下一站。[八章地图与实机录像](docs/lantern-road.md) | [物理试卷验收与支持范围](docs/exam-question-quality.md)
 
 将自己的讲义、课件或图示做成一局配对练习。学生可以在开局前调整知识点和难度，配对时查看线索，结束后按知识点回看出处，再用容易混淆的概念开一局。教师也可以用同一份讲义准备课堂活动。
 
@@ -45,7 +45,7 @@ python run.py
 | B 资料理解 | [文档和图像读取](backend/material_processing.py)、[知识点、证据与质量检查](backend/material_adapter.py) |
 | C 网页与游戏交互 | [网页源码](public/)、[浏览器验收](tests/browser/) |
 | D 集成与学习记录 | [FastAPI 入口](backend/main.py)、[任务流程](backend/pipeline.py)、[判分和报告](backend/sessions.py) |
-| RPG 答题战役后端 | [八卷远征、战术首领与进阶周目](docs/rpg-expedition.md)、[单卷战役](docs/rpg-battles.md)、[资料生成和会话对接](docs/rpg-backend-handoff.md) |
+| RPG 答题战役后端 | [八章远征、战术首领与进阶周目](docs/rpg-expedition.md)、[单卷战役](docs/rpg-battles.md)、[资料生成和会话对接](docs/rpg-backend-handoff.md) |
 | RPG 烟柳渡首领战 | 启动后打开 `/rpg/battle/`，体验答题交战、营地修习和战后结算。[试玩与前端交接手册](docs/rpg-battle-frontend.md) |
 
 运行后的 `/docs` 提供交互式 API 文档，`/health` 显示当前模式。[真实模型与浏览器验收记录](docs/acceptance.md)包括遗漏项、修正和实测耗时。API 调用顺序、配置、统计口径和数据清理方法见[对接与测试说明](docs/integration.md)。

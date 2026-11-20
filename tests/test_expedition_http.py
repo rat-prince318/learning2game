@@ -210,6 +210,7 @@ def test_victory_unlocks_a_new_archive_with_one_earned_relic(app):
 
 def finish_campaign(client, current, books):
     from backend.rpg.quest_story import CHOICES
+    from backend.rpg.expedition_models import ExpeditionState
 
     with connection(client.app) as db:
         published = {gid: read_rpg_internal(db, gid) for gid in books}
@@ -218,6 +219,8 @@ def finish_campaign(client, current, books):
     path = BASE + "/" + current["session_id"]
     reached = set()
     questions = set()
+    seen_in_fight = set()
+    all_draws = set()
     while current["phase"] != "victory":
         phase = current["phase"]
         region = current["map"][current["region_index"]]
@@ -229,6 +232,7 @@ def finish_campaign(client, current, books):
                 action = (payload(current, "advance_exploration") if region["region_id"] in current["field_signals"]
                           else payload(current, "inspect_landmark"))
             else:
+                seen_in_fight.clear()
                 action = payload(current, "choose_route", route_id=current["routes"][0]["id"])
         elif phase == "reward":
             action = payload(current, "choose_reward", reward_id="purse")
@@ -236,9 +240,24 @@ def finish_campaign(client, current, books):
             assert phase == "combat", current
             prompt = current["battle"]["prompt"]
             item = (current["game_id"], prompt["text"])
-            kid, correct = solutions[item]
-            assert kid not in questions
-            questions.add(kid)
+            progress = current["battle"]["rounds"]
+            expected = {"normal": 3, "elite": 4, "boss": 4}[current["battle"]["tactics"]["tier"]]
+            assert progress["total"] >= (5 if current["battle"]["tactics"]["encounter_id"] == "ash_crown" else expected)
+            assert progress["completed"] == len(seen_in_fight) and prompt["text"] not in seen_in_fight
+            seen_in_fight.add(prompt["text"])
+            assert prompt["text"] not in all_draws
+            all_draws.add(prompt["text"])
+            if progress["kind"] == "source":
+                kid, correct = solutions[item]
+                assert kid not in questions
+                questions.add(kid)
+            else:
+                with connection(client.app) as conn:
+                    row = conn.execute("SELECT state_json FROM expedition_runs WHERE id=?", (current["session_id"],)).fetchone()
+                fight = ExpeditionState.model_validate_json(row["state_json"]).battle
+                drill = next(d for d in fight.encounter_drills if d.card.prompt == prompt["text"])
+                assert drill.kind == progress["kind"]
+                correct = drill.card.correct_option_id
             action = payload(current, "answer", prompt_id=prompt["prompt_id"], option_id=correct,
                              skill="guard")
         reply = client.post(path + "/actions", json=action)

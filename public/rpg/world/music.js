@@ -97,6 +97,11 @@ export function createMusic() {
     },
     cue(kind) {
       if (!enabled || ctx?.state !== 'running') return;
+      if (kind === 'bridge-bell') {
+        tone(55, ctx.currentTime, 0.72, 0.16, 'sine');
+        tone(67, ctx.currentTime + 0.01, 0.38, 0.05, 'triangle');
+        return;
+      }
       const scale = kind === 'seal' ? [0, 4, 7, 12] : kind === 'danger' ? [0, -1, -5] : [0, 7];
       scale.forEach((n, i) => tone(68 + n, ctx.currentTime + i * 0.085, 0.24, 0.1, 'triangle'));
     },

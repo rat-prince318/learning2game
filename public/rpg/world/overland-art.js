@@ -1,3 +1,4 @@
+import { districtTile, drawDistrictFloor, bookshelf, harborGulls } from './district-art.js';
 import { CELL, COLS, ROWS, WIDTH, HEIGHT, noise } from './overland-map.js';
 const colors = [
   [
@@ -150,76 +151,6 @@ function line(c, color, width, points) {
   for (const point of points.slice(1)) c.lineTo(...point);
   c.stroke();
 }
-// The tide yards, rail beds and carved ceremonial courts are walkable surface markings.
-function localGround(c, map, p) {
-  const { x, y } = map.spawn;
-  if (map.region === 1) {
-    for (let j = 0; j < 3; j++)
-      for (let i = 0; i < 3; i++) {
-        const px = x + 47 + i * 21,
-          py = y + 38 + j * 14;
-        rect(c, '#929a7b', px, py, 20, 13);
-        rect(c, '#a7c6b1', px + 2, py + 2, 16, 8);
-        rect(c, '#cee2c2', px + 3, py + 2, 13, 1);
-        rect(c, '#d8d7ab', px, py + 12, 20, 1);
-      }
-  } else if (map.region === 2) {
-    for (let i = -7; i < 20; i++) {
-      const px = x + i * 12;
-      rect(c, '#745a4b', px, y - 10, 3, 11);
-      rect(c, '#a27f63', px, y - 10, 1, 11);
-    }
-    for (const off of [-9, -1]) {
-      rect(c, '#4d5260', x - 84, y + off, 320, 2);
-      rect(c, '#c1ada0', x - 84, y + off, 320, 1);
-    }
-    for (let i = 0; i < 12; i++) rect(c, '#494f50', x + 47 + i * 4, y - 43 + (i % 3) * 2, 5, 3);
-  } else if (map.region === 3) {
-    for (let j = 0; j < 3; j++) {
-      const py = y + 32 + j * 15;
-      line(c, '#69724b', 3, [
-        [x - 110, py + 3],
-        [x - 89, py - 2],
-        [x - 23, py - 2],
-        [x - 14, py - 6],
-      ]);
-      line(c, '#dabb77', 1, [
-        [x - 109, py + 2],
-        [x - 90, py - 4],
-        [x - 23, py - 4],
-        [x - 15, py - 7],
-      ]);
-      for (let k = 0; k < 7; k++) {
-        const px = x - 84 + k * 8;
-        rect(c, '#4f7b45', px, py - 10, 2, 5);
-        rect(c, '#dfb557', px - 1, py - 12, 3, 3);
-      }
-    }
-  } else if (map.region === 4 || map.region === 6 || map.region === 7) {
-    const star = map.region === 7,
-      n = star ? 12 : 8,
-      r = star ? 37 : 27;
-    for (const radius of [r, r - 3, r * 0.58]) {
-      const points = Array.from({ length: n + 1 }, (_, i) => [
-        x + Math.cos((i * Math.PI * 2) / n) * radius,
-        y + Math.sin((i * Math.PI * 2) / n) * radius * 0.49,
-      ]);
-      line(c, star ? '#d8b786' : map.region === 6 ? '#8e705b' : '#c1bdaf', 1, points);
-    }
-    for (let i = 0; i < n; i++) {
-      const a = (i * Math.PI * 2) / n,
-        at = (rad, d) => [x + Math.cos(a + d) * rad, y + Math.sin(a + d) * rad * 0.49];
-      line(c, star ? '#c0a484' : p[5], 1, [at(r * 0.6, 0), at(r * 0.84, 0.14), at(r, 0)]);
-    }
-  } else if (map.region === 5) {
-    for (let j = 0; j < 9; j++) {
-      const px = x + 51 + (j % 3) * 21 + (Math.floor(j / 3) % 2) * 6,
-        py = y + 33 + Math.floor(j / 3) * 12;
-      ellipse(c, '#aeced1', px, py, 10 + (j % 3) * 2, 3);
-      rect(c, '#d3e7e2', px - 6, py - 1, 11, 1);
-    }
-  }
-}
 // Footprints, workshops and work surfaces extend the illustration beyond the
 // station sprite. The same survey coordinates drive collision and interaction.
 function districtGround(c, spot, p) {
@@ -319,6 +250,7 @@ function floorTexture(map, p) {
         y = yy * CELL,
         kind = tile(xx, yy),
         rng = (n) => noise(xx * 17 + n, yy * 11 + n * 13, map.region);
+      if (map.plan && districtTile(c,map,kind,x,y,rng)) continue;
       if (kind === 'water') {
         rect(c, p[6], x, y, 16, 16);
         // A four-pixel depth gradient follows the shape of the river. The waterline
@@ -433,7 +365,7 @@ function floorTexture(map, p) {
         }
       }
     }
-  localGround(c, map, p);
+  if (map.plan) drawDistrictFloor(c, map);
   for (const spot of map.landmarks) districtGround(c, spot, p);
   return out;
 }
@@ -512,6 +444,16 @@ function drawWorkshopProp(c, o, t) {
         line(c, '#897d66', 1, [[u + 1, v + 13], [u + 8, v + 3]]);
       }
     }
+  } else if (variant === 'salt') {
+    const peak = Math.round(h * .75);
+    for (let j = 0; j < peak; j++) {
+      const width = Math.max(2, Math.round((j + 1) * w / peak));
+      const px = x - width * .52, py = y - peak + j;
+      rect(c, '#b0c3bc', px, py, width, 1);
+      rect(c, '#f3ead5', px, py, Math.max(1, width * .58), 1);
+      if (j % 3 === 0) rect(c, '#d9ded1', px + width * .24, py, width * .22, 1);
+    }
+    rect(c,'#9caca0',left+1,y,w-2,2);
   } else if (variant === 'dial') {
     ellipse(c, '#535164', x, y - 2, w * 0.45, 5);
     ellipse(c, '#c1a079', x, y - 5, w * 0.45, 5);
@@ -536,13 +478,37 @@ function drawObject(c, o, s, t, map) {
     p = colors[map.region];
   const source = s.village;
   const shadow = '#172c3566';
+  if (o.type === 'fittings') {
+    const bob = o.variant === 7 ? Math.sin(t * 1.3 + x) * 1.2 : 0;
+    ellipse(c, shadow, x + 2, y - 1, w * .36, 3);
+    blit(c, s.fittings, o.variant * 128, 0, 128, 128, left, top + bob, w, h);
+    return;
+  }
+  if (o.type === 'shelf') return bookshelf(c,o);
+  if (o.type === 'monument') {
+    ellipse(c,shadow,x+3,y-1,w*.38,6);
+    blit(c,s.monuments,o.variant*160,0,160,160,left,top,w,h);
+    if (o.variant === 1) glow(c,x,y-h*.80,27,'#ffe6a4',.21+.08*Math.sin(t*.9));
+    if (o.variant === 2) {
+      for (let i=0;i<7;i++) {
+        const k=(t*.28+i/7)%1;
+        c.globalAlpha=.24*(1-k);
+        ellipse(c,'#967b75',x-16+k*17,y-h+10-k*31,3+5*k,2+4*k);
+      }
+      c.globalAlpha=1;
+    }
+    return;
+  }
   if (o.type === 'works') return drawWorkshopProp(c, o, t);
   if (o.type === 'landmark') {
     // Reuse the local illustrated architecture for silhouette and materials.
     // Moving machinery gives the facilities an identity at field scale.
     const station = { wheel: 3, beacon: 1, press: 4, rail: 2, kiln: 2, terrace: 3, ring: 7, cairn: 5, wharf: 0, salt: 1 }[o.variant];
     ellipse(c, shadow, x + 4, y - 1, w * 0.4, 4);
-    if (o.variant === 'wheel' && map.region === 0)
+    if (o.variant === 'salt') {
+      drawWorkshopProp(c, {...o, x:x-10, w:39, h:22, variant:'salt'},t);
+      drawWorkshopProp(c, {...o, x:x+10, y:y+2, w:33, h:18, variant:'salt'},t);
+    } else if (o.variant === 'wheel' && map.region === 0)
       blit(c, s.village, 256, 80, 64, 80, left, top - 7, w * 0.88, h + 7);
     else blit(c, s.stations, station * 112, 0, 112, 112, left, top - 7, w, h + 7);
     switch (o.variant) {
@@ -741,6 +707,10 @@ export function makePainter(canvas, map) {
     ),
   };
   if (map.region === 0) s.ship = bitmap(base + 'ghost-ship.webp');
+  if (map.plan) {
+    s.monuments = bitmap(base + 'district-monuments.webp');
+    s.fittings = bitmap(base + 'district-props.webp');
+  }
   const theme = colors[map.region];
   return function paint(cam, player, dots, t, reduced) {
     const w = canvas.width,
@@ -774,6 +744,7 @@ export function makePainter(canvas, map) {
     for (const o of map.objects)
       if (o.type === 'lantern' && o.x > x - 18 && o.x < x + w + 18 && o.y > y && o.y < y + h + 20)
         glow(ctx, o.x + 4, o.y - 13, 17, theme[9], 0.17);
+    if (map.region===1) harborGulls(ctx,map.spawn.x+30,map.spawn.y-63,t);
     const site = map.dots.site;
     mark(ctx, site.x, site.y - 44, 'talk', t);
     for (const d of dots) {

@@ -21,8 +21,14 @@ test('every chapter guides players to its actual story, landmark, exit or battle
           assert.equal(/[\u3400-\u9fff]/u.test(copy), locale === 'zh');
         }
       };
+      const scoutFirst = [1, 3, 4].includes(index);
+      if (scoutFirst) {
+        target('site');
+        view.field_signals.push(post.id);
+      }
       target(index ? 'keeper' : 'ship');
       view.story_marks[post.id] = acts[index].choices[0].id;
+      view.field_signals = [];
       target('site');
       view.field_signals.push(post.id);
       target('ship');
@@ -35,6 +41,10 @@ test('every chapter guides players to its actual story, landmark, exit or battle
       view.routes = [{ id: 'boss_daring', boss: true }, { id: 'boss_steady', boss: true }];
       target('boss_steady');
       assert.notEqual(checkpointAftermath(view), midpoint, 'Only the last stop sends the party onward');
+      if (index < 7) {
+        view.phase = 'reward';
+        target('ship');
+      }
       view.phase = 'victory';
       assert.equal(fieldQuest(view).target, null);
     }

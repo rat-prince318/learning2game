@@ -190,8 +190,7 @@ export const atlas = [
   },
 ];
 export const line = (pair) => msg(...pair);
-// Each signal has a real three-position mechanism and a matching hint on the map.
-// The original trail remains available for expeditions started outside the campaign.
+// Campaign dialogue and quest targets for each region.
 const campaignPosts = {
   willow_ferry: {
     meet: ['去渡口调查灵船船首', 'Investigate the ghost ship’s prow'],
@@ -204,12 +203,14 @@ const campaignPosts = {
     end: ['闸门开了。赤翎在船尾听了半晌，伸手指向下游。白汐港的钟还在响。', 'The sluice opens. Kestrel listens from the stern and points downstream. The Salt Harbor bell is still ringing.'],
   },
   salt_harbor: {
+    scoutFirst: true,
+    needSignal: ['弩长指着压得很低的船舷。「伤员船吃水两米。先上灯塔，给它指条过得去的水道。」', 'The captain points at a low-riding boat. “Two metres of draught and wounded aboard. Get to the lighthouse and mark a channel deep enough for her.”'],
     meet: ['去码头找盐港弩长', 'Meet the bow captain on the wharf'],
     approach: ['打通通往潮泵的巡道', 'Clear the harbor patrol on the way to the pump'],
     boss: ['击停逆潮司泵，打开出港水道', 'Stop the Tide Engine to clear the harbor channel'],
-    keeper: acts[1].speaker, landmark: ['在潮汐浮标上找准钟链', 'Set the bell chain at the tide buoy'],
-    clue: ['铜链的第三环裹着一圈白盐。把它扣回浮标上，沉在底下的钟就会露出来。', 'Salt crusts the third link. Hook that link to the buoy to raise the sunken bell.'],
-    found: ['浮标托住铜链，钟沿浮出了水面。港里的人点起了航灯。', 'The buoy takes the chain and the bell rim breaks the surface. A pilot lights the harbor lamp.'],
+    keeper: acts[1].speaker, site: ['灯塔领港台', 'Pilots’ table'], landmark: ['去灯塔读潮，给伤员船点亮航标', 'Read the tide at the lighthouse and mark a channel'],
+    clue: ['盐池边一艘伤员船正等着进港，船舷上的吃水标是两米。领港台上挂着三条水道刚测的深度。你点哪盏灯，船就走哪条。', 'A hospital boat waits outside the pans. Her hull draws two metres. The pilot has just sounded all three channels. Light the buoy you want her to follow.'],
+    found: ['中槽亮起一盏绿灯。伤员船擦过盐堤，慢慢靠上弩长守的码头。', 'The middle buoy burns green. The hospital boat slides past the salt bank and ties up at the captain’s wharf.'],
     end: ['水道一通，弩长就给山上的赤铆车场打了个旗语。那边半天才回，回的是求援旗。', 'As soon as the channel clears, the captain signals Copper Yard. An answer finally comes. It is a distress flag.'],
   },
   copper_yard: {
@@ -222,21 +223,25 @@ const campaignPosts = {
     end: ['矿车终于能沿山轨走了。铆青蹬上踏板，朝你拍拍车厢：「上来。追粮船比它快的，就这趟车。」', 'The mountain track is clear. Flint hops on the running board and pats the car. “In you get. Only ride fast enough to catch that grain ship.”'],
   },
   sail_terraces: {
+    scoutFirst: true,
+    needSignal: ['领航员死死抓着索梯。「先替我稳住那面侧帆！腾出一只手，我就能拉你上船。」', 'The navigator grips the rope ladder. “Catch that loose sail! Free one of my hands and I’ll haul you aboard.”'],
     meet: ['去梯田找粮船领航员', 'Meet the grain ship’s navigator in the terraces'],
     approach: ['清出通往帆索的山路', 'Clear the trail to the sail crossing'],
     boss: ['逼退悬帆渡鸢，把粮船牵回来', 'Drive off the Sailwing Kite and land the grain ship'],
     keeper: acts[3].speaker, landmark: ['去风索绞盘拉稳侧帆', 'Steady the side sail at the winch'],
-    clue: ['风向袋指着山口。逆风收紧侧帆，绞盘才吃得住粮船的分量。', 'The windsock points to the pass. Wind the side sail upwind so the winch can take the ship’s weight.'],
-    found: ['粮船贴住山坡，第一袋米顺着风索落进梯田。村口升起一面风旗，让后船照着靠。', 'The ship settles against the slope. A sack of rice slides down the line. The villagers hoist a pennant to guide the next boat.'],
+    clue: ['风从山口灌进来，侧帆拍得桅杆直晃。先拉紧迎风的索，再把铁爪扣进绞盘，才能腾出手来。', 'A gust from the pass slams the sail against its mast. Haul the windward sheet first, then drop the pawl into the winch to hold it.'],
+    found: ['铁爪咬住齿轮，侧帆终于停住了。领航员顺着绳梯爬下来，朝你招了招手。山脊上的巨鸢还在拖那艘粮船。', 'The pawl bites and the sail stops thrashing. The navigator climbs down the ladder and waves you over. Above the ridge, the kite still has the grain ship in tow.'],
     end: ['最后一袋粮送到了村里。赤翎收起那张带红印的运单，往复写馆去了。', 'The last sack reaches the village. Kestrel pockets the red-stamped waybill and sets off for the archive.'],
   },
   palimpsest: {
+    scoutFirst: true,
+    needSignal: ['阿简把一张折过角的战报递过来。「那行小字盖在红印底下。先去透光台读给我听，我就把原册找出来。」', 'Wren hands you a dog-eared dispatch. “There’s a line underneath that red seal. Take it to the proofing table. Tell me what it says and I’ll fetch the original.”'],
     meet: ['找编目员阿简借阅征名底册', 'Ask Wren for the original muster roll'],
     approach: ['穿过书架，去装订房找原稿', 'Get past the stacks to the binding room'],
     boss: ['击败红线总校官，取回底册', 'Defeat the Redline Scribe and reclaim the roll'],
-    keeper: acts[4].speaker, landmark: ['把母亲的战报放上透光台', 'Examine your mother’s dispatch at the proofing table'],
-    clue: ['红墨盖住了她的字。把纸搁在灯前，让光透过纸背，旧墨就会显出来。', 'Red ink covers her writing. Put the lamp behind the sheet so the old strokes show through.'],
-    found: ['在纸背，你看见一行小字「木铃一响，就是自己人」。阿简把桌上的书灯交给你照路。', 'On the back you make out one more line: “One wooden chime means a friend.” Wren gives you the reading lamp for the trail.'],
+    keeper: acts[4].speaker, landmark: ['去档案厅的透光台，辨认折角战报', 'Read the folded dispatch at the archive light table'],
+    clue: ['台上摊着一封旧战报。折角下露出半枚虎符，跟你腰间的正好配成一对。红印压着原来的字，把灯移到纸背看看。', 'An old dispatch lies across the table. Half a seal peeks out from the fold. It matches the one on your belt. A red stamp covers the writing; try the lamp behind the sheet.'],
+    found: ['你抄下纸背上的暗号「木铃一响，就是自己人」，拿起桌边的书灯，去找编目员阿简。', 'You copy the line from the back: “One wooden chime means a friend.” You pick up the reading lamp and head for Wren’s desk.'],
     end: ['阿简把原册锁回柜里。你和赤翎各背一捆麻绳，去镜雪山口接母亲的后队。', 'Wren locks the roll away. You and Kestrel each shoulder a coil of rope and leave for the missing scouts at Mirror Pass.'],
   },
   mirror_pass: {
@@ -252,7 +257,7 @@ const campaignPosts = {
     meet: ['找修钟匠问清落桥的钟声', 'Ask the bell tender for the drawbridge signal'],
     approach: ['穿过钟架，拿下吊桥的桥头', 'Clear the bell galleries to reach the drawbridge'],
     boss: ['击倒七桥铸钟师，放下吊桥', 'Beat the Bellfounder and lower the bridges'],
-    keeper: acts[6].speaker, landmark: ['用铜簧音叉调准落桥的钟声', 'Tune the drawbridge signal with the fork'],
+    keeper: acts[6].speaker, landmark: ['去钟楼鸣钟，让车队让开吊桥', 'Ring the tower bell to clear the bridge for lowering'],
     clue: ['头两响留给车队，第三响才落桥。把音叉抵在第三根簧上，敲一下试试。', 'Two strokes warn the carts. The third lowers the bridge. Rest the fork against the third reed and give it a tap.'],
     found: ['第三响越过屋脊，对岸跟着回了一声。你给下一班援军留好了过桥的信号。', 'The third stroke carries over the roofs. The far bank answers. The arriving troops now have their crossing signal.'],
     end: ['桥板一块块落回桥墩。最后一道铁索松开，天台的城坡就在眼前。', 'One by one the spans settle on their piers. The last chain pays out. The ramp to the Orrery lies ahead.'],
@@ -268,16 +273,50 @@ const campaignPosts = {
   },
 };
 
+// Eight-chapter instruments have their own controls. Earlier story saves keep
+// the map clues for their three-position dials.
+const chapterControls = {
+  copper_yard: {
+    site: ['矿车分道闸', 'Ore cart points'], tool: ['挂好车轴安全钩', 'Hook the axle ring'],
+    clue: ['矿车正往炉口滑。先送进有水的侧线，轮缘冷下来就踩闸，把钩子挂进车轴。', 'The ore cart is rolling toward the furnace. Send it down the siding with the water trough, stamp on the brake, then hook the axle.'],
+  },
+  mirror_pass: {
+    site: ['山口听绳台', 'Bell line post'], tool: ['敲一声木铃报平安', 'Ring once to answer'],
+    clue: ['赤翎递给你一枚木铃。冰下的人会拉绳回信。摸到回应以后，就敲一声告诉他们路在哪边。', 'Kestrel hands you a wooden bell. The people below will tug a line in reply. When you feel them, ring once to guide them home.'],
+  },
+  bell_bridges: {
+    site: ['钟楼放桥台', 'Drawbridge signals'], tool: ['拔销放桥', 'Unpin the bridge'],
+    clue: ['桥上还有车。第一响让东岸停车，第二响轮到西岸。两边旗手都退开，第三响就拔销落桥。', 'Carts are still crossing. Ring once to stop traffic on the east bank, twice for the west. When both flaggers step clear, pull the pin on the third stroke.'],
+  },
+  orrery: {
+    site: ['日环信镜', 'Meridian signal mirror'], tool: ['打开信镜', 'Uncover signal mirror'],
+    clue: ['东边的群山刚露出一线晨光。把瞄准槽朝东，再压低铜环，让光沿地平线射进信镜。', 'First light is breaking over the eastern hills. Face the sight east and lower the ring until the light skims the horizon into the mirror.'],
+  },
+};
+
 export function regionOf(view) {
   const post = atlas[view?.region_index] || atlas[0];
-  return view?.campaign_story ? { ...post, ...campaignPosts[post.id] } : post;
+  if (!view?.campaign_story) return post;
+  return { ...post, ...campaignPosts[post.id], ...(view.eight_chapters ? chapterControls[post.id] : {}) };
+}
+
+export function atChapterExit(view) {
+  return Boolean(view?.eight_chapters && view.phase === 'reward' &&
+    view.region_index + 1 < view.map.length &&
+    view.scene_index + 1 === view.map[view.region_index].chapters.length);
 }
 
 export function fieldQuest(view) {
   const post = regionOf(view);
   const title = line(view?.campaign_story ? acts[view.region_index]?.title || post.name : post.name);
   const step = (target, copy, verb) => ({ title, target, text: line(copy), verb: line(verb) });
+  if (atChapterExit(view)) {
+    const next = atlas[view.region_index + 1];
+    return step('ship', ['去出口领补给，前往' + next.name[0], 'Meet the convoy at the exit for ' + next.name[1]], ['领补给', 'Take supplies']);
+  }
   if (view?.phase !== 'route') return { title, target: null, text: '', verb: '' };
+  if (view.eight_chapters && post.scoutFirst && !view.story_marks?.[post.id] && !view.field_signals?.includes(post.id))
+    return step('site', post.landmark, post.tool);
   if (view.campaign_story && !view.story_marks?.[post.id]) {
     const ship = post.id === 'willow_ferry';
     return step(ship ? 'ship' : 'keeper', post.meet, ship ? ['调查船首', 'Inspect the prow'] : ['交谈', 'Talk']);

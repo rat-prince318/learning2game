@@ -4,6 +4,23 @@
     "BattleEvent": {
       "additionalProperties": false,
       "properties": {
+        "round_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "application",
+                "tactics"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Round Kind"
+        },
         "kind": {
           "enum": [
             "hit",
@@ -708,6 +725,44 @@
       "title": "PlayerView",
       "type": "object"
     },
+    "RoundProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "completed": {
+          "minimum": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "application",
+                "tactics"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "completed",
+        "total",
+        "kind"
+      ],
+      "title": "RoundProgress",
+      "type": "object"
+    },
     "SideQuestView": {
       "additionalProperties": false,
       "properties": {
@@ -1015,6 +1070,17 @@
   },
   "additionalProperties": false,
   "properties": {
+    "rounds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RoundProgress"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "schema_version": {
       "const": "1.0",
       "default": "1.0",

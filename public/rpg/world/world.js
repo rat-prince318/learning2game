@@ -3,7 +3,7 @@ import { msg, getLocale, setLocale } from '../../js/locale.js';
 import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController } from '../battle/controller.js';
 import { mountBattle } from '../battle/battle.js';
-import { atlas, line, regionOf, fieldQuest } from './atlas.js';
+import { atlas, line, regionOf, fieldQuest, atChapterExit } from './atlas.js';
 import {
   header,
   title,
@@ -22,6 +22,8 @@ import { commission, savedBuild, discardBuild } from './provision.js';
 import { createMusic } from './music.js';
 import { mountOverland } from './overland.js';
 import { mountGuide } from './wayfinder.js';
+import { stationInstrument } from './station-tools.js';
+import { openDistrictTool, operateDistrictTool, districtToolReady } from './district-tools.js';
 import { reuploadNotice } from './exam-recovery.js';
 
 const main = document.querySelector('#journey'),
@@ -46,7 +48,8 @@ let pin = 0,
   report = null,
   notes = [],
   coverage = null,
-  dial = 0;
+  dial = 0,
+  districtTool = null;
 let sound = readLocal('l2g.lantern.sound') === true;
 const dials = [
   [['低岸', 'Low'], ['中堤', 'Middle'], ['高堤', 'High'], 0],
@@ -57,6 +60,10 @@ const dials = [
   [['实桩', 'Timber'], ['冰壁', 'Ice wall'], ['雪面', 'Snow'], 0],
   [['一响', 'First'], ['二响', 'Second'], ['三响', 'Third'], 2],
   [['天顶', 'Zenith'], ['地平', 'Horizon'], ['北极', 'Pole'], 1],
+];
+const controlNames = [
+  ['选缆桩', 'Choose a post'], ['换链环', 'Move the chain'], ['扳道岔', 'Throw the switch'], ['调帆向', 'Trim the sail'],
+  ['移灯', 'Move the lamp'], ['试铃绳', 'Test a bell line'], ['拨音簧', 'Select a reed'], ['转日环', 'Turn the meridian'],
 ];
 function tell(text = '') {
   notice.textContent = text;
@@ -124,6 +131,7 @@ function release() {
 }
 function stationPhase() {
   if (view?.campaign_story && view.phase === 'victory') return 'ending';
+  if (atChapterExit(view)) return 'scene';
   return ['combat', 'sidequest', 'reward'].includes(view?.phase)
     ? 'battle'
     : view?.phase === 'retreated'
@@ -153,7 +161,7 @@ function openFieldSupplies(host) {
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'lr-glass lr-supply-close';
-  close.textContent = msg('返回战场', 'Back to the field');
+  close.textContent = atChapterExit(view) ? msg('继续探索', 'Keep exploring') : msg('返回战场', 'Back to the field');
   close.addEventListener('click', () => dialog.close());
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
@@ -163,7 +171,8 @@ function openFieldSupplies(host) {
   host.append(dialog);
   dialog.addEventListener('close', () => {
     dialog.remove();
-    host.querySelector('[data-act="exit"]')?.focus({ preventScroll: true });
+    if (world) world.focus();
+    else host.querySelector('[data-act="exit"]')?.focus({ preventScroll: true });
   }, { once: true });
   dialog.showModal();
 }
@@ -173,7 +182,7 @@ function signalPanel() {
     fixed = view.field_signals?.includes(r.id);
   if (pick !== 'site' || fixed || view.phase !== 'route') return;
   const box = main.querySelector('.lr-dialog-act');
-  box.innerHTML = `<div class="lr-dial"><button type="button" data-do="tune" aria-label="${msg('切换刻度', 'Adjust setting')}">↻　${line(list[dial])}</button>${button('inspect', line(r.tool), 'lr-gold')}</div>`;
+  box.innerHTML = stationInstrument(view, dial, districtTool) || `<div class="lr-dial"><button type="button" data-do="tune">${line(controlNames[view.region_index])}　${line(list[dial])}</button>${button('inspect', line(r.tool), 'lr-gold')}</div>`;
 }
 function draw() {
   clearField();
@@ -203,7 +212,7 @@ function draw() {
       onContact: (key) => run(() => engage(key)),
       onGuideFrame: guide.frame,
       onLeaveDialogue: resumeField,
-      canMove: () => view.phase === 'route' && !pick,
+      canMove: () => (view.phase === 'route' || atChapterExit(view)) && !pick,
       blocked: () => locked,
     });
     spot.dispatchEvent(
@@ -245,7 +254,7 @@ async function goto(dest) {
         if (ticket !== epoch) return;
         mem(await controller.load());
         if (ticket !== epoch) return;
-        if (dest === 'battle' && view.phase === 'reward') return openFieldSupplies(host);
+        if (dest === 'battle' && view.phase === 'reward' && !atChapterExit(view)) return openFieldSupplies(host);
         pick = '';
 
         await goto(stationPhase());
@@ -352,6 +361,10 @@ function resumeField() {
 }
 function choose(key) {
   music.cue('pick');
+  if (key === 'ship' && atChapterExit(view)) {
+    openFieldSupplies(main.querySelector('.lr-world'));
+    return;
+  }
   if (key === 'ship' && isExploration(view) && (view.region_index || view.story_marks?.[regionOf(view).id])) {
     if (view.story_marks?.[regionOf(view).id] && view.field_signals.includes(regionOf(view).id)) {
       pick = 'exit';
@@ -363,14 +376,30 @@ function choose(key) {
     return;
   }
   if (view.campaign_story && (key === 'keeper' || key === 'ship')) {
+    if (key === 'keeper' && view.eight_chapters && regionOf(view).scoutFirst && fieldQuest(view).target === 'site' &&
+        !view.story_marks?.[regionOf(view).id]) {
+      pick = 'await-signal';
+      refreshDialogue();
+      return;
+    }
     main
       .querySelector('.lr-world')
       ?.dispatchEvent(new CustomEvent('lantern:story', { bubbles: true, detail: storyContext() }));
     return;
   }
   pick = key === 'ship' ? 'keeper' : key;
-  dial = (dials[view.region_index][3] + 1) % 3;
+  districtTool = key === 'site' ? openDistrictTool(view) : null;
+  dial = view.campaign_story && [1, 3, 4].includes(view.region_index) ? -1 : (dials[view.region_index][3] + 1) % 3;
   refreshDialogue();
+}
+async function recordSignal() {
+  const hp = view.player.hp;
+  await command({ action: 'inspect_landmark' });
+  music.cue('seal');
+  draw();
+  const healed = view.player.hp - hp;
+  tell(line(regionOf(view).signal) + msg('已记入手记。', ' recorded in your journal.') +
+    (healed > 0 ? '　HP +' + healed : ''));
 }
 async function run(fn) {
   if (locked) return;
@@ -437,6 +466,26 @@ async function act(action, b) {
       return goto(stationPhase());
     case 'engage':
       return engage(b.dataset.key);
+    case 'set-control': {
+      if (b.dataset.tool && districtTool) {
+        districtTool = operateDistrictTool(districtTool, b.dataset.tool);
+        music.cue(b.dataset.tool === 'ring' ? 'bridge-bell' : 'pick');
+        signalPanel();
+        const panel = main.querySelector('.lr-field-instrument');
+        const same = panel?.querySelector('[data-tool="' + CSS.escape(b.dataset.tool) + '"]');
+        const focus = same?.disabled
+          ? panel.querySelector('[data-do="inspect"]:enabled') || panel.querySelector('[data-tool]:enabled')
+          : same;
+        focus?.focus({ preventScroll: true });
+        return;
+      }
+      dial = Number(b.dataset.index);
+      if (view.region_index === 1 && dial === 1) return recordSignal();
+      music.cue('pick');
+      signalPanel();
+      main.querySelector(`[data-do="set-control"][data-index="${dial}"]`)?.focus({preventScroll:true});
+      return;
+    }
     case 'tune':
       dial = (dial + 1) % 3;
       music.cue('pick');
@@ -445,25 +494,18 @@ async function act(action, b) {
       tell();
       return;
     case 'inspect':
-      if (dial !== dials[view.region_index][3])
+      if (districtTool) {
+        if (districtToolReady(districtTool)) return recordSignal();
+        return;
+      }
+      if (dial !== (view.campaign_story && view.region_index === 3 ? 0 : dials[view.region_index][3]))
         return tell(
           msg(
             '机关发出一声轻响。再对照守站人留下的线索调整刻度。',
             'The mechanism clicks. Compare its setting with the keeper’s clue.',
           ),
         );
-      {
-        const hp = view.player.hp;
-        await command({ action: 'inspect_landmark' });
-        music.cue('seal');
-        draw();
-        const healed = view.player.hp - hp;
-        tell(
-          msg('驿站信物已收录。', 'Station signal recorded.') +
-            (healed > 0 ? '　HP +' + healed : ''),
-        );
-        return;
-      }
+      return recordSignal();
     case 'claim': {
       const swap = main.querySelector('[data-swap="' + CSS.escape(b.dataset.key) + '"]');
       await command({
@@ -507,6 +549,8 @@ async function act(action, b) {
 document.addEventListener('click', (event) => {
   const b = event.target.closest('[data-do]');
   if (!b) return;
+  // The tide reading can still be saving when a player closes its field note.
+  if (b.dataset.do === 'walk' && pick === 'site') return resumeField();
   if (b.dataset.do === 'spot' || b.dataset.do === 'follow-quest') return world?.navigate(b.dataset.key);
   if (b.dataset.do === 'sound') {
     sound = !sound;

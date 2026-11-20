@@ -1,5 +1,6 @@
 import { buildMap, footpath, moveFeet, clamp, CELL, COLS, ROWS, WIDTH, HEIGHT } from './overland-map.js';
 import { makePainter } from './overland-art.js';
+import { readLocal, saveLocal } from '../../js/utils.js';
 
 const keys = {
   KeyW: 'north',
@@ -14,6 +15,13 @@ const keys = {
 const directions = { north: [0, -1], south: [0, 1], west: [-1, 0], east: [1, 0] };
 const roles = ['arcanist', 'vanguard', 'ranger'];
 const pace = 139;
+const radarColors = {
+  water: '#548f9a', cliff: '#49404b', void: '#181f29', wall: '#433e44', saltflat: '#829fa2',
+  slag: '#736655', furrow: '#7c9565', basalt: '#545368', ice: '#9bbcc5', cobble: '#84929a',
+  flagstone: '#9b9991', road: '#b69f75', quay: '#d5b887', track: '#c98b63', gantry: '#dab77d',
+  bridge: '#e4c592', dock: '#d4ae77', stairs: '#cdae7f', stonebridge: '#d2c5a7', mosaic: '#bba085',
+  starroad: '#b6a2d4', floor: '#af9782', parquet: '#c9a881', carpet: '#ae7380',
+};
 export function mountOverland(
   root,
   view,
@@ -31,15 +39,29 @@ export function mountOverland(
   const paint = makePainter(canvas, map);
   const camera = { x: 0, y: 0 },
     reduce = matchMedia('(prefers-reduced-motion: reduce)');
-  const sessionKey = 'l2g.foot.2.' + view.session_id + '.' + region + '.' + view.scene_index;
-  const fromStore = () => {
+  const districtKey = view.session_id + '.' + region + '.';
+  const positionKey = (stage) => 'l2g.foot.3.' + districtKey + stage;
+  function savedFeet(stage) {
+    const local = readLocal(positionKey(stage));
+    if (local && local.mapVersion === map.version) return local;
+    if (map.version) return null;
     try {
-      return JSON.parse(sessionStorage.getItem(sessionKey));
+      return JSON.parse(sessionStorage.getItem('l2g.foot.2.' + districtKey + stage));
     } catch {
       return null;
     }
-  };
-  const saved = fromStore();
+  }
+  const chapters = view.map[region].chapters;
+  const lastFight = view.phase === 'reward' ? view.scene_index : view.scene_index - 1;
+  const clearedRoute = chapters[lastFight]?.route_id;
+  // Prefer the actual foot position (including patrol drift) in this browser.
+  // A save opened on another computer still knows where its defeated foe stood.
+  const arrivals = [savedFeet(view.scene_index)];
+  if (clearedRoute) {
+    if (lastFight !== view.scene_index) arrivals.push(savedFeet(lastFight));
+    arrivals.push(map.encounterSpot(lastFight, clearedRoute));
+  }
+  const saved = arrivals.find((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y) && map.pass(p.x, p.y));
   const feet = {
     ...map.spawn,
     dir: 'south',
@@ -48,7 +70,7 @@ export function mountOverland(
     stride: 0,
     mark: view.story_marks?.willow_ferry === 'ferry_child',
   };
-  if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y) && map.pass(saved.x, saved.y)) {
+  if (saved) {
     Object.assign(feet, { x: saved.x, y: saved.y, dir: saved.dir in directions ? saved.dir : 'south' });
   }
   const abort = new AbortController(),
@@ -85,11 +107,7 @@ export function mountOverland(
   // A contact requires entering it on foot, rather than merely standing there.
   suppressNearbyContacts();
   function save() {
-    try {
-      sessionStorage.setItem(sessionKey, JSON.stringify({ x: feet.x, y: feet.y, dir: feet.dir }));
-    } catch {
-      /* Private browsing. */
-    }
+    saveLocal(positionKey(view.scene_index), { x: feet.x, y: feet.y, dir: feet.dir, mapVersion: map.version });
   }
   function reset() {
     held.clear();
@@ -130,7 +148,8 @@ export function mountOverland(
       for (let x = 0; x < COLS; x++) {
         const type = map.cells[y][x];
         if (type === 'grass') continue;
-        c.fillStyle = { water: '#548f9a', road: '#b69f75', bridge: '#d0b37e', dock: '#d0b37e' }[type] || '#546c64';
+        c.fillStyle = radarColors[type] || (map.blockedTerrain?.has(type) ? '#303640' :
+          type === map.plan?.crossing || type === map.plan?.lane ? '#d9c5a1' : '#647d70');
         c.fillRect(x, y, 1, 1);
       }
     for (const d of masterDots) {
