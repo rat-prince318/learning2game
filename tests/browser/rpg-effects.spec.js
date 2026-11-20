@@ -5,6 +5,54 @@ const courseView = JSON.parse(readFileSync(
   new URL('../../docs/rpg-fixtures/battle-ui/willow-boss.public.json', import.meta.url), 'utf8',
 ));
 
+test('restored encounters select their own scenery, preserve a still frame and release all layers', async ({page}) => {
+  await page.route('**/__ferry_story', route => route.fulfill({contentType:'text/html',
+    body:'<link rel="stylesheet" href="/rpg/battle/stage.css"><div id="arena" style="width:390px;height:200px"></div>'}));
+  await page.goto('/__ferry_story');
+  await page.evaluate(async sample => {
+    const {createStage} = await import('/rpg/battle/stage.js');
+    const arena = document.querySelector('#arena'), stage = createStage(arena, {muted:true,reducedMotion:true});
+    function pixels(canvas) {
+      const bytes = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+      let hash = 2166136261;
+      for (let i=0;i<bytes.length;i+=124) hash=Math.imul(hash ^ bytes[i] ^ (bytes[i+1]<<8) ^ (bytes[i+2]<<16),16777619);
+      return hash;
+    }
+    window.setScene = (phase, second, encounter = 'willow_lock') => {
+      const view = structuredClone(sample);
+      view.phase = phase; view.battle.tactics.phase = second ? 2 : 1;
+      view.battle.tactics.encounter_id = encounter;
+      if (phase === 'victory') view.battle.enemy.hp = 0;
+      stage.setView(view);
+    };
+    window.readScene = () => {
+      const plate = arena.querySelector('.rpg-ferry-plate-visible');
+      if (!plate || !arena.querySelector('.rpg-ferry-air').width) return null;
+      return {story:arena.querySelector('.rpg-stage-world').dataset.story, plate:pixels(plate),
+        water:pixels(arena.querySelector('.rpg-ferry-air')), narrative:arena.querySelector('.rpg-stage-storymark').hidden};
+    };
+    window.disposeStage = () => stage.destroy();
+  },courseView);
+  const plates = new Set();
+  for (const [phase, second, expected] of [
+    ['combat',false,'ferry'], ['combat',true,'surge'], ['sidequest',true,'camp'], ['victory',true,'open'],
+  ]) {
+    await page.evaluate(([p,s]) => window.setScene(p,s),[phase,second]);
+    await expect.poll(() => page.evaluate(() => window.readScene()?.story)).toBe(expected);
+    const frame = await page.evaluate(() => window.readScene());
+    // Wait through several possible ambient ticks. Reduced motion keeps the water still.
+    await page.waitForTimeout(260);
+    expect(await page.evaluate(() => window.readScene())).toEqual(frame);
+    expect(frame.narrative).toBe(true);
+    plates.add(frame.plate);
+  }
+  expect(plates.size).toBe(4);
+  await page.evaluate(() => window.setScene('combat',true,'ferry_ram'));
+  await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story','ferry');
+  await page.evaluate(() => window.disposeStage());
+  await expect(page.locator('#arena > *')).toHaveCount(0);
+});
+
 test('attack, guard break and each class burst draw distinct effects; reduced motion keeps just the receipt', async ({ page }) => {
   // Isolate the stage from the camera, scroll and network. The flow specs cover actual
   // answer receipts. Here all three classes act on the same enemy at the same screen position.

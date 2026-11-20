@@ -78,6 +78,7 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     else if (view.phase === 'combat' || view.phase === 'sidequest') board.innerHTML = encounter(view, skill, choice);
     else board.innerHTML = result(view, standalone, standalone && savedEntry);
     stage.setView(view);
+    stage.setAim(skill, Boolean(choice) && view?.phase === 'combat');
   }
 
   function accept(next) {
@@ -187,6 +188,7 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     }
     const submit = board.querySelector('[data-act="submit"]');
     if (submit) submit.disabled = !choice;
+    stage.setAim(skill, Boolean(choice) && view.phase === 'combat');
   }
 
   async function click(event) {

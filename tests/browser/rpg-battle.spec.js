@@ -35,12 +35,25 @@ async function expectView(page, view) {
 
 async function expectCharactersOnBridge(page) {
   const arena = page.getByTestId('battle-arena');
-  const characters = arena.locator('.rpg-stage-actor img');
+  const characters = arena.locator('.rpg-stage-actor');
   await expect(characters).toHaveCount(2);
   const bounds = await arena.boundingBox();
-  for (const sprite of await characters.all()) {
-    await sprite.evaluate((img) => img.decode());
-    const box = await sprite.boundingBox();
+  for (const actor of await characters.all()) {
+    const box = await actor.evaluate(async node => {
+      const image = node.querySelector('img');
+      await image.decode();
+      const pose = node.querySelector('canvas');
+      if (!pose || getComputedStyle(pose).display === 'none') return image.getBoundingClientRect().toJSON();
+      const {data} = pose.getContext('2d').getImageData(0, 0, pose.width, pose.height);
+      let first = pose.height, last = -1;
+      for (let pixel = 0; pixel < pose.width * pose.height; pixel++) {
+        if (data[4*pixel+3] < 12) continue;
+        const y = Math.floor(pixel / pose.width);
+        first = Math.min(first, y); last = Math.max(last, y);
+      }
+      const rect = pose.getBoundingClientRect(), scale = rect.height / pose.height;
+      return {y:rect.y + first*scale, height:(last - first + 1)*scale};
+    });
     expect(box.height).toBeGreaterThan(30);
     expect(box.y).toBeGreaterThanOrEqual(bounds.y);
     expect(box.y + box.height).toBeLessThanOrEqual(bounds.y + bounds.height);
@@ -159,6 +172,7 @@ test('public lecture to willow boss victory, actual XP and loot, one answer per 
     observer.observe(layer, {childList:true});
   });
   let turns = 0;
+  let sawSecondPhase = false;
   while (view.phase === 'combat' && turns < 24) {
     view = await playTurn(page, view, { rapidClick: turns === 0 });
     if (turns === 0) {
@@ -166,9 +180,15 @@ test('public lecture to willow boss victory, actual XP and loot, one answer per 
       await expect(damageNumbers).toHaveAttribute('data-last-foe-hit',
         new RegExp('−' + view.battle.last_event.damage_dealt + '$'));
     }
+    if (view.phase === 'combat' && view.battle.tactics.phase === 2) {
+      sawSecondPhase = true;
+      await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story', 'surge');
+    }
     turns += 1;
   }
   expect(view.phase).toBe('victory');
+  expect(sawSecondPhase).toBe(true);
+  await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story','open');
   expect(answerIds).toHaveLength(turns);
   expect(new Set(answerIds).size).toBe(turns);
   const event = view.battle.last_event;
@@ -188,6 +208,8 @@ test('public lecture to willow boss victory, actual XP and loot, one answer per 
   // ownership again after the player has read the settlement.
   await openTestHost(page, view.session_id);
   await expectView(page, view);
+  await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story','open');
+  await expect(page.locator('.rpg-stage-storymark')).toBeHidden();
   await page.getByTestId('battle-exit').click();
   await expect(page.locator('#host')).toHaveAttribute('data-returned-session', view.session_id);
   await expect(page.locator('#host')).toHaveAttribute('data-returned-revision', String(view.revision));
@@ -202,12 +224,14 @@ test('defeat opens sourced camp exercises; refresh restores them and recovery re
   for (let turn = 0; view.phase === 'combat' && turn < 20; turn++)
     view = await playTurn(page, view, { correct: false });
   expect(view.phase).toBe('sidequest');
+  await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story','camp');
   const first = view.battle.sidequest.lesson;
   await expect(page.getByTestId('battle-lesson')).toContainText(first.term);
   await expect(page.getByTestId('battle-lesson')).toContainText(first.source_ref);
   await checkCopy(page);
   await page.reload();
   await expectView(page, view);
+  await expect(page.locator('.rpg-stage-world')).toHaveAttribute('data-story','camp');
   await expect(page.getByTestId('battle-lesson')).toContainText(first.definition);
   // An incorrect correction keeps the same concept available for another attempt.
   view = await playTurn(page, view, { correct: false });

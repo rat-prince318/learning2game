@@ -2,6 +2,9 @@ import { drawHeroEffect } from './effects/hero-effects.js';
 import { drawEnemyCounter, drawEnemyImpact } from './effects/impact-effects.js';
 import { makeAudio } from './effects/audio.js';
 import { drawFerryLight } from './effects/ferry-light.js';
+import { createLivingFerry } from './effects/living-ferry.js';
+import { createActorPoses } from './effects/actor-poses.js';
+import { createFerryPalette } from './effects/ferry-palette.js';
 
 const asset = (file) => new URL('./art/' + file, import.meta.url).href;
 const heroes = new Set(['arcanist', 'ranger', 'vanguard']);
@@ -21,7 +24,18 @@ function makeActor(side) {
   image.alt = '';
   image.draggable = false;
   body.append(image);
+  const sight = element('span', 'rpg-stage-sight');
+  sight.setAttribute('aria-hidden', 'true');
+  body.append(sight);
   return {body, image};
+}
+
+function ferryStory(view) {
+  if (view?.phase === 'sidequest') return 'camp';
+  const tactics = view?.battle?.tactics;
+  if (tactics?.encounter_id !== 'willow_lock') return 'ferry';
+  if (['reward', 'victory'].includes(view.phase) && view.battle.enemy?.hp === 0) return 'open';
+  return view.phase === 'combat' && tactics.phase === 2 ? 'surge' : 'ferry';
 }
 
 // Choreography uses virtual scene pixels. The hit stop holds the contact pose
@@ -78,29 +92,64 @@ export function createStage(container, preferences = {}) {
   const reflections = element('canvas','rpg-stage-reflections');
   const numbers = element('div','rpg-stage-numbers');
   const light = element('div','rpg-stage-light');
+  const backCanvas = element('canvas','rpg-ferry-air'), frontCanvas = element('canvas','rpg-ferry-bank');
+  const overlay = element('div','rpg-stage-overlay');
+  overlay.setAttribute('aria-hidden','true');
+  const storyMark = element('div','rpg-stage-storymark');
+  storyMark.hidden = true;
   const title = element('span','rpg-stage-technique');
   title.hidden = true;
+  const palette = createFerryPalette(backdrop);
+  backdrop.append(backCanvas);
+  overlay.append(title,storyMark);
   world.append(backdrop,element('div','rpg-stage-shade'),light,reflections,hero.body,foe.body,camp);
-  [[11,63],[23,33],[58,47],[64,64],[84,39],[89,59]].forEach(([left,top],i) => {
-    const light = element('i','rpg-stage-ember');
-    light.style.cssText = 'left:'+left+'%;top:'+top+'%;animation-delay:-'+i*.71+'s';
-    world.append(light);
-  });
-  world.append(canvas,numbers,title);
-  container.append(world);
+  world.append(frontCanvas,canvas,numbers);
+  container.append(world,overlay);
+  const scenery = createLivingFerry(backCanvas,frontCanvas,preferences);
+  const poses = createActorPoses(hero,foe);
   const sound = makeAudio(), life = new AbortController();
   let reduced = false, active = null, currentHero = '', currentFoe = '';
+  let storyTimer, storySession = '';
+
+  function hideStoryMark() {
+    clearTimeout(storyTimer);
+    storyMark.hidden = true;
+  }
+
+  function setStory(view) {
+    const next = ferryStory(view), previous = world.dataset.story;
+    const sameRun = view?.session_id && storySession === view.session_id;
+    if (previous !== next || !sameRun) hideStoryMark();
+    if (previous !== next) {
+      palette.setStory(next);
+      scenery.setStory(next);
+      world.dataset.story = next;
+      if (sameRun && !reduced && !container.ownerDocument.hidden) {
+        const label = { surge:'闸水倒涌', open:'渡船通航', camp:'退回营地' }[next];
+        if (label) {
+          storyMark.textContent = label;
+          storyMark.dataset.story = next;
+          storyMark.hidden = false;
+          storyTimer = setTimeout(hideStoryMark, 1900);
+          if (next === 'open' || next === 'surge') sound.signal(next);
+        }
+      }
+    }
+    storySession = view?.session_id || '';
+  }
   // A UI button may sit outside the stage. The first trusted document gesture also unlocks a saved sound preference.
   for (const type of ['pointerdown','keydown']) container.ownerDocument.addEventListener(type,sound.unlock,
     {capture:true,passive:true, signal:life.signal});
   container.ownerDocument.addEventListener('visibilitychange', () => {
-    if (container.ownerDocument.hidden) active?.finish();
+    if (container.ownerDocument.hidden) { hideStoryMark(); active?.finish(); }
   }, {signal:life.signal});
   function setPreferences(next) {
     if (next.muted !== undefined) sound.mute(next.muted);
     if (next.reducedMotion !== undefined) {
       if (next.reducedMotion && !reduced) active?.finish();
       reduced = Boolean(next.reducedMotion);
+      scenery.setPreferences({reducedMotion:reduced});
+      if (reduced) hideStoryMark();
       world.dataset.reduced = String(reduced);
     }
   }
@@ -111,15 +160,22 @@ export function createStage(container, preferences = {}) {
     const encounter = view?.battle?.tactics?.encounter_id;
     const family = creatures.has(enemy?.sprite) ? enemy.sprite :
       encounter && encounter !== 'willow_lock' ? 'warden' : 'willow';
-    if (role !== currentHero) { hero.image.src = asset('hero-' + role + '.png'); currentHero = role; }
+    if (role !== currentHero) {
+      hero.image.src = asset('hero-' + role + '.png');
+      hero.body.style.setProperty('--rpg-silhouette', 'url("' + hero.image.src + '")');
+      currentHero = role;
+    }
     if (family !== currentFoe) {
       foe.image.src = asset(family === 'willow' ? 'willow-keeper.png' : 'foe-' + family + '.png');
+      foe.body.style.setProperty('--rpg-silhouette', 'url("' + foe.image.src + '")');
       foe.body.dataset.family = family; currentFoe = family;
     }
     const campOpen = view?.phase === 'sidequest';
     const combat = view?.phase === 'combat';
     const tactics = view?.battle?.tactics;
     const intent = tactics?.intent;
+    setStory(view);
+    poses.setView(role,family,{combat, phase:tactics?.phase, intent:intent?.id, broken:tactics?.broken});
     world.dataset.camp = String(campOpen);
     const idle = Boolean(view) && (!combat || !enemy || enemy.hp === 0);
     world.dataset.cleared = String(idle);
@@ -168,6 +224,8 @@ export function createStage(container, preferences = {}) {
     const start = performance.now(), still = reduced;
     let frame, struck = false, returned = false, cast = false;
     world.dataset.fighting = 'true';
+    hideStoryMark();
+    scenery.setCombat(true);
     const showTitle = !still && outgoing && (action === 'burst' || (guard && receipt.tactics?.intercepted_charge));
     if (showTitle) {
       title.textContent = action === 'burst' ? technique || '职业战技' : '截断蓄势';
@@ -222,6 +280,7 @@ export function createStage(container, preferences = {}) {
       if (fatal) foe.body.style.opacity = String(1 - ease((hitTime-140)/255));
       foe.image.style.filter = recoil > .89 ? 'brightness(1.65) sepia(.24)' : '';
       hero.image.style.filter = hurt && heroRecoil > .87 ? 'brightness(1.55)' : '';
+      poses.paint({clock,impactAt,counterAt,action,outgoing,counter,broken,guard,hurt,blocked,hit});
 
       const lightLevel = outgoing ? gather * (1 - ease((hitTime-65)/360)) : 0;
       const camera = lightLevel * (action === 'burst' ? .067 : strong ? .032 : .014);
@@ -229,7 +288,12 @@ export function createStage(container, preferences = {}) {
       const shake = (hitTime >= 0 ? firstShake * (strong ? 1.65 : .75) : 0) +
         (counter && backTime >= 0 ? (1-ease(backTime/90))*.95 : 0);
       // Use wall time only for vibration; pose and particles share the same held contact frame.
-      world.style.transform = `scale(${1+camera}) translate(${Math.sin(elapsed/16)*shake*ratio}px, ${Math.cos(elapsed/22)*shake*ratio*.38}px)`;
+      const travel = ease((beat-.18)/.70) * (counter ? 1-ease((backTime+290)/280) : 1);
+      const subject = outgoing ? h.x+(f.x-h.x)*travel : h.x;
+      const pan = (.50-subject/width)*bounds.width*camera*1.12;
+      world.style.transform = `scale(${1+camera}) translate(${pan+Math.sin(elapsed/16)*shake*ratio}px, ${Math.cos(elapsed/22)*shake*ratio*.38}px)`;
+      backdrop.style.transform = `translateX(${-pan*.16}px) scale(${1+camera*.10})`;
+      frontCanvas.style.transform = `translateX(${pan*.26}px)`;
       light.style.opacity = String(lightLevel * (action === 'burst' ? .95 : strong ? .63 : .26));
       if (showTitle) {
         title.style.opacity = String(ease(elapsed/95) * (1-ease((elapsed-impactAt-hold-110)/170)));
@@ -250,6 +314,8 @@ export function createStage(container, preferences = {}) {
       function finish(error) {
         cancelAnimationFrame(frame);
         world.style.removeProperty('transform');
+        backdrop.style.removeProperty('transform');
+        frontCanvas.style.removeProperty('transform');
         light.style.removeProperty('opacity');
         title.hidden = true;
         title.style.removeProperty('opacity');
@@ -259,6 +325,8 @@ export function createStage(container, preferences = {}) {
           actor.image.style.removeProperty('filter');
         }
         world.dataset.fighting = 'false';
+        poses.reset();
+        scenery.setCombat(false);
         numbers.replaceChildren();
         ctx.clearRect(0, 0, width, height);
         reflectionCtx?.clearRect(0, 0, width, height);
@@ -286,7 +354,11 @@ export function createStage(container, preferences = {}) {
   }
   setView(null);
   setPreferences(preferences);
-  return {setView,play,setPreferences,destroy() {
-    active?.finish(); life.abort(); sound.destroy(); world.remove(); container.classList.remove('rpg-stage-host');
+  return {setView,play,setPreferences,setAim(skill, selected) {
+    world.dataset.aim = selected ? skill : '';
+  },destroy() {
+    active?.finish(); hideStoryMark(); life.abort();
+    poses.destroy(); scenery.destroy(); palette.destroy(); sound.destroy();
+    world.remove(); overlay.remove(); container.classList.remove('rpg-stage-host');
   }};
 }

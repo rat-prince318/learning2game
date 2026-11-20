@@ -6,6 +6,8 @@ const heroes = {
   ranger: ['岚弓游侠', '穿云箭'],
 };
 const numbers = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const portraits = {arcanist:0, vanguard:1, ranger:2, willow:3, warden:4, moth:5, sprout:6, golem:7};
+const commandIcons = {arcanist:2, ranger:3, vanguard:4};
 export const heroInfo = (view) => heroes[view?.player?.hero_class] || heroes.arcanist;
 export const icon = (name) => `<i class="bf-icon bf-i-${name}" aria-hidden="true"></i>`;
 
@@ -19,28 +21,49 @@ export function heading(view) {
     <h1>${h(location)}</h1></div><span class="bf-seal">${tag}</span>`;
 }
 
-function track(label, value, max, type) {
+function gaugeState(type, active) {
+  if (type === 'focus' && active) return 'ready';
+  if (type === 'poise' && active) return 'broken';
+  return '';
+}
+
+function gaugeLabel(type, state) {
+  if (state === 'ready') return '蓄满';
+  if (state === 'broken') return '破势';
+  return {hp:'生命', enemyhp:'生命', focus:'蓄力', poise:'架势'}[type];
+}
+
+function track(value, max, type, active = false) {
   const width = max > 0 ? Math.max(0, Math.min(100, 100 * value / max)) : 0;
-  return `<div class="bf-meter bf-${type}"><span>${label}</span>
-    <progress aria-label="${label}" value="${value}" max="${max || 1}">${width}%</progress>
+  const state = gaugeState(type, active), label = gaugeLabel(type, '');
+  return `<div class="bf-meter bf-${type}" data-state="${state}"><span class="bf-gauge-name">${gaugeLabel(type, state)}</span>
+    <span class="bf-track" style="--parts:${Math.max(1, max)}"><progress aria-label="${label}" value="${value}" max="${max || 1}">${width}%</progress></span>
     <span class="bf-number">${value}<small>/${max}</small></span></div>`;
+}
+
+function portrait(index) {
+  return `<span aria-hidden="true" class="bf-portrait"><i style="--portrait:${index}"></i></span>`;
 }
 
 export function hud(view) {
   const player = view?.player, foe = view?.battle?.enemy, tactics = view?.battle?.tactics;
   const [hero] = heroInfo(view);
   const weapon = player?.inventory.find((gear) => gear.id === player.loadout.weapon)?.name;
+  const heroPortrait = portraits[player?.hero_class] ?? portraits.arcanist;
+  const foePortrait = !view || tactics?.encounter_id === 'willow_lock' ? portraits.willow : portraits[foe?.sprite] ?? portraits.warden;
   return `<div class="bf-cardinal">
+      ${portrait(heroPortrait)}
       <div class="bf-identity"><span>出战</span><strong title="${h(weapon || '嫩枝法杖')}">${h(hero)}</strong>${player ? `<b>Lv. ${player.level}</b>` : ''}</div>
-      ${player ? track('生命', player.hp, player.max_hp, 'hp') + track('蓄力', player.focus, player.focus_max, 'focus') :
+      ${player ? track(player.hp, player.max_hp, 'hp') + track(player.focus, player.focus_max, 'focus', player.burst_ready) :
         '<p>嫩枝法杖 <span class="bf-slash">/</span> 坠星术</p>'}
     </div>
     <div class="bf-cardinal bf-foe">
+      ${foe || !view ? portrait(foePortrait) : ''}
       <div class="bf-identity"><span>${foe?.boss || !view ? '首领' : '对手'}</span>
       <strong>${h(foe?.name || (view ? '行军途中' : '柳根闸主'))}</strong>
       ${tactics ? `<b>阶段 ${tactics.phase}</b>` : ''}</div>
-      ${foe ? track('生命', foe.hp, foe.max_hp, 'enemyhp') : ''}
-      ${tactics ? track('架势', tactics.shield, tactics.shield_max, 'poise') : ''}
+      ${foe ? track(foe.hp, foe.max_hp, 'enemyhp') : ''}
+      ${tactics ? track(tactics.shield, tactics.shield_max, 'poise', tactics.broken) : ''}
       ${!view ? '<p>柳木总闸 <span class="bf-slash">/</span> 根须借力</p>' : ''}
     </div>`;
 }
@@ -50,15 +73,18 @@ export function hud(view) {
 export function showContact(hudElement, view, side) {
   const enemy = view.battle?.enemy, tactics = view.battle?.tactics, player = view.player;
   const values = side === 'foe' ? [
-    ['enemyhp', enemy?.hp, enemy?.max_hp], ['poise', tactics?.shield, tactics?.shield_max],
-    ['focus', player.focus, player.focus_max],
+    ['enemyhp', enemy?.hp, enemy?.max_hp], ['poise', tactics?.shield, tactics?.shield_max, tactics?.broken],
+    ['focus', player.focus, player.focus_max, player.burst_ready],
   ] : [['hp', player.hp, player.max_hp]];
-  for (const [name, value, max] of values) {
+  for (const [name, value, max, active] of values) {
     const row = hudElement.querySelector('.bf-' + name);
     if (!row || value == null || max == null) continue;
     const progress = row.querySelector('progress');
     progress.max = max || 1;
     progress.value = value;
+    row.dataset.state = gaugeState(name, active);
+    row.querySelector('.bf-gauge-name').textContent = gaugeLabel(name, row.dataset.state);
+    row.querySelector('.bf-track').style.setProperty('--parts', String(Math.max(1, max)));
     const number = row.querySelector('.bf-number');
     number.firstChild.nodeValue = String(value);
     number.querySelector('small').textContent = '/' + max;
@@ -73,23 +99,23 @@ export function briefing() {
     <button class="bf-primary" type="button" data-act="start" data-testid="battle-start">${icon('swords')} 进入首领战</button></section>`;
 }
 
-function skillButton(id, label, glyph, selected, disabled, detail) {
+function skillButton(id, label, image, selected, disabled, detail) {
   return `<button type="button" class="bf-skill" data-act="skill" data-id="${id}" data-testid="battle-skill-${id}"
-    aria-pressed="${selected === id}" ${disabled ? 'disabled' : ''}>${icon(glyph)}
+    aria-pressed="${selected === id}" ${disabled ? 'disabled' : ''}><i aria-hidden="true" class="bf-skill-pic" style="--command:${image}"></i>
     <span><strong>${label}</strong><small>${detail}</small></span></button>`;
 }
 
 function tacticsPanel(view, selected) {
   const t = view.battle.tactics, p = view.player, intent = t?.intent;
-  return `<aside class="bf-orders"><div class="bf-section-label">${icon('compass')} 敌方意图
+  return `<aside class="bf-orders bf-tactics"><div class="bf-command-top"><div class="bf-section-label">${icon('compass')} 敌方意图</div>
     <span class="bf-round">回合 ${t?.turn || 1}</span></div>
     <div data-testid="battle-intent" class="bf-intent"><h2>${h(intent?.name || '观察敌情')}</h2>
     <p>${h(intent?.telegraph || view.battle.stage.objective)}</p>
     ${intent?.advice ? `<p class="bf-advice">${h(intent.advice)}</p>` : ''}</div>
     <div class="bf-skills" role="group" aria-label="战斗指令">
-    ${skillButton('strike', '普攻', 'swords', selected, false, '积攒蓄力')}
-    ${skillButton('guard', '格挡', 'shield', selected, false, '防守反击')}
-    ${skillButton('burst', heroInfo(view)[1], 'sparkles', selected, !p.burst_ready, `蓄力 ${p.focus}/${p.focus_max}`)}
+    ${skillButton('strike', '普攻', 0, selected, false, '蓄能')}
+    ${skillButton('guard', '格挡', 1, selected, false, '反击')}
+    ${skillButton('burst', heroInfo(view)[1], commandIcons[p.hero_class] ?? commandIcons.arcanist, selected, !p.burst_ready, p.burst_ready ? '就绪' : `${p.focus} / ${p.focus_max}`)}
     </div></aside>`;
 }
 

@@ -86,6 +86,16 @@ export function makeAudio() {
         voice('sine', 784, 420, .28, .12, .09);
       }
     },
+    signal(story) {
+      if (story === 'open') {
+        voice('triangle', 392, 392, .24, .08);
+        voice('sine', 494, 494, .32, .105, .12);
+        voice('sine', 587, 587, .49, .11, .24);
+      } else {
+        voice('sine', 132, 76, .36, .16);
+        voice('noise', 650, 350, .29, .12, .04);
+      }
+    },
     destroy() { if (context) void context.close().catch(() => {}); },
   };
 }
