@@ -32,6 +32,34 @@
           "title": "Options",
           "type": "array"
         },
+        "study_term": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Study Term"
+        },
+        "study_definition": {
+          "anyOf": [
+            {
+              "maxLength": 1200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Study Definition"
+        },
         "knowledge_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -113,6 +141,22 @@
           "default": "1.0",
           "title": "Schema Version",
           "type": "string"
+        },
+        "question_language": {
+          "anyOf": [
+            {
+              "enum": [
+                "zh",
+                "en"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question Language"
         },
         "title": {
           "maxLength": 120,

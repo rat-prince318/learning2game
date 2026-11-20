@@ -44,7 +44,7 @@ def assemble_plan(preferences, selected, draft, warnings):
     sections = groups(selected, preferences.scene_count)
     if len(draft.scenes) != len(sections):
         raise RPGContentError("生成的场景数与本轮安排有出入，请重新拟定方案。")
-    return RPGPlan(title=draft.title, goal=preferences.goal, learner_level=preferences.learner_level,
+    return RPGPlan(title=draft.title, question_language=preferences.question_language, goal=preferences.goal, learner_level=preferences.learner_level,
                    difficulty=preferences.difficulty, theme=preferences.theme,
                    knowledge_ids=[k.knowledge_id for k in selected], challenge_count=len(selected),
                    scene_count=len(sections), learning_objectives=draft.learning_objectives,
@@ -71,6 +71,10 @@ def _nearby(item, pool, hard):
 
 
 def _question(item, pool, plan, book, repeat):
+    if item.exam_question:
+        entry = getattr(item.exam_question, plan.question_language or "en")
+        return QuestionDraft(knowledge_id=item.knowledge_id, prompt=entry.prompt, options=entry.options,
+                             correct_index=item.exam_question.correct_index, hint=entry.hint, success_effect="stamp")
     harder = plan.difficulty == "hard" or plan.goal == "distinguish"
     peers = _nearby(item, pool, harder)
     # A definition quoting its own term is evidence, but would reveal a reverse
@@ -103,9 +107,14 @@ def _question(item, pool, plan, book, repeat):
     else:
         prompt = (f"同伴为「{item.term}」留下了几份记录。根据讲义，哪一份可以收入{book}？" if harder
                   else f"你领到了「{item.term}」标签。请选择与讲义相符的说明，补全{book}。")
+    hint = "先圈出描述中的动作、对象或位置，再逐项比较选项。"
+    if plan.question_language == "en":
+        prompt = (f"The field guide reads “{evidence}”. Which term describes this observation?" if reverse
+                  else f"Which description of “{item.term}” is supported by the course material?")
+        hint = "Identify the action, object and conditions in the clue, then compare the alternatives."
     return QuestionDraft(knowledge_id=item.knowledge_id, prompt=prompt,
                          options=[answer, *alternatives], correct_index=0,
-                         hint="先圈出描述中的动作、对象或位置，再逐项比较选项。",
+                         hint=hint,
                          success_effect="stamp")
 
 
@@ -154,6 +163,9 @@ def assemble_game(draft, plan, pool, previous):
                 explanation = first
             else:
                 explanation = item.definition
+            if item.exam_question:
+                entry = getattr(item.exam_question, plan.question_language or "en")
+                explanation = entry.explanation
             opts = [{"id": f"o{i}_{j}_{n}", "text": t} for n, t in enumerate(q.options)]
             book = THEMES[plan.theme][3]
             # Consequences belong to the story; the subsequent teaching note
@@ -161,12 +173,19 @@ def assemble_game(draft, plan, pool, previous):
             effects = {"stamp": f"你在{book}上留下了核对印记。",
                        "archive": f"{scene.npc_name}把核对好的记录收入{book}。",
                        "deliver": f"一张核对好的记录已交到{scene.npc_name}手中。"}
+            if plan.question_language == "en":
+                effects = {"stamp": "You seal the verified entry.", "archive": "The entry is filed in the field guide.",
+                           "deliver": "The next keeper receives your dispatch."}
+            remediation = ("Review this field note with the keeper." if plan.question_language == "en" else
+                           f"向导陪你按讲义核对这条记录。{book}收下了本页讲解。")
             challenges.append(dict(challenge_id=f"c{i}_{j}", type="single_choice", prompt=q.prompt,
                                    options=opts, correct_option_id=opts[q.correct_index]["id"],
+                                   study_term=item.term if plan.question_language else None,
+                                   study_definition=item.definition if plan.question_language and len(item.definition) <= 1200 else None,
                                    knowledge_id=item.knowledge_id, hint=q.hint, explanation=explanation,
                                    source_ref=item.source_ref, evidence=item.evidence,
                                    success_text=effects[q.success_effect],
-                                   remediation_text=f"向导陪你按讲义核对这条记录。{book}收下了本页讲解。"))
+                                   remediation_text=remediation))
         scenes.append(dict(scene_id=f"s{i}", name=outline.name, description=scene.description,
                            visual_key=THEMES[plan.theme][1], npc=dict(name=scene.npc_name, dialogue=scene.dialogue),
                            quest=dict(quest_id=f"q{i}", title=scene.quest_title, objective=outline.objective,
@@ -178,5 +197,6 @@ def assemble_game(draft, plan, pool, previous):
         seen = {key(q.prompt) for s in previous.scenes for q in s.challenges}
         if any(key(q["prompt"]) in seen for s in scenes for q in s["challenges"]):
             warnings.append("部分题目沿用已有情境，可再次核对原资料线索。")
-    return RPGGameInternal(title=plan.title, rules="接受所在场景的任务，按序完成挑战。每题可尝试两次并查看一次提示，完成任务获得经验与物品。",
+    return RPGGameInternal(title=plan.title, question_language=plan.question_language,
+                           rules="接受所在场景的任务，按序完成挑战。每题可尝试两次并查看一次提示，完成任务获得经验与物品。",
                            theme=plan.theme, start_scene_id="s1", scenes=scenes, warnings=warnings)

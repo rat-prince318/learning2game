@@ -1,0 +1,84 @@
+@import url('./katex/katex.min.css');
+.study-content {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.study-math {
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: normal;
+  /* KaTeX fraction and italic glyphs can paint past their fractional advance
+     width at browser zoom. Reserve end space before testing for overflow. */
+  padding-block: 0.12em;
+  padding-inline-end: 0.16em;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 55%, transparent) transparent;
+  text-align: start;
+}
+.study-math:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+.study-display,
+.study-scroll,
+.study-code-block {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0.4em 0;
+}
+.study-math .katex {
+  font-size: 1.08em;
+  line-height: 1.25;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.study-math .katex-display {
+  margin: 0.2em 0;
+}
+.study-code,
+.study-code-block,
+.study-tex-source {
+  font:
+    0.94em/1.5 ui-monospace,
+    Consolas,
+    monospace;
+}
+.study-code,
+.study-tex-source {
+  color: inherit;
+  background: rgb(126 136 145 / 0.15);
+  border-radius: 3px;
+  padding: 0.04em 0.23em;
+}
+.study-code-block {
+  padding: 0.55em 0.7em;
+  border-inline-start: 0.18em solid currentColor;
+  background: rgb(126 136 145 / 0.12);
+  white-space: pre;
+}
+.study-table {
+  display: table;
+  border-collapse: collapse;
+  text-align: start;
+  white-space: normal;
+  font-variant-numeric: tabular-nums;
+}
+.study-table [role='row'] {
+  display: table-row;
+}
+.study-table [role='cell'],
+.study-table [role='columnheader'] {
+  display: table-cell;
+  border: 1px solid currentColor;
+  padding: 0.15em 0.5em;
+}
+.study-table [role='columnheader'] {
+  font-weight: 700;
+  background: rgb(126 136 145 / 0.12);
+}

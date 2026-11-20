@@ -110,6 +110,10 @@ def _decision_text(prompt):
 
 
 def _question(recipe, item, references, plan, previous):
+    if item.exam_question:
+        question = getattr(item.exam_question, plan.question_language or "en")
+        return prompts.QuestionDraft(knowledge_id=item.knowledge_id, prompt=question.prompt, options=question.options,
+                    correct_index=item.exam_question.correct_index, hint=question.hint, success_effect=recipe.success_effect), None
     chosen = list(dict.fromkeys(recipe.contrasts))
     if len(chosen) < 2:
         raise DraftError("每道题需要两条不同的参考项来构造干扰选项。")
@@ -124,7 +128,10 @@ def _question(recipe, item, references, plan, previous):
         keys = list(EVENTS)
         event_key = keys[(keys.index(event_key) + 1) % len(keys)]
     opening = EVENTS[event_key]
-    target = _clue(item, recipe.clue)
+    english = plan.question_language == "en"
+    # Evidence always retains its source language. Use translated teaching fields for display.
+    source_field = "definition" if plan.question_language and recipe.clue == "evidence" else recipe.clue
+    target = _clue(item, source_field)
     visual = item.source_type in {"image", "diagram", "mixed", "visual"}
     record = "图示记录" if visual else "资料记录"
     if plan.difficulty == "hard" and target:
@@ -143,10 +150,13 @@ def _question(recipe, item, references, plan, previous):
                       "两栏标签要按顺序送出，你签发哪一组？")
             # Each clue eliminates a different plausible candidate. All options
             # have the same format. The second slot is the assessed concept.
+            if english:
+                prompt = f"The first entry reads “{first}”. The second reads “{target}”. Which pair labels them in order?"
             a, b, c = contrast.term, item.term, third.term
             alternatives = [f"{a} → {b}", f"{b} → {a}", f"{a} → {c}", f"{c} → {b}"]
             return prompts.QuestionDraft(knowledge_id=item.knowledge_id, prompt=prompt,
-                options=alternatives, correct_index=0, hint=HINTS["order"], success_effect=recipe.success_effect), contrast
+                options=alternatives, correct_index=0, hint=("Compare both entries, keeping their order." if english else HINTS["order"]),
+                success_effect=recipe.success_effect), contrast
     if target and plan.difficulty != "easy":
         prompt = f"{opening}{record}注明「{target}」。你会把这张标签归到哪一项？"
         choices = [k.term for k in [item, *foils]]
@@ -158,9 +168,15 @@ def _question(recipe, item, references, plan, previous):
                 raise DraftError("请选用更短、更清晰的线索和干扰项。")
             prompt = f"{opening}{record}注明「{target}」。应领取哪张标签？"
             choices = [k.term for k in [item, *foils]]
+    if english:
+        if choices[0] == item.term:
+            prompt = f"The field guide reads “{target}”. Which term identifies this entry?"
+        else:
+            prompt = f"Which entry accurately describes “{item.term}”?"
     hint = recipe.hint_style if recipe.hint_style != "order" else "action"
     return prompts.QuestionDraft(knowledge_id=item.knowledge_id, prompt=prompt, options=choices,
-            correct_index=0, hint=HINTS[hint], success_effect=recipe.success_effect), None
+            correct_index=0, hint=("Compare the distinguishing features in the field guide." if english else HINTS[hint]),
+            success_effect=recipe.success_effect), None
 
 
 def make_game(recipe, pool, plan, previous):
@@ -202,6 +218,10 @@ def make_game(recipe, pool, plan, previous):
                             f"「{_clue(primary, 'definition') or _clue(primary, 'example') or primary.definition}」。")
                 if len(note) > 1200:
                     raise DraftError("两栏的来源说明过长，请选择简短的线索及对照项。")
+                if plan.question_language == "en":
+                    note = f"The first entry describes {companion.term}: {_clue(companion, 'definition')}. The second describes {primary.term}: {primary.definition}"
+                    if len(note) > 1200:
+                        raise DraftError("两栏的来源说明过长，请选择简短的线索及对照项。")
                 challenge.explanation = note
     if any(q.knowledge_id in seen and _decision_text(q.prompt) == _decision_text(seen[q.knowledge_id].prompt)
            for scene in game.scenes for q in scene.challenges):

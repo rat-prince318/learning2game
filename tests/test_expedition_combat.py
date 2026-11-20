@@ -118,9 +118,13 @@ def test_tactical_defeat_and_mistake_trigger_sourced_camp_rematch(course):
     assert recovered.last_event.kind == "recovered" and recovered.xp == state.xp
     assert recovered.hp == player_stats(recovered).max_hp and recovered.expedition.turn == 0
     assert recovered.expedition.shield == world.encounter_for("eclipse_lion").shield
+    next_kid = active_exam(recovered, *course).question.knowledge_id
+    assert next_kid != kid
     recovered.hp = 1
     missed = answer(recovered, course, "guard", correct=False)
-    assert missed.phase == "sidequest" and missed.concepts[kid].combat_attempts == 2
+    assert missed.phase == "sidequest" and missed.review_queue == [next_kid]
+    assert missed.concepts[next_kid].combat_attempts == 1 and missed.concepts[next_kid].combat_correct == 0
+    assert missed.concepts[kid].combat_attempts == 1
     assert missed.concepts[kid].combat_correct == 1 and missed.defeats == 2
 
 

@@ -4,6 +4,23 @@
     "BattleEvent": {
       "additionalProperties": false,
       "properties": {
+        "round_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "application",
+                "tactics"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Round Kind"
+        },
         "kind": {
           "enum": [
             "hit",
@@ -136,6 +153,17 @@
           "title": "Hero Class",
           "type": "string"
         },
+        "partner_assist": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartnerAssist"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "damage_blocked": {
           "default": 0,
           "minimum": 0,
@@ -240,6 +268,23 @@
           ],
           "default": null,
           "title": "Hint"
+        },
+        "purpose": {
+          "anyOf": [
+            {
+              "enum": [
+                "retry",
+                "tower_practice",
+                "finisher"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purpose"
         }
       },
       "required": [
@@ -514,6 +559,47 @@
       "title": "Loadout",
       "type": "object"
     },
+    "PartnerAssist": {
+      "additionalProperties": false,
+      "properties": {
+        "companion_id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Companion Id",
+          "type": "string"
+        },
+        "effect": {
+          "enum": [
+            "guard",
+            "strike",
+            "focus"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "amount": {
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "companion_id",
+        "effect",
+        "level",
+        "amount"
+      ],
+      "title": "PartnerAssist",
+      "type": "object"
+    },
     "PlayerView": {
       "additionalProperties": false,
       "properties": {
@@ -639,6 +725,44 @@
       "title": "PlayerView",
       "type": "object"
     },
+    "RoundProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "completed": {
+          "minimum": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "application",
+                "tactics"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "completed",
+        "total",
+        "kind"
+      ],
+      "title": "RoundProgress",
+      "type": "object"
+    },
     "SideQuestView": {
       "additionalProperties": false,
       "properties": {
@@ -758,6 +882,29 @@
     "TacticsView": {
       "additionalProperties": false,
       "properties": {
+        "companion_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "reed",
+                "flint",
+                "lumen"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Companion Id"
+        },
+        "companion_level": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Companion Level",
+          "type": "integer"
+        },
         "encounter_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -923,6 +1070,17 @@
   },
   "additionalProperties": false,
   "properties": {
+    "rounds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RoundProgress"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "schema_version": {
       "const": "1.0",
       "default": "1.0",
@@ -1018,6 +1176,17 @@
           "type": "null"
         }
       ]
+    },
+    "prior_answer": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BattleEvent"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "tactics": {
       "anyOf": [

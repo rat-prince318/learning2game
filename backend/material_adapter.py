@@ -18,12 +18,12 @@ from pathlib import Path
 from matching_agent.wording import has_unwanted_wording
 
 from .material_processing import MaterialError, TextBlock, read_material, validate_office_archive
-from .models import KnowledgeItem, MaterialResult
+from .exam_material import parse_exam, knowledge_from_exam
+from .models import MAX_MATERIAL_POINTS, KnowledgeItem, MaterialResult
 from .provider import trace_tool
 
 __all__ = ["MaterialError", "extract_material", "validate_office_archive"]
 
-MAX_POINTS = 64
 MAX_CHUNKS = 8
 _CHUNK_SIZE = 3500
 _BULLET = re.compile(r"^\s*(?:[-*+]\s+|\d+[.、)]\s*)")
@@ -62,7 +62,8 @@ class Point:
     example: str | None = None
 
 
-def _rules(block: TextBlock) -> list[Point]:
+def _rules(block: TextBlock, *, explicit_only=False) -> list[Point]:
+    patterns = (_COLON, _DASH) if explicit_only else (_COLON, _DASH, _IS, _CHINESE)
     candidates = []
     lines = block.text.splitlines()
     if block.source_id.startswith("pdf:"):
@@ -85,7 +86,7 @@ def _rules(block: TextBlock) -> list[Point]:
                 continue
             term, definition = cells
         else:
-            match = next((m for p in (_COLON, _DASH, _IS, _CHINESE) if (m := p.fullmatch(line))), None)
+            match = next((m for p in patterns if (m := p.fullmatch(line))), None)
             if not match:
                 continue
             term, definition = match.groups()
@@ -136,13 +137,15 @@ class MaterialProvider:
         if not self.key:
             raise MaterialError("视觉与文字提取需要配置 LLM_API_KEY。离线模式可读取文字讲义。")
 
-    def complete(self, content, *, vision: bool) -> list[dict]:
+    def complete(self, content, *, vision: bool, system: str = _SYSTEM, json_mode=False) -> list[dict]:
         remaining = self.deadline - time.monotonic()
         if remaining <= .1:
             raise MaterialError("资料分析已达时间上限，请缩小选页范围后重试。")
         payload = {"model": self.vision_model if vision else self.text_model,
-                   "messages": [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": content}],
+                   "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}],
                    "max_tokens": 2200}
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
         req = urllib.request.Request(f"{self.base_url}/chat/completions",
                                      data=json.dumps(payload).encode(),
                                      headers={"Authorization": "Bearer " + self.key, "Content-Type": "application/json"})
@@ -276,39 +279,42 @@ def extract_material(path: Path, *, live=False, pages=None, include_images=True,
     path = Path(path)
     with trace_tool("read_course_material"):
         material = read_material(path, pages=pages, figures=live and include_images)
+    filename = _display(Path(original_name or path.name).name)[:180]
+    if has_unwanted_wording(filename):
+        filename = "上传资料"
+    exam = parse_exam(material, filename)
+    if exam is not None:
+        with trace_tool("extract_verified_exam_problems"):
+            return knowledge_from_exam(material, exam, filename,
+                                       live_provider=MaterialProvider() if live else None)
     candidates = []
     provider = MaterialProvider() if live else None
     if material.blocks:
         with trace_tool("extract_knowledge_points" if live else "extract_glossary_pairs"):
+            # Parse explicit definitions from the entire text, including the tail
+            # of large lectures outside the model's bounded reading window.
+            for block in material.blocks:
+                candidates.extend(_rules(block, explicit_only=live))
             if live:
                 for i, blocks in enumerate(_chunks(material.blocks)):
-                    if i >= MAX_CHUNKS or len(candidates) >= MAX_POINTS * 2:
+                    if i >= MAX_CHUNKS:
                         material.warn("本轮模型文字调用已达上限，可缩小选页范围后继续。")
                         break
                     candidates.extend(_from_text(provider, blocks))
-            else:
-                for block in material.blocks:
-                    candidates.extend(_rules(block))
-                    if len(candidates) >= MAX_POINTS * 4:
-                        material.warn("本轮已收集足够候选，可按章节上传其余内容。")
-                        break
     for image in material.images:
         with trace_tool("analyze_diagram"):
             candidates.extend(_from_image(provider, image))
     with trace_tool("verify_sources_and_deduplicate"):
         playable, conflicts = _dedupe(candidates)
-        if len(playable) > MAX_POINTS:
-            playable = playable[:MAX_POINTS]
-            material.warn(f"本次已收录前 {MAX_POINTS} 个知识点，其余内容可分章上传。")
+        if len(playable) > MAX_MATERIAL_POINTS:
+            playable = playable[:MAX_MATERIAL_POINTS]
+            material.warn(f"本次已收录前 {MAX_MATERIAL_POINTS} 个知识点，其余内容可分章上传。")
         if conflicts:
             material.warn("部分候选包含重复或冲突的配对关系，已留待资料修订。")
         if not playable:
             if live:
                 raise MaterialError("所选资料暂未提取到有来源的配对关系，请选择标注更清晰的图示或包含定义的段落。")
             raise MaterialError("请上传包含「术语：定义」的讲义，或启用模型分析叙述性资料与图示。")
-        filename = _display(Path(original_name or path.name).name)[:180]
-        if has_unwanted_wording(filename):
-            filename = "上传资料"
         knowledge = []
         for point in playable:
             # The ID is stable across runs and independent of upload paths and display order.

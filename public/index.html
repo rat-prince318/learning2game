@@ -8,6 +8,7 @@
     <title>Learning2Game 学习配对工作室</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/study/study.css" />
     <script type="module" src="/js/app.js"></script>
   </head>
   <body>
@@ -22,9 +23,11 @@
         <a href="#play" data-route="play"><span>2</span>配对练习</a>
         <a href="#report" data-route="report"><span>3</span>学习报告</a>
       </nav>
+      <div class="studio-shortcuts"><a class="expedition-link" href="/rpg/">进入远征 RPG</a>
+      <button id="studio-language" class="language-button" type="button" lang="en">English</button>
       <button id="mode-button" class="mode-button" type="button" aria-haspopup="dialog">
         连接中
-      </button>
+      </button></div>
     </header>
     <main id="main" tabindex="-1">
       <div id="global-error" class="error-banner" role="alert" hidden>
@@ -91,7 +94,7 @@
               </div>
               <details id="file-preview" class="preview-details" hidden>
                 <summary>预览文字</summary>
-                <pre id="preview-content"></pre>
+                <div id="preview-content"></div>
               </details>
               <p class="privacy-note" id="privacy-note"></p>
               <a id="vision-example" class="text-button" href="/examples/campus-printing.pdf" download hidden>下载校园打印图文示例（PDF）</a>

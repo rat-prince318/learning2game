@@ -55,6 +55,94 @@ def win_current(state, courses):
     pytest.fail("Encounter failed to reach settlement with correct strategic answers")
 
 
+def test_switch_earned_gear_at_a_post_and_carry_it_into_the_next_fight():
+    books = bookshelf(books=2, chapters=1)
+    state = ex.new_expedition("outfit", books, "arcanist")
+    state = command(state, books, "choose_route", route_id="boss_steady")
+    state = win_current(state, books)
+    assert state.phase == "reward"
+    earned = next(item.id for item in ex.view(state, books).player.inventory
+                  if item.slot == "weapon" and item.id != "twig_focus")
+    for item_id in ("twig_focus", earned):
+        state = command(state, books, "equip", item_id=item_id)
+        assert ex.view(state, books).player.loadout.weapon == item_id
+    state = command(state, books, "choose_reward", reward_id="purse")
+    state = command(state, books, "equip", item_id="twig_focus")
+    state = command(state, books, "choose_route", route_id="boss_steady")
+    assert ex.view(state, books).player.loadout.weapon == "twig_focus"
+
+
+def test_backpack_supplies_on_legacy_saves_and_safe_stat_changes():
+    books = bookshelf(2, 1)
+    start = ex.new_expedition("pouch", books, "arcanist", "ward")
+    old_state = start.model_dump(exclude={"supplies"})
+    old_view = ex.view(start, books).model_dump(exclude={"supplies"})
+    state = ex.ExpeditionState.model_validate(old_state)
+    assert ex.ExpeditionView.model_validate(old_view) == ex.view(state, books)
+    assert [(s.id, s.quantity, s.heal, s.focus) for s in ex.view(state, books).supplies] == [
+        ("field_bandage", 2, 12, 0), ("focus_tea", 1, 0, 1)]
+
+    max_hp = ex.view(state, books).player.max_hp
+    with pytest.raises(BattleError):
+        command(state, books, "use_item", item_id="field_bandage")
+    state.battle.hp = max_hp - 16
+    state = command(state, books, "use_item", item_id="field_bandage")
+    assert (state.battle.hp, state.supplies.field_bandage) == (max_hp - 4, 1)
+    state = command(state, books, "use_item", item_id="field_bandage")
+    assert (state.battle.hp, state.supplies.field_bandage) == (max_hp, 0)
+    state = command(state, books, "inspect_landmark")
+    state = command(state, books, "inspect_landmark")
+    assert state.supplies.field_bandage == 1
+    full_focus = state.model_copy(deep=True)
+    full_focus.battle.focus = ex.view(state, books).player.focus_max
+    with pytest.raises(BattleError):
+        command(full_focus, books, "use_item", item_id="focus_tea")
+    assert full_focus.supplies.focus_tea == 1
+    state = command(state, books, "use_item", item_id="focus_tea")
+    assert state.battle.focus == 1 and state.supplies.focus_tea == 0
+    for action, fields in [
+        ("use_item", {"item_id": "focus_tea"}),
+        ("discard_item", {"item_id": "field_bandage", "quantity": 2}),
+        ("discard_item", {"item_id": "ward_vest", "quantity": 1}),
+        ("discard_item", {"item_id": "twig_focus", "quantity": 1}),
+        ("unequip", {"item_id": "twig_focus"}),
+    ]:
+        with pytest.raises(BattleError):
+            command(state, books, action, **fields)
+    state = command(state, books, "unequip", item_id="ward_vest")
+    assert state.battle.loadout.armor is None
+    assert ex.view(state, books).player.max_hp == state.battle.hp == max_hp - 4
+    assert "ward_vest" in state.battle.inventory_ids
+    state = command(state, books, "equip", item_id="ward_vest")
+    assert ex.view(state, books).player.max_hp == max_hp and state.battle.hp == max_hp - 4
+    state = command(state, books, "unequip", item_id="ward_vest")
+    state = command(state, books, "discard_item", item_id="ward_vest", quantity=1)
+    assert "ward_vest" not in state.battle.inventory_ids
+    with pytest.raises(BattleError):
+        command(state, books, "equip", item_id="ward_vest")
+
+
+def test_provisions_and_discarded_weapon_progression_cross_volumes():
+    books = bookshelf(2, 1)
+    state = ex.new_expedition("pouch-trip", books, "arcanist")
+    state = command(state, books, "use_item", item_id="focus_tea")
+    state = command(state, books, "choose_route", route_id="boss_daring")
+    assert state.battle.focus == 1
+    with pytest.raises(BattleError):
+        command(state, books, "discard_item", item_id="field_bandage", quantity=2)
+    state = win_current(state, books)
+    assert state.phase == "reward" and state.supplies.focus_tea == 1
+    state = command(state, books, "discard_item", item_id="field_bandage", quantity=2)
+    state = command(state, books, "equip", item_id="twig_focus")
+    state = command(state, books, "discard_item", item_id="amber_focus", quantity=1)
+    state = command(state, books, "choose_reward", reward_id="purse")
+    state = command(state, books, "choose_route", route_id="boss_steady")
+    assert state.battle.game_id == "volume-1" and state.supplies.field_bandage == 0
+    assert "amber_focus" not in state.battle.inventory_ids
+    state = win_current(state, books)
+    assert state.battle.loadout.weapon == "rain_focus" and state.supplies.focus_tea == 2
+
+
 def test_overland_economy_routes_and_retirement_from_an_unentered_chapter():
     courses = bookshelf()
     start = ex.new_expedition("run", courses)

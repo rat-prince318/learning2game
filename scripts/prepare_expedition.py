@@ -20,8 +20,8 @@ def finish_job(client, receipt, expected):
         time.sleep(0.5)
 
 
-def prepare_plans(client, material_ids, concepts, scenes):
-    request = {"sources": [{"material_id": mid} for mid in material_ids],
+def prepare_plans(client, material_ids, concepts, scenes, eight_chapters=False):
+    request = {"sources": [{"material_id": mid} for mid in material_ids], "eight_chapters": eight_chapters,
                "concepts_per_volume": concepts, "scenes_per_volume": scenes}
     outline = client.post("/rpg/expedition-outline", json=request).raise_for_status().json()
     plans = []
@@ -34,18 +34,19 @@ def prepare_plans(client, material_ids, concepts, scenes):
     return plans
 
 
-def publish(client, plan_ids, hero_class, kit, request_id):
+def publish(client, plan_ids, hero_class, kit, request_id, eight_chapters=False):
     game_ids = []
     for plan_id in plan_ids:
         receipt = client.post("/rpg/games", json={"plan_id": plan_id, "confirmed": True}).raise_for_status().json()
         game_ids.append(finish_job(client, receipt, "completed")["game_id"])
-    return client.post("/rpg/expeditions", json={"game_ids": game_ids, "hero_class": hero_class,
+    return client.post("/rpg/expeditions", json={"game_ids": game_ids, "hero_class": hero_class, "eight_chapters": eight_chapters,
                        "kit": kit, "request_id": request_id}).raise_for_status().json()
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server", default="http://127.0.0.1:8000", help="Base URL of an already running backend")
+    parser.add_argument("--eight-chapters", action="store_true", help="Use the full eight-chapter story and exploration maps")
     commands = parser.add_subparsers(dest="operation", required=True)
     plan = commands.add_parser("plan", help="Plan volumes for extracted materials and print the plans for review")
     plan.add_argument("material_ids", nargs="+")
@@ -59,11 +60,13 @@ def main():
     args = parser.parse_args()
     with httpx.Client(base_url=args.server, timeout=60) as client:
         if args.operation == "plan":
-            result = prepare_plans(client, args.material_ids, args.concepts_per_volume, args.scenes_per_volume)
+            result = prepare_plans(client, args.material_ids, args.concepts_per_volume, args.scenes_per_volume, args.eight_chapters)
         else:
-            if not 1 <= len(args.plan_ids) <= 8 or len(set(args.plan_ids)) != len(args.plan_ids):
-                parser.error("Pass one to eight distinct reviewed plan IDs in course order.")
-            result = publish(client, args.plan_ids, args.hero_class, args.kit, args.request_id)
+            if len(set(args.plan_ids)) != len(args.plan_ids):
+                parser.error("Pass distinct reviewed plan IDs in course order.")
+            if not args.eight_chapters and len(args.plan_ids) > 8:
+                parser.error("Use --eight-chapters to include more than eight volumes.")
+            result = publish(client, args.plan_ids, args.hero_class, args.kit, args.request_id, args.eight_chapters)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

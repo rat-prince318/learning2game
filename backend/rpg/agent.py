@@ -5,9 +5,11 @@ import json
 from pydantic import ValidationError
 
 from ..provider import trace_tool
+from ..question_language import localized_items
 from . import authoring, offline, prompts, reviewer
 from .models import GameRecommendation, RPGGenerationResult, RPGIssue, RPGValidationReport
-from .validation import DraftError, RPGContentError, check_game, eligible, groups, reference_pool, select, source_pack
+from .validation import (DraftError, RPGContentError, check_game, eligible, groups, minimum_challenges,
+                         reference_pool, select, source_pack)
 
 
 class RPGAgent:
@@ -42,6 +44,7 @@ class RPGAgent:
 
     async def recommend(self, knowledge, preferences):
         pool = eligible(knowledge)
+        minimum = minimum_challenges(preferences, pool)
         supported = ["matching", "rpg_quest"]
         selected = getattr(preferences, "selected_knowledge_ids", None)
         count = getattr(preferences, "challenge_count", 6)
@@ -51,7 +54,7 @@ class RPGAgent:
             if len(selected) > count:
                 raise RPGContentError("请将题量调至至少与选中知识点数相同，或缩小选中范围。")
             pool = [k for k in pool if k.knowledge_id in selected]
-        meaningful = min(len(pool), count) >= 3
+        meaningful = min(len(pool), count) >= minimum
         warnings = [] if meaningful else ["普通 RPG 需要至少三个有明确出处的知识点，并选择至少三道题。"]
         if self.client:
             with trace_tool("recommend_game_type"):
@@ -77,6 +80,7 @@ class RPGAgent:
 
     async def plan(self, knowledge, preferences, previous_report):
         selected, warnings = select(knowledge, preferences, previous_report)
+        selected = await localized_items(selected, preferences.question_language, self.client)
         if self.client:
             with trace_tool("design_rpg_plan"):
                 sections = groups(selected, preferences.scene_count)
@@ -100,11 +104,13 @@ class RPGAgent:
 
     async def generate(self, knowledge, plan, previous):
         pool = reference_pool(eligible(knowledge), plan)
+        pool = await localized_items(pool, plan.question_language, self.client)
         if set(plan.knowledge_ids) - {k.knowledge_id for k in pool}:
             raise RPGContentError("请重新确认资料范围，当前方案含有缺少依据的知识点。")
-        if len(pool) < 3:
+        supplied_options = len(pool) < 3 and all(item.exam_question for item in pool)
+        if len(pool) < 3 and not supplied_options:
             raise RPGContentError("单选挑战需要可区分的选项，请补充至少三个概念及对应证据。")
-        if not self.client:
+        if not self.client or supplied_options:
             with trace_tool("rule_generate_rpg_config"):
                 draft = offline.local_game(pool, plan, previous)
                 game = offline.assemble_game(draft, plan, pool, previous)
@@ -157,6 +163,7 @@ class RPGAgent:
         return RPGGenerationResult(status="failed", config=None, validation=checks)
 
     async def feedback(self, report, knowledge):
+        language = getattr(report, "question_language", None)
         by_id = {k.knowledge_id: k for k in knowledge}
         rows = {c.knowledge_id: c for c in report.concepts}
         targets = report.weak_knowledge_ids or list(rows)
@@ -167,7 +174,7 @@ class RPGAgent:
                 schema = prompts.feedback_schema([by_id[k] for k in targets])
                 # The model handles short named slots. Only the backend maps
                 # them to stored knowledge IDs, irrespective of response order.
-                payload = {"finish_reason": report.finish_reason, "targets": {
+                payload = {"question_language": language, "finish_reason": report.finish_reason, "targets": {
                     f"target_{i}": {"term": by_id[k].term, "evidence": by_id[k].evidence,
                                      "source_type": by_id[k].source_type, "attempts": rows[k].attempts,
                                      "mistakes": rows[k].mistakes, "hints": rows[k].hints,
@@ -194,8 +201,21 @@ class RPGAgent:
                    "compare": "选一个容易混淆的条目，写下区分它们的关键词，再对照来源核查。",
                    "recall": "先遮住讲义复述含义，再打开原文找回遗漏的线索。",
                    "apply": "给同伴写一道使用这个概念的小题，用原文核对答案。"}
-        lines = ["本轮复习建议" if report.weak_knowledge_ids else "下一轮拓展练习"]
+        english = language == "en"
+        if english:
+            methods = {"trace": "Trace the connections or directions in the source figure.",
+                       "compare": "Contrast the conditions of two similar cases, then check the source.",
+                       "recall": "Close the handout, reconstruct the result and check the missing steps.",
+                       "apply": "Write a new example and verify your reasoning against the source."}
+        heading = ("Review this round" if report.weak_knowledge_ids else "Further practice") if english else (
+                   "本轮复习建议" if report.weak_knowledge_ids else "下一轮拓展练习")
+        lines = [heading]
         for step in steps:
             item = by_id[step.knowledge_id]
-            lines.append(f"{item.term}（{item.source_ref}）：{methods[step.strategy]}")
+            term = getattr(rows[step.knowledge_id], "term", item.term)
+            method = methods[step.strategy]
+            if item.exam_question:
+                wording = getattr(item.exam_question, language or "en")
+                method = wording.hint
+            lines.append(f"{term} ({item.source_ref}) — {method}" if english else f"{term}（{item.source_ref}）：{method}")
         return "\n".join(lines)

@@ -16,7 +16,7 @@ from ..provider import call_service
 from .games import store_rpg_game
 from .models import GameRecommendation, RPGGameInternal, RPGPlan, RPGPreferences, StudyFeedback
 from .reports import read_rpg_report
-from .validation import RPGContentError, eligible
+from .validation import RPGContentError, eligible, minimum_challenges
 
 router = APIRouter(tags=["RPG learning workflow"])
 GAME = "rpg_quest"
@@ -84,18 +84,17 @@ def recommend(body: PlanRequest, request: Request, tasks: BackgroundTasks):
     return MaterialJob(material_id=body.material_id, job_id=job_id)
 
 
-def _make_plan(job, material_id, material, prefs, scope, practice_session_id, previous_report):
+def _make_plan(job, material_id, material, prefs, scope, practice_session_id, previous_report, minimum):
     with job.stage("planning"):
         proposal = _service(job, "plan_rpg", material.knowledge, prefs, previous_report)
     with job.stage("validating"):
         plan = RPGPlan.model_validate(proposal)
-        minimum = 1 if previous_report else 3
         if (not set(plan.knowledge_ids).issubset(scope)
                 or (prefs.selected_knowledge_ids is not None and set(plan.knowledge_ids) != set(scope))
                 or not minimum <= plan.challenge_count <= prefs.challenge_count
                 or plan.scene_count > prefs.scene_count
                 or any(getattr(plan, f) != getattr(prefs, f)
-                       for f in ("difficulty", "learner_level", "theme", "goal"))):
+                       for f in ("difficulty", "learner_level", "theme", "goal", "question_language"))):
             raise OutputError("方案与选定的范围或偏好不一致，请重新规划。")
         warnings = list(dict.fromkeys([*plan.warnings, *material.warnings]))
         plan = RPGPlan.model_validate({**plan.model_dump(), "warnings": warnings[:12]})
@@ -112,7 +111,8 @@ def _make_plan(job, material_id, material, prefs, scope, practice_session_id, pr
 def _queue_plan(app, tasks, conn, material_id, prefs, session_id=None, report=None):
     _require_rpg(app)
     material = _knowledge(conn, material_id)
-    available = [item.knowledge_id for item in eligible(material.knowledge)]
+    pool = eligible(material.knowledge)
+    available = [item.knowledge_id for item in pool]
     scope = [key for key in available if key in report.weak_knowledge_ids] if report else available
     if prefs.selected_knowledge_ids is not None:
         if not set(prefs.selected_knowledge_ids).issubset(scope):
@@ -120,10 +120,11 @@ def _queue_plan(app, tasks, conn, material_id, prefs, session_id=None, report=No
         scope = prefs.selected_knowledge_ids
         if len(scope) > prefs.challenge_count:
             raise HTTPException(422, "请将题量调至选中知识点的数量，或减少选中的知识点。")
-    if report is None and min(len(scope), prefs.challenge_count) < 3:
+    minimum = minimum_challenges(prefs, pool, report is not None)
+    if min(len(scope), prefs.challenge_count) < minimum:
         raise HTTPException(422, "常规 RPG 需要至少三个有出处的知识点。请扩大范围、补充资料或选择配对练习。")
     job_id = insert_job(conn, "practice" if report else "planning", session_id or material_id, app.state.mode, GAME)
-    tasks.add_task(_execute, app, job_id, _make_plan, material_id, material, prefs, scope, session_id, report)
+    tasks.add_task(_execute, app, job_id, _make_plan, material_id, material, prefs, scope, session_id, report, minimum)
     return MaterialJob(material_id=material_id, job_id=job_id)
 
 
@@ -211,7 +212,7 @@ def feedback(session_id: str, request: Request, tasks: BackgroundTasks):
         if last and last["status"] != "failed":
             return FeedbackJob(session_id=session_id, job_id=last["id"])
         _require_rpg(request.app)
-        knowledge = _knowledge(conn, row["material_id"]).knowledge
+        knowledge = _knowledge(conn, row["material_id"], for_generation=False).knowledge
         job_id = insert_job(conn, "feedback", session_id, request.app.state.mode, GAME)
     tasks.add_task(_execute, request.app, job_id, _feedback, session_id, report, knowledge)
     return FeedbackJob(session_id=session_id, job_id=job_id)

@@ -5,9 +5,11 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from ..models import Count, Identifier, Rate, StrictModel
+from .backpack import DiscardItem, HeldSupply, SupplyPouch, Unequip, UseItem, supply_stacks
 from .battle_models import BattleState, BattleView, Equip, ExpeditionAnswer, Hint, PlayerView, Retreat
 from .battle_reports import BattleConcept
-from .expedition_combat import ForgeRank
+from .companions import CompanionId, CompanionView
+from .expedition_combat import ForgeRank, tower_health
 from .expedition_world import RelicSpec, RouteSpec
 from .hero_catalog import ClassId, KitId
 from .models import Description, ShortText
@@ -22,6 +24,18 @@ class ChooseRoute(StrictModel):
     route_id: Identifier
 
 
+class InspectLandmark(StrictModel):
+    action: Literal["inspect_landmark"]
+    event_id: Identifier
+    expected_revision: Count
+
+
+class AdvanceExploration(StrictModel):
+    action: Literal["advance_exploration"]
+    event_id: Identifier
+    expected_revision: Count
+
+
 class ChooseReward(StrictModel):
     action: Literal["choose_reward"]
     event_id: Identifier
@@ -30,7 +44,40 @@ class ChooseReward(StrictModel):
     replace_relic_id: Identifier | None = None
 
 
-ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | ChooseReward | Retreat,
+class StoryChoice(StrictModel):
+    action: Literal["story_choice"]
+    event_id: Identifier
+    expected_revision: Count
+    choice: Identifier
+
+
+class PartyCommand(StrictModel):
+    action: Literal["recruit_companion", "assign_companion"]
+    event_id: Identifier
+    expected_revision: Count
+    companion_id: CompanionId
+
+
+class TowerCommand(StrictModel):
+    action: Literal["tower_enter"]
+    event_id: Identifier
+    expected_revision: Count
+
+
+class TowerAnswer(ExpeditionAnswer):
+    action: Literal["tower_answer"]
+
+
+class TowerHint(Hint):
+    action: Literal["tower_hint"]
+
+
+class TowerEquip(Equip):
+    action: Literal["tower_equip"]
+
+
+ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | Unequip | UseItem | DiscardItem | ChooseReward | Retreat |
+                             PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark | AdvanceExploration,
                              Field(discriminator="action")]
 
 
@@ -81,9 +128,39 @@ class VolumeStudy(StrictModel):
     concepts: list[BattleConcept]
 
 
+TowerPhase = Literal["idle", "combat", "sidequest", "cleared"]
+
+
+class TowerState(StrictModel):
+    floor: Count = 0
+    best_floor: Count = 0
+    phase: TowerPhase = "idle"
+    battle: BattleState | None = None
+    last_draw_by_game: dict[Identifier, Identifier] = Field(default_factory=dict)
+
+
+class TowerView(StrictModel):
+    floor: Count = 0
+    best_floor: Count = 0
+    phase: TowerPhase = "idle"
+    region_id: str = ""
+    next_guardian_hp: Count = tower_health(1)
+    chain_target: Count = 1
+    question_mode: Literal["recognition", "recall", "paired", "synthesis"] = "recognition"
+    difficulty: Count = 0
+    battle: BattleView | None = None
+
+
 class ExpeditionState(StrictModel):
+    supplies: SupplyPouch = Field(default_factory=SupplyPouch)
+    used_drills: list[Identifier] = Field(default_factory=list)
+    eight_chapters: bool = False
+    excluded_cards: dict[Identifier, list[Identifier]] = Field(default_factory=dict)
+    campaign_story: bool = False
+    story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
+    story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
     session_id: Identifier
-    game_ids: list[Identifier] = Field(min_length=1, max_length=8)
+    game_ids: list[Identifier] = Field(min_length=1)
     hero_class: ClassId
     kit: KitId
     veteran: bool = False
@@ -100,9 +177,15 @@ class ExpeditionState(StrictModel):
     journal: list[Visit] = Field(default_factory=list)
     completed_volumes: list[VolumeStudy] = Field(default_factory=list)
     battle: BattleState
+    field_signals: list[Identifier] = Field(default_factory=list)
+    bonds: dict[CompanionId, Count] = Field(default_factory=dict)
+    active_companion: CompanionId | None = None
+    tower: TowerState = Field(default_factory=TowerState)
 
 
 class ChapterMap(StrictModel):
+    kind: Literal["battle", "exploration"] = "battle"
+    game_id: Identifier | None = None
     scene_id: Identifier
     name: ShortText
     objective: Description
@@ -112,6 +195,7 @@ class ChapterMap(StrictModel):
 
 
 class RegionMap(StrictModel):
+    knowledge_count: Count = 0
     region_id: Identifier
     name: ShortText
     game_id: Identifier
@@ -120,6 +204,18 @@ class RegionMap(StrictModel):
 
 
 class ExpeditionView(StrictModel):
+    supplies: list[HeldSupply] = Field(default_factory=lambda: supply_stacks(SupplyPouch()))
+    eight_chapters: bool = False
+    cleared_regions: Count = 0
+    knowledge_count: Count = 0
+    covered_knowledge_count: Count = 0
+    legacy_exam_cover: bool = False
+    campaign_story: bool = False
+    story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
+    story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
+    field_signals: list[Identifier] = Field(default_factory=list)
+    companions: list[CompanionView] = Field(default_factory=list)
+    tower: TowerView = Field(default_factory=TowerView)
     session_id: Identifier
     veteran: bool
     inherited_relic_id: Identifier | None
@@ -147,6 +243,8 @@ class ExpeditionView(StrictModel):
 
 
 class ExpeditionReport(StrictModel):
+    story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
+    story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
     session_id: Identifier
     veteran: bool
     inherited_relic_id: Identifier | None

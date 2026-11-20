@@ -699,6 +699,39 @@
   },
   "additionalProperties": false,
   "properties": {
+    "story_marks": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "type": "string"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Story Marks",
+      "type": "object"
+    },
+    "story_ending": {
+      "anyOf": [
+        {
+          "enum": [
+            "shatter_crown",
+            "keep_watch",
+            "wake_towns"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Story Ending"
+    },
     "session_id": {
       "maxLength": 128,
       "minLength": 1,

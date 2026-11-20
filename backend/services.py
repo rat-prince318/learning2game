@@ -72,6 +72,27 @@ _EXAMPLES = (
              "即便换成训练阶段没有见过的输入，学到的规律依然适用。", "训练结束后，系统也认出了全新照片里的路牌。这里体现了模型的哪种能力？"),
 )
 _BY_ID = {example.knowledge_id: example for example in _EXAMPLES}
+_EN_DEMO = {
+    e.knowledge_id: e for e in (
+        _Example("supervised", "Supervised learning", "Train on examples paired with target labels.",
+                 "An essay grader trains on essays paired with teachers' scores.", "Look for target outputs during training.",
+                 "Each training input comes with a reference output.", "A trainer supplies both essays and their scores."),
+        _Example("unsupervised", "Unsupervised learning", "Discover structure in examples without target labels.",
+                 "A system groups students by course choices without group labels.", "Look for similarity in the inputs.",
+                 "Patterns emerge from the inputs alone.", "A program finds similar course choices in unlabeled records."),
+        _Example("classification", "Classification", "Predict a discrete category.", "A filter labels each email as spam or normal.",
+                 "Count the possible output labels.", "The result is one of a set of labels.", "A filter selects one of two tags for a message."),
+        _Example("regression", "Regression", "Predict a continuous value.", "A model forecasts hourly electricity use in kilowatt-hours.",
+                 "Check whether the output is a measured quantity.", "The predicted quantity can vary continuously.",
+                 "A model estimates energy use to the nearest decimal place."),
+        _Example("overfitting", "Overfitting", "A model learns incidental training details and performs poorly on new examples.",
+                 "A model passes nearly every training case but misses similar new problems.", "Compare old and new examples.",
+                 "Training-specific details become apparent rules.", "Familiar questions go well while fresh ones of equal difficulty fail."),
+        _Example("generalization", "Generalization", "A model applies learned patterns to unseen examples.",
+                 "A model recognizes road signs in photos held out from training.", "Consider performance on new inputs.",
+                 "Patterns learned during training also work on new inputs.", "A trained model correctly handles a previously unseen photo."),
+    )
+}
 _HANDOUT = "机器学习入门示例讲义"
 DEMO_MATERIAL_TEXT = (
     f"{_HANDOUT}\n"
@@ -129,7 +150,8 @@ class DemoServices:
         if len(knowledge) < preferences.pair_count:
             warnings.append(f"本轮可选知识点只有 {len(knowledge)} 个，已相应减少卡片数量。")
         return MatchingPlan(
-            title=f"机器学习入门：{purpose[preferences.goal]}（示例）",
+            title=("Introduction to machine learning" if preferences.question_language == "en" else
+                   f"机器学习入门：{purpose[preferences.goal]}（示例）"), question_language=preferences.question_language,
             goal=preferences.goal,
             learner_level=preferences.learner_level,
             difficulty=preferences.difficulty,
@@ -148,17 +170,21 @@ class DemoServices:
         pairs = []
         for knowledge_id in plan.knowledge_ids:
             item = selected.get(knowledge_id)
-            example = _BY_ID.get(knowledge_id)
+            english = plan.question_language == "en"
+            example = (_EN_DEMO if english else _BY_ID).get(knowledge_id)
             if item is None or example is None:
                 raise ValueError("Unknown concept in demo plan")
             relation = plan.relationship_type
             if relation == "auto":
                 relation = {"easy": "term_illustrated_definition", "medium": "term_definition",
                             "hard": "term_scenario"}[plan.difficulty]
+            if english:
+                item = item.model_copy(update={"term":example.term, "definition":example.definition})
+            label = " Example: " if english else " 例："
             card_text = {
                 "term_illustrated_definition": (
-                    f"{item.definition} 例：{example.case}",
-                    f"{example.alternate_definition} 例：{example.alternate_case}",
+                    f"{item.definition}{label}{example.case}",
+                    f"{example.alternate_definition}{label}{example.alternate_case}",
                 ),
                 "term_definition": (item.definition, example.alternate_definition),
                 "term_scenario": (example.case, example.alternate_case),
@@ -171,13 +197,19 @@ class DemoServices:
                 knowledge_id=knowledge_id,
                 left=item.term,
                 right=alternate if old_cards.get(knowledge_id) == original else original,
-                explanation=f"{item.definition}例如：{example.case}",
+                explanation=(f"{item.definition} Example: {example.case}" if english else f"{item.definition}例如：{example.case}"),
+                study_term=item.term if plan.question_language else None,
                 source_ref=item.source_ref,
                 hint=example.hint,
             ))
         return GameConfigInternal(title=plan.title, pairs=pairs)
 
     def feedback(self, report: LearningReport, knowledge: list[KnowledgeItem]) -> str:
+        if report.question_language == "en":
+            if not report.weak_knowledge_ids:
+                return "Try the scenarios in the handout for your next round."
+            terms = ", ".join(_EN_DEMO[k].term for k in report.weak_knowledge_ids)
+            return f"Review these concepts and work through one example for each: {terms}."
         if not report.weak_knowledge_ids:
             return "示例反馈：本轮没有标记待复习知识点。可以从讲义中选择情境例子，再配对一次。"
         by_id = {item.knowledge_id: item for item in knowledge}

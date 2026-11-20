@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#101c25" />
+    <title>灯路远征 | The Lantern Road</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/study/study.css" />
+    <link rel="stylesheet" href="/rpg/battle/battle.css" />
+    <link rel="stylesheet" href="/rpg/world/world.css" />
+    <link rel="stylesheet" href="/rpg/world/overland.css" />
+    <link rel="stylesheet" href="/rpg/world/wayfinder.css" />
+    <link rel="stylesheet" href="/rpg/world/theater.css" />
+    <link rel="stylesheet" href="/rpg/world/combat-viewport.css" />
+    <link rel="stylesheet" href="/rpg/world/pack.css" />
+  </head>
+  <body class="lantern">
+    <div id="road">
+      <header id="top"></header>
+      <main id="journey"></main>
+      <aside id="game-chrome" aria-label="Game controls">
+        <button id="game-menu-toggle" data-theater="menu" aria-controls="top" type="button">
+          菜单
+        </button>
+        <button id="game-fullscreen-toggle" data-theater="fullscreen" type="button">全屏</button>
+      </aside>
+      <div id="notice" role="status" aria-live="polite"></div>
+    </div>
+    <dialog id="story-dialog" aria-labelledby="story-card-title"></dialog>
+    <script type="module" src="/rpg/world/fullscreen.js"></script>
+    <script type="module" src="/rpg/world/saga/story.js"></script>
+    <script type="module" src="/rpg/world/world.js"></script>
+  </body>
+</html>

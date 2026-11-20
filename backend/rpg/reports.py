@@ -30,7 +30,8 @@ def evaluate_rpg_learning(conn: Connection, session_id: str) -> RPGLearningRepor
             attempts = progress.challenge_attempts.get(key, 0)
             passed = key in progress.passed_challenge_ids
             concepts.append(RPGConceptPerformance(
-                knowledge_id=question.knowledge_id, term=terms.get(question.knowledge_id, question.knowledge_id),
+                knowledge_id=question.knowledge_id,
+                term=question.study_term or terms.get(question.knowledge_id, question.knowledge_id),
                 attempts=attempts, mistakes=attempts - int(passed),
                 first_attempt_correct=(passed and attempts == 1) if attempts else None,
                 hints=progress.hints_by_challenge.get(key, 0), passed=passed,
@@ -44,7 +45,8 @@ def evaluate_rpg_learning(conn: Connection, session_id: str) -> RPGLearningRepor
     correct = len(progress.passed_challenge_ids)
     resolved = len(progress.resolved_challenge_ids)
     return RPGLearningReport(
-        session_id=session_id, game_id=session["game_id"], elapsed_seconds=progress.elapsed_seconds,
+        session_id=session_id, game_id=session["game_id"], question_language=game.question_language,
+        elapsed_seconds=progress.elapsed_seconds,
         finish_reason="completed" if progress.all_quests_completed else "exited",
         total_challenges=len(concepts), resolved_challenges=resolved, correct_challenges=correct,
         remediated_challenges=len(progress.remediated_challenge_ids), total_quests=len(game.scenes),
