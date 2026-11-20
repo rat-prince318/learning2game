@@ -6,6 +6,7 @@ from ..models import KnowledgeItem
 from . import expedition_combat as tactics
 from . import expedition_world as world
 from .battle_content import Exam, active_exam
+from .companions import PartnerAssist
 from .battle_models import (
     BattleAction, BattleEvent, BattleState, BattleTally, BattleView, EnemyView, ExpeditionAnswer,
     Equip, Hint, NextStage, PlayerView, Retreat, SideQuestView, StageView,
@@ -60,6 +61,8 @@ def _unit_health(state, game):
 
 
 def _enemy_health(state, game):
+    if state.expedition and state.expedition.tower_floor:
+        return tactics.tower_health(state.expedition.tower_floor)
     return _unit_health(state, game) * len(game.scenes[state.stage_index].challenges)
 
 
@@ -105,14 +108,17 @@ def new_battle(session_id: str, game_id: str, game: RPGGameInternal,
 
 def begin_encounter(state: BattleState, game: RPGGameInternal, encounter_id: str, relic_ids: list[str],
                     *, region_index: int, stage_index: int | None = None, veteran: bool = False,
-                    edge_ranks: int = 0, plating_ranks: int = 0) -> BattleState:
+                    edge_ranks: int = 0, plating_ranks: int = 0, tower_floor=0,
+                    companion_id=None, companion_level=0) -> BattleState:
     """Enter a chosen map node. World navigation owns the enclosing action revision."""
     result = state.model_copy(deep=True)
     if stage_index is not None:
         result.stage_index = stage_index
     result.expedition = tactics.EncounterState(encounter_id=encounter_id, region_index=region_index,
                                                relic_ids=list(relic_ids), veteran=veteran,
-                                               edge_ranks=edge_ranks, plating_ranks=plating_ranks)
+                                               edge_ranks=edge_ranks, plating_ranks=plating_ranks,
+                                               tower_floor=tower_floor, companion_id=companion_id,
+                                               companion_level=companion_level)
     _set_fight(result, game, recover=False)
     result.prompt_serial += 1
     result.last_event = None
@@ -254,8 +260,10 @@ def _combat_answer(state, game, exam, action, correct):
                                explanation=q.explanation, source_ref=q.source_ref)
     else:
         state.combo = 0
-        if q.knowledge_id not in state.missed_this_fight:
-            state.missed_this_fight.append(q.knowledge_id)
+        missed = exam.missed_by_choice[action.option_id] if exam.missed_by_choice else [q.knowledge_id]
+        for kid in missed:
+            if kid not in state.missed_this_fight:
+                state.missed_this_fight.append(kid)
         if state.pending:
             state.pending.append(state.pending.pop(0))
         else:
@@ -263,6 +271,11 @@ def _combat_answer(state, game, exam, action, correct):
         feedback = BattleEvent(kind="miss", message="判断偏离了线索，敌人发动反击。",
                                correct=False, skill=action.skill)
 
+    if correct and len(exam.supporting) > 1:
+        feedback.explanation = "\n".join(q.explanation for q in exam.supporting)
+        refs = list(dict.fromkeys(q.source_ref for q in exam.supporting))
+        joined = " / ".join(refs)
+        feedback.source_ref = joined if len(joined) <= 500 else refs[0]
     exchange = None
     if ctx is not None:
         exchange = tactics.exchange(ctx, stats, state.stage_index, correct, action.skill, power)
@@ -278,8 +291,31 @@ def _combat_answer(state, game, exam, action, correct):
     # review book when the hero brings a fully charged high-level weapon.
     if ctx and ctx.phase == 1 and world.encounter_for(ctx.encounter_id).tier == "boss":
         reserve = max(reserve, _enemy_health(state, game) // 2)
+    if ctx and ctx.tower_floor and state.combo < tactics.tower_chain(ctx.tower_floor):
+        reserve = max(1, reserve)
     feedback.damage_dealt = min(power, max(0, state.enemy_hp - reserve))
     state.enemy_hp -= feedback.damage_dealt
+    if ctx and correct and ctx.companion_id:
+        rank = ctx.companion_level
+        amount = 0
+        if ctx.companion_id == "reed":
+            # Reuse the preview rules to report the actual incremental prevention.
+            solo = ctx.model_copy(update={"companion_id": None})
+            baseline = tactics.exchange(solo, stats, state.stage_index, True, action.skill, power)
+            amount = min(state.hp, baseline.damage) - min(state.hp, counter) if state.enemy_hp else 0
+            effect = "guard"
+        elif ctx.companion_id == "flint" and action.skill == "strike":
+            effect = "strike"
+            amount = min(1 + rank, max(0, state.enemy_hp - reserve))
+            state.enemy_hp -= amount
+            feedback.damage_dealt += amount
+        elif ctx.companion_id == "lumen" and action.skill != "burst" and state.combo % 3 == 0:
+            effect = "focus"
+            amount = min(1 + int(rank >= 3), stats.focus_max - state.focus)
+            state.focus += amount
+        if amount:
+            feedback.partner_assist = PartnerAssist(companion_id=ctx.companion_id, level=rank,
+                                                   amount=amount, effect=effect)
     if exchange is not None:
         feedback.tactics = tactics.apply_exchange(ctx, exchange, state.enemy_hp, _enemy_health(state, game))
     if state.enemy_hp == 0:
@@ -313,6 +349,18 @@ def _review_answer(state, game, exam, action, correct):
     return feedback
 
 
+def equip_item(state: BattleState, item_id: str) -> Gear:
+    if item_id not in state.inventory_ids:
+        raise BattleError(422, "请从已获得的装备中选择。")
+    item = equipment(item_id)
+    if item.class_id not in (None, state.hero_class):
+        raise BattleError(422, "请选择本职业可以使用的装备。")
+    setattr(state.loadout, item.slot, item.id)
+    state.equipped_id = state.loadout.weapon
+    state.hp = min(state.hp, player_stats(state).max_hp)
+    return item
+
+
 def advance(state: BattleState, action: BattleAction | ExpeditionAnswer, game: RPGGameInternal,
             knowledge: list[KnowledgeItem]) -> BattleState:
     if action.expected_revision != state.revision:
@@ -324,14 +372,7 @@ def advance(state: BattleState, action: BattleAction | ExpeditionAnswer, game: R
         result.phase = "retreated"
         feedback = BattleEvent(kind="retreat", message="已结束本次冒险，旅途记录已整理。")
     elif isinstance(action, Equip):
-        if action.item_id not in result.inventory_ids:
-            raise BattleError(422, "请从已获得的装备中选择。")
-        item = equipment(action.item_id)
-        if item.class_id not in (None, result.hero_class):
-            raise BattleError(422, "请选择本职业可以使用的装备。")
-        setattr(result.loadout, item.slot, item.id)
-        result.equipped_id = result.loadout.weapon
-        result.hp = min(result.hp, player_stats(result).max_hp)
+        item = equip_item(result, action.item_id)
         feedback = BattleEvent(kind="equip", message=f"已装备{item.name}。", equipped_item=item)
     elif isinstance(action, NextStage):
         if result.expedition is not None:
@@ -355,7 +396,8 @@ def advance(state: BattleState, action: BattleAction | ExpeditionAnswer, game: R
                 tally.review_hints += 1
             else:
                 tally.hints += 1
-            feedback = BattleEvent(kind="hint", message=exam.help_text)
+            feedback = BattleEvent(kind="hint", message=(exam.help_text if len(exam.help_text) <= 600
+                                                        else "本回合的讲义提示已展开。"))
         else:
             if action.option_id not in {o.id for o in exam.prompt.options}:
                 raise BattleError(422, "请选择当前题目提供的选项。")

@@ -1730,3 +1730,22 @@
     background: #e5f2e5;
   }
 }
+
+@layer components {
+  .card-column > div { grid-template-columns: minmax(0, 1fr); }
+  .match-card { min-width: 0; }
+  .studio-shortcuts { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+  .language-button, .expedition-link { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 5px 10px; font: inherit; font-size: 13px; line-height: 1.2; border-radius: 5px; }
+  .expedition-link { color: var(--teal); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+  .language-button { border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+  @media (max-width: 850px) {
+    .site-header { flex-wrap: wrap; }
+    .steps { order: 3; width: 100%; }
+    .studio-shortcuts { gap: 4px; }
+  }
+  @media (max-width: 525px) {
+    .studio-shortcuts { width: 100%; }
+    .studio-shortcuts .mode-button { margin-inline-start: auto; }
+    .steps a { min-width: 0; }
+  }
+}

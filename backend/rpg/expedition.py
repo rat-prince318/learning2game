@@ -3,13 +3,13 @@
 from collections import Counter
 
 from ..models import KnowledgeItem
-from . import battle_rules, expedition_combat
-from .battle_models import BattleState, Retreat
+from . import battle_rules, companions, expedition_combat, tower
+from .battle_models import BattleState, Equip, Retreat
 from .battle_reports import concept_rows
 from .battle_rules import BattleError
 from .expedition_models import (
     BountySeal, ChapterMap, ChooseReward, ChooseRoute, ExpeditionAction, ExpeditionReport, ExpeditionState,
-    ExpeditionView, HeldRelic, RegionMap, RewardChoice, Visit, VolumeStudy,
+    ExpeditionView, HeldRelic, InspectLandmark, PartyCommand, RegionMap, RewardChoice, Visit, VolumeStudy,
 )
 from .expedition_world import region_at, relic_for, reward_relics, routes_for
 from .hero_catalog import ClassId, KitId
@@ -112,7 +112,8 @@ def _enter(state, courses, selected):
     fight = battle_rules.begin_encounter(state.battle, game, route.encounter_id, state.relic_ids,
                                          region_index=state.region_index, stage_index=state.scene_index,
                                          veteran=state.veteran, edge_ranks=state.edge_ranks,
-                                         plating_ranks=state.plating_ranks)
+                                         plating_ranks=state.plating_ranks, companion_id=state.active_companion,
+                                         companion_level=companions.level(state.bonds[state.active_companion]) if state.active_companion else 0)
     if route.boss and route.approach == "steady":
         stats = battle_rules.player_stats(fight)
         fight.hp += _heal_limit(fight.hp, stats.max_hp, 30)
@@ -135,6 +136,7 @@ def _volume_study(index, game_id, course, fight, outcome):
 def _settle(state, courses):
     route = _current_route(state, courses)
     fight = state.battle
+    companions.bond_on_win(state, fight)
     game, knowledge = courses[fight.game_id]
     coins = {"normal": 3, "elite": 5, "boss": 6}[route.risk]
     if route.boss and route.approach == "daring":
@@ -194,11 +196,30 @@ def _take_reward(state, courses, action):
 def advance(state: ExpeditionState, action: ExpeditionAction, courses: Courses) -> ExpeditionState:
     if action.expected_revision != state.revision:
         raise BattleError(409, "远征进度已更新，请读取当前存档。")
+    if action.action.startswith("tower_") or isinstance(action, PartyCommand):
+        result = state.model_copy(deep=True)
+        if isinstance(action, PartyCommand):
+            companions.set_companion(result, action)
+        else:
+            tower.advance(result, action, courses)
+        result.revision += 1
+        return result
     if state.phase in {"retreated", "victory"}:
         raise BattleError(409, "本次远征已经结束，可查看战报或开始另一趟旅程。")
     result = state.model_copy(deep=True)
     if isinstance(action, Retreat):
         result.phase = "retreated"
+    elif isinstance(action, Equip) and state.phase in {"route", "reward"}:
+        battle_rules.equip_item(result.battle, action.item_id)
+    elif isinstance(action, InspectLandmark):
+        if state.phase != "route":
+            raise BattleError(409, "回到地图路口后可以调查地标。")
+        landmark = region_at(state.region_index).id
+        if landmark not in result.field_signals:
+            result.field_signals.append(landmark)
+            maximum = battle_rules.player_stats(result.battle, relic_ids=result.relic_ids,
+                                                edge_ranks=result.edge_ranks, plating_ranks=result.plating_ranks).max_hp
+            result.battle.hp = min(maximum, result.battle.hp + 3)
     elif isinstance(action, ChooseRoute):
         if result.phase != "route":
             raise BattleError(409, "到达下一个路口后可以选路。")
@@ -289,7 +310,8 @@ def view(state: ExpeditionState, courses: Courses) -> ExpeditionView:
         narrative = _current_route(state, courses).description
     elif state.phase == "sidequest":
         narrative = "打开讲义摘记，完成本章复习后重返刚才的战场。"
-    return ExpeditionView(session_id=state.session_id, veteran=state.veteran, inherited_relic_id=state.inherited_relic_id,
+    return ExpeditionView(field_signals=state.field_signals, companions=companions.roster(state), tower=tower.projection(state, courses),
+                          session_id=state.session_id, veteran=state.veteran, inherited_relic_id=state.inherited_relic_id,
                           bounty_seals=_bounty_seals(state), revision=state.revision, phase=state.phase,
                           region_index=state.region_index, scene_index=state.scene_index, game_id=game_id,
                           chapter_count=sum(len(r.chapters) for r in atlas), cleared_chapters=len(state.journal),

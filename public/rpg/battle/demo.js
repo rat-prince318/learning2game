@@ -1,3 +1,4 @@
+import { msg } from '../../js/locale.js';
 import { ApiClient, ApiError } from '../../js/api.js';
 import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController, tabRecords } from './controller.js';
@@ -27,10 +28,10 @@ async function prepare(options) {
     api = new ApiClient(), heroClass = 'arcanist', onProgress = () => {},
     fetchImpl = globalThis.fetch, storage = tabRecords,
   } = options;
-  onProgress('正在连接烟柳渡');
+  onProgress(msg('正在连接烟柳渡','Contacting Willow Ferry…'));
   const health = await api.health();
   if (health.mode !== 'offline' || !health.rpg_play_modes?.includes('expedition')) {
-    throw new ApiError('OFFLINE_DEMO', '试玩需要离线远征服务。可从主站打开已有存档，或用 EDUGAME_MODE=offline 启动本地服务。');
+    throw new ApiError('OFFLINE_DEMO', msg('试玩需要离线远征服务。可从主站打开已有存档，或用 EDUGAME_MODE=offline 启动本地服务。','The demo uses offline expedition mode. Open an existing save in the studio or start the service with EDUGAME_MODE=offline.'));
   }
 
   const checkpointKey = BUILD + '.' + heroClass;
@@ -43,7 +44,7 @@ async function prepare(options) {
     try {
       const job = await api.waitForJob(saved[jobField]);
       if (job.status !== expectedStatus || !job.result) {
-        throw new ApiError('BAD_RESPONSE', '课程任务返回了意外状态，请重试。');
+        throw new ApiError('BAD_RESPONSE', msg('课程任务返回了意外状态，请重试。','The course job returned an unexpected state. Please retry.'));
       }
       return job.result;
     } catch (error) {
@@ -53,14 +54,14 @@ async function prepare(options) {
   }
 
   async function prepareMaterial() {
-    onProgress('正在整理细胞生物学讲义');
+    onProgress(msg('正在整理细胞生物学讲义','Binding the biology field guide…'));
     if (!saved.uploadJob) {
       let receipt;
       if (saved.materialId) {
         receipt = await api.retryMaterial(saved.materialId);
       } else {
         const response = await fetchImpl('/examples/cell-notes.txt');
-        if (!response.ok) throw new Error('示例讲义读取失败，请刷新后重试。');
+        if (!response.ok) throw new Error(msg('示例讲义读取失败，请刷新后重试。','The sample field guide could not be opened. Refresh to retry.'));
         const file = new File([await response.blob()], 'cell-notes.txt', { type: 'text/plain' });
         receipt = await api.upload(file);
       }
@@ -74,7 +75,7 @@ async function prepare(options) {
 
   async function preparePlan() {
     if (!saved.materialReady) await prepareMaterial();
-    onProgress('正在编排六道首领挑战');
+    onProgress(msg('正在编排六道首领挑战','Etching six boss inscriptions…'));
     if (!saved.planJob) {
       const receipt = await api.request('/rpg/plans', { method: 'POST', body: {
         material_id: saved.materialId,
@@ -91,7 +92,7 @@ async function prepare(options) {
 
   async function publishSample() {
     if (!saved.planId) await preparePlan();
-    onProgress('正在准备战场和题目');
+    onProgress(msg('正在准备战场和题目','Preparing the battlefield and inscriptions…'));
     if (!saved.publishJob) {
       const receipt = await api.request('/rpg/games', { method: 'POST', body: {
         plan_id: saved.planId, confirmed: true,
@@ -113,7 +114,7 @@ async function prepare(options) {
     try {
       if (!saved.gameId) await publishSample();
 
-      onProgress('正在前往柳根水闸');
+      onProgress(msg('正在前往柳根水闸','Approaching the willow sluice…'));
       if (!saved.sessionId) {
         const start = await api.request('/rpg/expeditions', { method: 'POST', body: {
           game_ids: [saved.gameId], hero_class: heroClass, kit: 'trail', request_id: saved.requestId,
@@ -124,7 +125,7 @@ async function prepare(options) {
       let view = await controller.load();
       if (view.phase === 'route') {
         const route = view.routes.find((item) => item.id === 'boss_steady' && item.encounter_id === 'willow_lock');
-        if (!route) throw new Error('首领路线尚未开放，请从章节地图继续。');
+        if (!route) throw new Error(msg('首领路线尚未开放，请从章节地图继续。','Continue from the chapter map to open the boss road.'));
         view = await controller.send({ action: 'choose_route', route_id: route.id });
       }
       rememberSession(view.session_id);

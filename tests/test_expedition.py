@@ -55,6 +55,23 @@ def win_current(state, courses):
     pytest.fail("Encounter failed to reach settlement with correct strategic answers")
 
 
+def test_switch_earned_gear_at_a_post_and_carry_it_into_the_next_fight():
+    books = bookshelf(books=2, chapters=1)
+    state = ex.new_expedition("outfit", books, "arcanist")
+    state = command(state, books, "choose_route", route_id="boss_steady")
+    state = win_current(state, books)
+    assert state.phase == "reward"
+    earned = next(item.id for item in ex.view(state, books).player.inventory
+                  if item.slot == "weapon" and item.id != "twig_focus")
+    for item_id in ("twig_focus", earned):
+        state = command(state, books, "equip", item_id=item_id)
+        assert ex.view(state, books).player.loadout.weapon == item_id
+    state = command(state, books, "choose_reward", reward_id="purse")
+    state = command(state, books, "equip", item_id="twig_focus")
+    state = command(state, books, "choose_route", route_id="boss_steady")
+    assert ex.view(state, books).player.loadout.weapon == "twig_focus"
+
+
 def test_overland_economy_routes_and_retirement_from_an_unentered_chapter():
     courses = bookshelf()
     start = ex.new_expedition("run", courses)

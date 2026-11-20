@@ -20,6 +20,8 @@ class Exam:
     help_text: str
     question: RPGChallengeInternal
     lesson: StudyLesson | None = None
+    supporting: tuple[RPGChallengeInternal, ...] = ()
+    missed_by_choice: dict[str, list[str]] | None = None
 
 
 def _token(*components: str) -> str:
@@ -104,6 +106,69 @@ def _review(state, token, question, game, knowledge):
                              hint=tip if state.hinted else None), answer, tip, question, lesson)
 
 
+def question_mode(floor, width):
+    if floor <= 1:
+        return "recognition"
+    if floor <= 3 or width < 2:
+        return "recall"
+    if floor <= 6 or width < 3:
+        return "paired"
+    return "synthesis"
+
+
+def _tower_exam(state, token, question, scene, knowledge):
+    floor = state.expedition.tower_floor
+    mode = question_mode(floor, len(scene.challenges))
+    seed = (state.camp_key, token)
+    fields = [question]
+    records = {k.knowledge_id: k for k in knowledge if _displayable(k)}
+    if mode in {"paired", "synthesis"}:
+        peers = sorted((q for q in scene.challenges if q.knowledge_id != question.knowledge_id),
+                       key=lambda q: _token(*seed, q.challenge_id))
+        fields += peers[:1 if mode == "paired" else 2]
+    hints = "\n".join(q.hint for q in fields)
+    right = [next(o.text for o in q.options if o.id == q.correct_option_id) for q in fields]
+    wrong = [sorted([o.text for o in q.options if o.id != q.correct_option_id],
+                    key=lambda value: _token(*seed, str(i), value)) for i, q in enumerate(fields)]
+    text = question.prompt
+    # Reverse retrieval with independently distinguishable terms and definitions.
+    # Only concepts already published for this floor can appear as new options.
+    if mode == "recall" and question.knowledge_id in records:
+        target = records[question.knowledge_id]
+        terms, meanings, distractors = {key(target.term)}, {key(target.definition)}, []
+        for q in scene.challenges:
+            other = records.get(q.knowledge_id)
+            if other and key(other.term) not in terms and key(other.definition) not in meanings:
+                terms.add(key(other.term))
+                meanings.add(key(other.definition))
+                distractors.append(other.term)
+        if len(distractors) >= 2:
+            text, right, wrong = target.definition, [target.term], [distractors]
+    if len(fields) == 1:
+        options = [[right[0]], *[[value] for value in wrong[0][:2 if mode == "recognition" else 3]]]
+    else:
+        # Each distractor preserves all other correct bindings. A player must
+        # solve each requested clue to distinguish the right tuple.
+        options = [right]
+        for i in range(len(fields)):
+            foil = right.copy()
+            foil[i] = wrong[i][0]
+            options.append(foil)
+        if len(options) == 3:
+            options.append([foils[-1] for foils in wrong])
+        text = "\n\n".join(f"{'①②③'[i]} {q.prompt}" for i, q in enumerate(fields))
+    entries, missed = [], {}
+    for i, row in enumerate(options):
+        ident = "to_" + _token(*seed, str(i))
+        label = row[0] if len(row) == 1 else "\n".join(f"{'①②③'[j]} {value}" for j, value in enumerate(row))
+        entries.append(BattleOption(id=ident, text=label))
+        missed[ident] = [q.knowledge_id for j, q in enumerate(fields) if row[j] != right[j]]
+    answer = entries[0].id
+    entries.sort(key=lambda o: _token(*seed, o.id))
+    return Exam(BattlePrompt(prompt_id=token, text=text, options=entries, hint=hints if state.hinted else None),
+                answer, hints, question, supporting=tuple(fields), missed_by_choice=missed)
+
+
 def active_exam(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeItem]) -> Exam | None:
     if state.phase not in {"combat", "sidequest"}:
         return None
@@ -119,6 +184,8 @@ def active_exam(state: BattleState, game: RPGGameInternal, knowledge: list[Knowl
     token = "turn_" + _token(state.session_id, state.phase, str(state.prompt_serial), q.challenge_id)
     if state.phase == "sidequest":
         return _review(state, token, q, game, knowledge)
+    if state.expedition and state.expedition.tower_floor:
+        return _tower_exam(state, token, q, game.scenes[state.stage_index], knowledge)
     options = [BattleOption(id=o.id, text=o.text) for o in q.options]
     return Exam(BattlePrompt(prompt_id=token, text=q.prompt, options=options,
                              hint=q.hint if state.hinted else None), q.correct_option_id, q.hint, q)

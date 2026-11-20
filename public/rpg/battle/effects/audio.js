@@ -86,6 +86,12 @@ export function makeAudio() {
         voice('sine', 784, 420, .28, .12, .09);
       }
     },
+    dock(action) {
+      if (action === 'load' || action === 'unload') {
+        voice('noise', action==='load'?420:680,220,.075,.12);
+        voice('triangle',action==='load'?240:390,180,.12,.065,.035);
+      }
+    },
     signal(story) {
       if (story === 'open') {
         voice('triangle', 392, 392, .24, .08);

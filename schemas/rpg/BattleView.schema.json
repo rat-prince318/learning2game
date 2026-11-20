@@ -136,6 +136,17 @@
           "title": "Hero Class",
           "type": "string"
         },
+        "partner_assist": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartnerAssist"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "damage_blocked": {
           "default": 0,
           "minimum": 0,
@@ -514,6 +525,47 @@
       "title": "Loadout",
       "type": "object"
     },
+    "PartnerAssist": {
+      "additionalProperties": false,
+      "properties": {
+        "companion_id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Companion Id",
+          "type": "string"
+        },
+        "effect": {
+          "enum": [
+            "guard",
+            "strike",
+            "focus"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "amount": {
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "companion_id",
+        "effect",
+        "level",
+        "amount"
+      ],
+      "title": "PartnerAssist",
+      "type": "object"
+    },
     "PlayerView": {
       "additionalProperties": false,
       "properties": {
@@ -758,6 +810,29 @@
     "TacticsView": {
       "additionalProperties": false,
       "properties": {
+        "companion_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "reed",
+                "flint",
+                "lumen"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Companion Id"
+        },
+        "companion_level": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Companion Level",
+          "type": "integer"
+        },
         "encounter_id": {
           "maxLength": 128,
           "minLength": 1,

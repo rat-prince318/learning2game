@@ -325,13 +325,14 @@ export function createLivingFerry(backCanvas, frontCanvas, {reducedMotion=false}
     if(story==='camp') firelight(front,fireX,fireY,t);
   }
 
+  let enabled = true;
   function stop() {
     if(timer!==null) win.clearTimeout(timer);
     timer=null; lastTick=null;
   }
   function tick(){
     timer=null;
-    if(!active || reduced || !visible || doc.hidden || !width) return;
+    if(!enabled || !active || reduced || !visible || doc.hidden || !width) return;
     const now=win.performance.now();
     if(lastTick!==null){
       const delta=Math.min(.3,(now-lastTick)/1000);
@@ -343,7 +344,7 @@ export function createLivingFerry(backCanvas, frontCanvas, {reducedMotion=false}
   }
   function refresh() {
     stop();
-    if(!active||!visible||doc.hidden||!width) return;
+    if(!enabled||!active||!visible||doc.hidden||!width) return;
     paint();
     if(!reduced) {
       lastTick=win.performance.now();
@@ -379,6 +380,10 @@ export function createLivingFerry(backCanvas, frontCanvas, {reducedMotion=false}
     setPreferences(next={}) {
       if(next.reducedMotion===undefined||Boolean(next.reducedMotion)===reduced) return;
       reduced=Boolean(next.reducedMotion);refresh();
+    },
+    setEnabled(next) {
+      if(enabled === next) return;
+      enabled = next; refresh();
     },
     setCombat(next) {
       if(combat===Boolean(next)) return;

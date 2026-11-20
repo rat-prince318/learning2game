@@ -219,6 +219,77 @@
       "title": "Hint",
       "type": "object"
     },
+    "InspectLandmark": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "inspect_landmark",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision"
+      ],
+      "title": "InspectLandmark",
+      "type": "object"
+    },
+    "PartyCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "recruit_companion",
+            "assign_companion"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "companion_id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Companion Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision",
+        "companion_id"
+      ],
+      "title": "PartyCommand",
+      "type": "object"
+    },
     "Retreat": {
       "additionalProperties": false,
       "properties": {
@@ -247,16 +318,181 @@
       ],
       "title": "Retreat",
       "type": "object"
+    },
+    "TowerAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "tower_answer",
+          "title": "Action",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        },
+        "option_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Option Id",
+          "type": "string"
+        },
+        "skill": {
+          "default": "strike",
+          "enum": [
+            "strike",
+            "burst",
+            "guard"
+          ],
+          "title": "Skill",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "prompt_id",
+        "option_id"
+      ],
+      "title": "TowerAnswer",
+      "type": "object"
+    },
+    "TowerCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "tower_enter",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision"
+      ],
+      "title": "TowerCommand",
+      "type": "object"
+    },
+    "TowerEquip": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "tower_equip",
+          "title": "Action",
+          "type": "string"
+        },
+        "item_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Item Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "item_id"
+      ],
+      "title": "TowerEquip",
+      "type": "object"
+    },
+    "TowerHint": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "action": {
+          "const": "tower_hint",
+          "title": "Action",
+          "type": "string"
+        },
+        "prompt_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Prompt Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "expected_revision",
+        "action",
+        "prompt_id"
+      ],
+      "title": "TowerHint",
+      "type": "object"
     }
   },
   "discriminator": {
     "mapping": {
       "answer": "#/$defs/ExpeditionAnswer",
+      "assign_companion": "#/$defs/PartyCommand",
       "choose_reward": "#/$defs/ChooseReward",
       "choose_route": "#/$defs/ChooseRoute",
       "equip": "#/$defs/Equip",
       "hint": "#/$defs/Hint",
-      "retreat": "#/$defs/Retreat"
+      "inspect_landmark": "#/$defs/InspectLandmark",
+      "recruit_companion": "#/$defs/PartyCommand",
+      "retreat": "#/$defs/Retreat",
+      "tower_answer": "#/$defs/TowerAnswer",
+      "tower_enter": "#/$defs/TowerCommand",
+      "tower_equip": "#/$defs/TowerEquip",
+      "tower_hint": "#/$defs/TowerHint"
     },
     "propertyName": "action"
   },
@@ -278,6 +514,24 @@
     },
     {
       "$ref": "#/$defs/Retreat"
+    },
+    {
+      "$ref": "#/$defs/PartyCommand"
+    },
+    {
+      "$ref": "#/$defs/TowerCommand"
+    },
+    {
+      "$ref": "#/$defs/TowerAnswer"
+    },
+    {
+      "$ref": "#/$defs/TowerHint"
+    },
+    {
+      "$ref": "#/$defs/TowerEquip"
+    },
+    {
+      "$ref": "#/$defs/InspectLandmark"
     }
   ],
   "title": "ExpeditionAction"

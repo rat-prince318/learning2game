@@ -1,3 +1,5 @@
+import { msg } from './locale.js';
+import { ui } from './studio-copy.js';
 export const JOB_LABELS = {
   queued: '任务排队中',
   uploading: '正在上传',
@@ -49,16 +51,20 @@ export class ApiClient {
       if (!response.ok)
         throw new ApiError(
           'HTTP_ERROR',
-          data?.error?.message || `请求返回 ${response.status}。请检查输入后重试。`,
+          ui(data?.error?.message) ||
+            msg(
+              `请求返回 ${response.status}。请检查输入后重试。`,
+              `Request failed (${response.status}). Check your input and try again.`,
+            ),
           response.status,
         );
-      if (!data) throw new ApiError('BAD_RESPONSE', '服务响应格式异常，请重新连接。');
+      if (!data) throw new ApiError('BAD_RESPONSE', ui('服务响应格式异常，请重新连接。'));
       return data;
     } catch (error) {
       if (error instanceof ApiError) throw error;
       throw new ApiError(
         'NETWORK_ERROR',
-        ctl.signal.aborted ? '等待服务响应超时，请重试。' : '连接中断，请检查服务后重试。',
+        ctl.signal.aborted ? ui('等待服务响应超时，请重试。') : ui('连接中断，请检查服务后重试。'),
       );
     } finally {
       clearTimeout(timer);
@@ -70,13 +76,13 @@ export class ApiClient {
       const job = await this.request('/jobs/' + id(jobId));
       onProgress(job);
       if (job.status === 'failed')
-        throw new ApiError('JOB_FAILED', job.error || '处理失败，请重试。');
+        throw new ApiError('JOB_FAILED', ui(job.error) || ui('处理失败，请重试。'));
       if (['completed', 'awaiting_confirmation'].includes(job.status)) return job;
       if (!(job.status in JOB_LABELS))
-        throw new ApiError('BAD_RESPONSE', '服务返回了未知的处理状态。');
+        throw new ApiError('BAD_RESPONSE', ui('服务返回了未知的处理状态。'));
       await new Promise((resolve) => setTimeout(resolve, this.pollInterval));
     }
-    throw new ApiError('JOB_TIMEOUT', '处理时间较长，请稍后继续查询。');
+    throw new ApiError('JOB_TIMEOUT', ui('处理时间较长，请稍后继续查询。'));
   }
   health() {
     return this.request('/health');

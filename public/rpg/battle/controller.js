@@ -1,3 +1,4 @@
+import { msg } from '../../js/locale.js';
 import { ApiClient, ApiError } from '../../js/api.js';
 import { newId } from '../../js/utils.js';
 
@@ -26,7 +27,7 @@ export const tabRecords = {
 
 export class BattleController {
   constructor(sessionId, { api = new ApiClient(), storage = tabRecords, initialView = null } = {}) {
-    if (!sessionId) throw new Error('请提供远征存档编号。');
+    if (!sessionId) throw new Error(msg('请提供远征存档编号。','Provide an expedition save ID.'));
     this.sessionId = sessionId;
     this.path = '/rpg/expeditions/' + encodeURIComponent(sessionId);
     this.api = api;
@@ -57,11 +58,11 @@ export class BattleController {
       if (this.pending) {
         const savedFields = Object.keys(this.pending).filter((key) => !['event_id', 'expected_revision'].includes(key));
         if (savedFields.length !== Object.keys(fields).length || !savedFields.every((key) => this.pending[key] === fields[key])) {
-          throw new ApiError('PENDING_TURN', '上一次操作正在确认，请先恢复进度。');
+          throw new ApiError('PENDING_TURN', msg('上一次操作正在确认，请先恢复进度。','Recover the pending turn before continuing.'));
         }
         return this._restore();
       }
-      if (!this.view) throw new ApiError('NO_SESSION', '请先读取远征存档。');
+      if (!this.view) throw new ApiError('NO_SESSION', msg('请先读取远征存档。','Load the expedition first.'));
       // Persist before sending. A closed tab or a lost HTTP response must
       // never turn a retry into a second answer, hint or reward.
       this._remember({ ...fields, event_id: newId(), expected_revision: this.view.revision });
@@ -72,7 +73,7 @@ export class BattleController {
   _run(label, work) {
     if (this.active) {
       if (this.active.label === label) return this.active.promise;
-      return Promise.reject(new ApiError('BUSY', '正在确认当前操作。'));
+      return Promise.reject(new ApiError('BUSY', msg('正在确认当前操作。','Your action is resolving.')));
     }
     this.resynced = false;
     const promise = Promise.resolve().then(work).finally(() => { this.active = null; });
@@ -87,7 +88,7 @@ export class BattleController {
 
   _accept(view) {
     if (view?.session_id !== this.sessionId || !Number.isInteger(view.revision)) {
-      throw new ApiError('BAD_RESPONSE', '存档响应格式异常，请重新读取。');
+      throw new ApiError('BAD_RESPONSE', msg('存档响应格式异常，请重新读取。','The save response was invalid. Reload the expedition.'));
     }
     this.view = view;
     return view;

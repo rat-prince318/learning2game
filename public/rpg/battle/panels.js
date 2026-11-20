@@ -1,24 +1,27 @@
-import { displayText, escapeHtml, h } from '../../js/utils.js';
+import { cargoMarkup } from './cargo.js';
+import { displayText, escapeHtml, h, sourceCitation } from '../../js/utils.js';
+import { msg } from '../../js/locale.js';
+import { studyMarkup } from '../../js/study.js';
+import { atlas, line } from '../world/atlas.js';
+import { enemyName, eventText, gearName, heroNames, intentCopy, lessonText, regionId, regionName } from './words.js';
 
-const heroes = {
-  arcanist: ['星纹术士', '坠星术'],
-  vanguard: ['誓盾先锋', '破阵斩'],
-  ranger: ['岚弓游侠', '穿云箭'],
-};
 const numbers = ['一', '二', '三', '四', '五', '六', '七', '八'];
 const portraits = {arcanist:0, vanguard:1, ranger:2, willow:3, warden:4, moth:5, sprout:6, golem:7};
 const commandIcons = {arcanist:2, ranger:3, vanguard:4};
-export const heroInfo = (view) => heroes[view?.player?.hero_class] || heroes.arcanist;
-export const icon = (name) => `<i class="bf-icon bf-i-${name}" aria-hidden="true"></i>`;
+const seals = ['✧','△','✣','◇','⬡','☆','✷','○'];
+export const glyph = i => seals[i % seals.length];
+export const heroInfo = view => heroNames(view?.player?.hero_class);
+export const icon = name => '<i class="bf-icon bf-i-' + name + '" aria-hidden="true"></i>';
+const study = value => studyMarkup(lessonText(value));
 
 export function heading(view) {
-  const index = view?.region_index || 0;
-  const location = view?.map?.[index]?.name || '烟柳渡';
-  const tag = view?.battle?.sidequest ? '营地修习' :
-    ({ normal: '遭遇战', elite: '精英战', boss: '首领战' }[view?.battle?.tactics?.tier] ||
-     (view ? '远征' : '首领战'));
-  return `<div class="bf-locus"><span class="bf-chapter">第${numbers[index] || index + 1}卷</span>
-    <h1>${h(location)}</h1></div><span class="bf-seal">${tag}</span>`;
+  const index = view?.region_index || 0, tier = view?.battle?.tactics?.tier;
+  const tag = view?.battle?.sidequest ? msg('营地修习','Camp study') :
+    ({normal:msg('遭遇战','Encounter'),elite:msg('精英战','Elite encounter'),boss:msg('首领战','Boss battle')}[tier] ||
+      (view ? msg('远征','Expedition') : msg('首领战','Boss battle')));
+  const mark = view?.mode === 'tower' ? msg('第 '+view.floor+' 层','Floor '+view.floor) :
+    msg('第'+(numbers[index] || index+1)+'卷', 'Book '+(index+1));
+  return `<div class="bf-locus"><span class="bf-chapter">${mark}</span><h1>${h(regionName(view))}</h1></div><span class="bf-seal">${tag}</span>`;
 }
 
 function gaugeState(type, active) {
@@ -26,152 +29,211 @@ function gaugeState(type, active) {
   if (type === 'poise' && active) return 'broken';
   return '';
 }
-
 function gaugeLabel(type, state) {
-  if (state === 'ready') return '蓄满';
-  if (state === 'broken') return '破势';
-  return {hp:'生命', enemyhp:'生命', focus:'蓄力', poise:'架势'}[type];
+  if (state === 'ready') return msg('蓄满','Ready');
+  if (state === 'broken') return msg('破势','Break');
+  return {hp:msg('生命','HP'),enemyhp:msg('生命','HP'),focus:msg('蓄力','Focus'),poise:msg('架势','Poise')}[type];
 }
-
 function track(value, max, type, active = false) {
-  const width = max > 0 ? Math.max(0, Math.min(100, 100 * value / max)) : 0;
-  const state = gaugeState(type, active), label = gaugeLabel(type, '');
-  return `<div class="bf-meter bf-${type}" data-state="${state}"><span class="bf-gauge-name">${gaugeLabel(type, state)}</span>
-    <span class="bf-track" style="--parts:${Math.max(1, max)}"><progress aria-label="${label}" value="${value}" max="${max || 1}">${width}%</progress></span>
+  const state = gaugeState(type, active);
+  return `<div class="bf-meter bf-${type}" data-state="${state}"><span class="bf-gauge-name">${gaugeLabel(type,state)}</span>
+    <span class="bf-track" style="--parts:${Math.max(1,max)}"><progress aria-label="${gaugeLabel(type,'')}" value="${value}" max="${max || 1}"></progress></span>
     <span class="bf-number">${value}<small>/${max}</small></span></div>`;
 }
-
 function portrait(index) {
   return `<span aria-hidden="true" class="bf-portrait"><i style="--portrait:${index}"></i></span>`;
 }
-
 export function hud(view) {
   const player = view?.player, foe = view?.battle?.enemy, tactics = view?.battle?.tactics;
-  const [hero] = heroInfo(view);
-  const weapon = player?.inventory.find((gear) => gear.id === player.loadout.weapon)?.name;
-  const heroPortrait = portraits[player?.hero_class] ?? portraits.arcanist;
+  const [hero,burst] = heroInfo(view);
+  const item = player?.inventory.find(gear => gear.id === player.loadout.weapon);
   const foePortrait = !view || tactics?.encounter_id === 'willow_lock' ? portraits.willow : portraits[foe?.sprite] ?? portraits.warden;
-  return `<div class="bf-cardinal">
-      ${portrait(heroPortrait)}
-      <div class="bf-identity"><span>出战</span><strong title="${h(weapon || '嫩枝法杖')}">${h(hero)}</strong>${player ? `<b>Lv. ${player.level}</b>` : ''}</div>
-      ${player ? track(player.hp, player.max_hp, 'hp') + track(player.focus, player.focus_max, 'focus', player.burst_ready) :
-        '<p>嫩枝法杖 <span class="bf-slash">/</span> 坠星术</p>'}
-    </div>
-    <div class="bf-cardinal bf-foe">
-      ${foe || !view ? portrait(foePortrait) : ''}
-      <div class="bf-identity"><span>${foe?.boss || !view ? '首领' : '对手'}</span>
-      <strong>${h(foe?.name || (view ? '行军途中' : '柳根闸主'))}</strong>
-      ${tactics ? `<b>阶段 ${tactics.phase}</b>` : ''}</div>
-      ${foe ? track(foe.hp, foe.max_hp, 'enemyhp') : ''}
-      ${tactics ? track(tactics.shield, tactics.shield_max, 'poise', tactics.broken) : ''}
-      ${!view ? '<p>柳木总闸 <span class="bf-slash">/</span> 根须借力</p>' : ''}
+  return `<div class="bf-cardinal">${portrait(portraits[player?.hero_class] ?? portraits.arcanist)}
+    <div class="bf-identity"><span>${msg('出战','Hero')}</span><strong title="${h(gearName(item))}">${hero}</strong>
+    ${player ? '<b>Lv. '+player.level+'</b>' : ''}</div>
+    ${player ? track(player.hp,player.max_hp,'hp') + track(player.focus,player.focus_max,'focus',player.burst_ready) :
+      '<p>'+gearName(null)+' / '+burst+'</p>'}</div>
+    <div class="bf-cardinal bf-foe">${foe || !view ? portrait(foePortrait) : ''}
+      <div class="bf-identity"><span>${foe?.boss || !view ? msg('首领','Boss') : msg('对手','Foe')}</span>
+      <strong>${foe || !view ? h(enemyName(view)) : msg('行军途中','On the road')}</strong>
+      ${tactics ? '<b>'+msg('阶段 ','Phase ')+tactics.phase+'</b>' : ''}</div>
+      ${foe ? track(foe.hp,foe.max_hp,'enemyhp') : ''}
+      ${tactics ? track(tactics.shield,tactics.shield_max,'poise',tactics.broken) : ''}
+      ${!view ? '<p>'+msg('柳木总闸 / 根须借力','Willow sluice / Root latch')+'</p>' : ''}
     </div>`;
 }
-
-// Reveal only the server-issued gauges at each point of contact. The next
-// prompt, final level and settlement are still shown together after the turn.
 export function showContact(hudElement, view, side) {
-  const enemy = view.battle?.enemy, tactics = view.battle?.tactics, player = view.player;
+  const enemy = view.battle?.enemy, tactics = view.battle?.tactics, p = view.player;
   const values = side === 'foe' ? [
-    ['enemyhp', enemy?.hp, enemy?.max_hp], ['poise', tactics?.shield, tactics?.shield_max, tactics?.broken],
-    ['focus', player.focus, player.focus_max, player.burst_ready],
-  ] : [['hp', player.hp, player.max_hp]];
-  for (const [name, value, max, active] of values) {
-    const row = hudElement.querySelector('.bf-' + name);
+    ['enemyhp',enemy?.hp,enemy?.max_hp],['poise',tactics?.shield,tactics?.shield_max,tactics?.broken],
+    ['focus',p.focus,p.focus_max,p.burst_ready],
+  ] : [['hp',p.hp,p.max_hp]];
+  for (const [name,value,max,active] of values) {
+    const row = hudElement.querySelector('.bf-'+name);
     if (!row || value == null || max == null) continue;
     const progress = row.querySelector('progress');
     progress.max = max || 1;
     progress.value = value;
-    row.dataset.state = gaugeState(name, active);
-    row.querySelector('.bf-gauge-name').textContent = gaugeLabel(name, row.dataset.state);
-    row.querySelector('.bf-track').style.setProperty('--parts', String(Math.max(1, max)));
+    row.dataset.state = gaugeState(name,active);
+    row.querySelector('.bf-gauge-name').textContent = gaugeLabel(name,row.dataset.state);
+    row.querySelector('.bf-track').style.setProperty('--parts',String(Math.max(1,max)));
     const number = row.querySelector('.bf-number');
     number.firstChild.nodeValue = String(value);
-    number.querySelector('small').textContent = '/' + max;
+    number.querySelector('small').textContent = '/'+max;
   }
 }
 
 export function briefing() {
-  return `<aside class="bf-orders"><div class="bf-section-label">${icon('compass')} 渡口情报</div>
-    <h2>柳根闸主</h2><p>树心亮起时，闸轮正在蓄势。看准这一拍格挡，可以击破它的架势。</p></aside>
-    <section class="bf-paper bf-briefing"><div class="bf-section-label">${icon('book-open')} 出战简报</div>
-    <h2>夺回渡口总闸</h2><p>带上细胞生物学讲义，替船工打通水路。每回合读招、选战技，再用一道题打出这一击。</p>
-    <button class="bf-primary" type="button" data-act="start" data-testid="battle-start">${icon('swords')} 进入首领战</button></section>`;
+  return `<aside class="bf-orders"><div class="bf-section-label">${icon('compass')} ${msg('渡口情报','Scout report')}</div>
+    <h2>${enemyName(null)}</h2><p>${msg('树心发亮，闸轮随之转动。听见木齿咬合时举盾，根须就会松开。','The tree heart glows and the wheel begins to turn. Raise your guard as its wooden teeth catch.')}</p></aside>
+    <section class="bf-paper bf-briefing"><div class="bf-section-label">${icon('book-open')} ${msg('船工的委托','The ferryman’s request')}</div>
+    <h2>${msg('夺回渡口总闸','Take back the sluice')}</h2>
+    <p>${msg('“对岸一直亮着灯。他们还在等我的船。带上这本细胞图鉴吧，闸轮吃得懂上面的印记。”','“They keep a light burning on the opposite bank. Take my field guide. The wheel remembers the marks on its pages.”')}</p>
+    <button class="bf-primary" type="button" data-act="start" data-testid="battle-start">${icon('swords')} ${msg('进入首领战','Challenge the gatekeeper')}</button></section>`;
 }
-
 function skillButton(id, label, image, selected, disabled, detail) {
   return `<button type="button" class="bf-skill" data-act="skill" data-id="${id}" data-testid="battle-skill-${id}"
     aria-pressed="${selected === id}" ${disabled ? 'disabled' : ''}><i aria-hidden="true" class="bf-skill-pic" style="--command:${image}"></i>
     <span><strong>${label}</strong><small>${detail}</small></span></button>`;
 }
-
+export function consequence(view, skill) {
+  const t = view.battle.tactics;
+  if (!t) return '';
+  if (skill === 'burst') return msg('消耗全部蓄力，释放职业战技。','Spend all focus on your class technique.');
+  const amount = skill === 'guard' ? t.guard_exposure : t.strike_exposure;
+  if (!Number.isFinite(amount)) return '';
+  const reward = skill === 'guard' ? msg('格挡削势','Guard chips poise') : msg('命中蓄力 +1','Hit gives +1 focus');
+  return reward + msg('。若对手存活，正确出招预计损失 ','. On a correct cast, a surviving foe costs ') + amount + ' HP' + msg('。','.');
+}
 function tacticsPanel(view, selected) {
-  const t = view.battle.tactics, p = view.player, intent = t?.intent;
-  return `<aside class="bf-orders bf-tactics"><div class="bf-command-top"><div class="bf-section-label">${icon('compass')} 敌方意图</div>
-    <span class="bf-round">回合 ${t?.turn || 1}</span></div>
-    <div data-testid="battle-intent" class="bf-intent"><h2>${h(intent?.name || '观察敌情')}</h2>
-    <p>${h(intent?.telegraph || view.battle.stage.objective)}</p>
-    ${intent?.advice ? `<p class="bf-advice">${h(intent.advice)}</p>` : ''}</div>
-    <div class="bf-skills" role="group" aria-label="战斗指令">
-    ${skillButton('strike', '普攻', 0, selected, false, '蓄能')}
-    ${skillButton('guard', '格挡', 1, selected, false, '反击')}
-    ${skillButton('burst', heroInfo(view)[1], commandIcons[p.hero_class] ?? commandIcons.arcanist, selected, !p.burst_ready, p.burst_ready ? '就绪' : `${p.focus} / ${p.focus_max}`)}
-    </div></aside>`;
+  const t = view.battle.tactics, p = view.player;
+  const [name, tell, advice] = intentCopy(t?.intent);
+  return `<aside class="bf-orders bf-tactics"><div class="bf-command-top"><div class="bf-section-label">${icon('compass')} ${msg('敌方意图','Enemy intent')}</div>
+    <span class="bf-round">${msg('回合 ','Turn ')}${t?.turn || 1}</span>
+    ${p.combo ? '<span class="bf-combo">'+msg('连击 ','Combo ')+p.combo+'</span>' : ''}</div>
+    <div data-testid="battle-intent" class="bf-intent"><h2>${h(name)}</h2><p>${h(tell || view.battle.stage.objective)}</p>
+    ${advice ? '<p class="bf-advice">'+h(advice)+'</p>' : ''}</div>
+    <div class="bf-skills" role="group" aria-label="${msg('战斗指令','Battle commands')}">
+    ${skillButton('strike',msg('普攻','Strike'),0,selected,false,msg('蓄能','Focus'))}
+    ${skillButton('guard',msg('格挡','Guard'),1,selected,false,msg('反击','Counter'))}
+    ${skillButton('burst',heroInfo(view)[1],commandIcons[p.hero_class] ?? 2,selected,!p.burst_ready,p.burst_ready ? msg('就绪','Ready') : p.focus+' / '+p.focus_max)}</div>
+    <p data-exposure class="bf-exposure">${consequence(view,selected)}</p></aside>`;
 }
-
 function lessonPanel(side) {
-  return `<aside class="bf-orders bf-study" data-testid="battle-lesson"><div class="bf-section-label">${icon('book-open')} 营地修习
+  return `<aside class="bf-orders bf-study" data-testid="battle-lesson"><div class="bf-section-label">${icon('book-open')} ${msg('营地修习','Camp study')}
     <span class="bf-round">${side.completed + 1} / ${side.total}</span></div>
-    <h2>${h(side.lesson.term)}</h2><p>${h(side.lesson.definition)}</p><div class="bf-source">讲义出处<br>${h(side.lesson.source_ref)}</div>
-    <p class="bf-note">完成本轮巩固后，返回同一场战斗。</p></aside>`;
+    <h2>${study(side.lesson.term)}</h2><div class="bf-studybody">${study(side.lesson.definition)}</div><div class="bf-source">${msg('讲义出处','Field notes')}<br>${h(sourceCitation(side.lesson.source_ref))}</div>
+    <p class="bf-note">${msg('修补残页后，将满血回到刚才的战场。','Mend the lost pages to rejoin the fight at full health.')}</p></aside>`;
 }
-
-// Keep the meaning of assessed course content intact when display rules mask a clause.
 function canPresent(prompt) {
-  return [prompt.text, ...prompt.options.map(o => o.text)].every(text =>
-    displayText(text, '') === String(text).replace(/\u00b7/gu, ' ').trim());
+  return [prompt.text,...prompt.options.map(o => o.text)].every(text =>
+    displayText(text,'') === String(text).replace(/\u00b7/gu,' ').trim());
 }
-
-function feedback(event) {
+function partnerNote(event) {
+  const aid = event?.partner_assist;
+  if (!aid) return '';
+  const who = {reed:msg('苇舟','Reed'),flint:msg('铆青','Flint'),lumen:msg('星萤','Lumen')}[aid.companion_id];
+  if (!who) return '';
+  const effect = {guard:msg('抵挡伤害','damage blocked'),strike:msg('协击伤害','assist damage'),focus:msg('额外蓄力','extra focus')}[aid.effect];
+  return `<div class="bf-aid">${icon('sparkles')} <strong>${who}</strong> Lv. ${aid.level} <span>${effect} +${aid.amount}</span></div>`;
+}
+function feedback(event, view) {
   if (!event || event.kind === 'hint') return '';
-  return `<details class="bf-feedback"><summary>上一回合<span>${h(event.message)}</span></summary>
-    ${event.explanation ? `<p>${h(event.explanation)}</p>` : ''}
-    ${event.source_ref ? `<p class="bf-citation">讲义出处 / ${h(event.source_ref)}</p>` : ''}</details>`;
+  return `${partnerNote(event)}<details class="bf-feedback"><summary>${msg('战斗记录','Combat log')}<span>${h(eventText(event,view))}</span></summary>
+    ${event.explanation ? '<div>'+study(event.explanation)+'</div>' : ''}
+    ${event.source_ref ? '<p class="bf-citation">'+msg('讲义出处','Source')+' / '+h(sourceCitation(event.source_ref))+'</p>' : ''}</details>`;
 }
 
-export function encounter(view, skill, option) {
-  const { battle } = view, prompt = battle.prompt, side = battle.sidequest;
-  const left = side ? lessonPanel(side) : tacticsPanel(view, skill);
-  if (!prompt || !canPresent(prompt)) return left + `<section class="bf-paper"><h2>请核对课程题面</h2>
-    <p>这道题需要保留讲义原意。请返回课程页调整措辞后重新发布。</p>
-    <button type="button" class="bf-primary" data-act="exit" data-testid="battle-exit">返回课程</button></section>`;
+// Ordered-evidence challenges are forged by the backend with literal spaced
+// arrows. Split only this exact form, keeping single equations intact.
+export function chainPieces(prompt) {
+  if (!prompt || !/两栏标签要按顺序送出|seal the entries in order|set the marks in order/iu.test(prompt.text)) return null;
+  if (!prompt.options?.every(o => o.text.split(' → ').length === 2)) return null;
+  const pairs = prompt.options.map(o => o.text.split(' → ').map(s => s.trim()));
+  if (pairs.some(pair => pair.includes('')) || new Set(pairs.map(pair=>JSON.stringify(pair))).size !== pairs.length) return null;
+  return pairs;
+}
+export function chainMarkup(prompt, picked) {
+  const pairs = chainPieces(prompt);
+  const index = picked.length ? 1 : 0;
+  const unique = [...new Set(pairs.flat().filter(term => index === 0 ?
+    pairs.some(pair=>pair[0] === term) : pairs.some(pair=>pair[0] === picked[0] && pair[1] === term)))];
+  const selected = picked.length === 2;
+  return `<div class="bf-chain"><div class="bf-chain-slots">
+    <span>${picked[0] ? study(picked[0]) : msg('首印','First seal')}</span><i aria-hidden="true">→</i>
+    <span>${picked[1] ? study(picked[1]) : msg('尾印','Second seal')}</span>
+    ${picked.length ? '<button type="button" data-act="erase">'+msg('撤刻','Undo')+'</button>' : ''}</div>
+    ${selected ? '' : '<div class="bf-options" role="group" aria-label="'+msg('符文顺序','Inscription order')+'">'+unique.map((term,i)=>
+      '<button type="button" data-act="fragment" data-fragment="'+escapeHtml(term)+'"><b aria-hidden="true">'+glyph(i)+'</b><span>'+study(term)+'</span></button>').join('')+'</div>'}</div>`;
+}
+// The tower publishes entire answer tuples under opaque IDs. A lens changes
+// which clue is legible, never the choice sent to the server.
+export function towerEvidence(prompt) {
+  const split = value => {
+    const matches = [...String(value).matchAll(/(?:^|\n+)([①②③]) ([\s\S]*?)(?=\n+[①②③] |$)/gu)];
+    return matches.length >= 2 && matches.every((match,i)=>match[1] === '①②③'[i]) ?
+      matches.map(match=>match[2].trim()) : null;
+  };
+  const clues=split(prompt?.text);
+  if (!clues) return null;
+  const rows=prompt.options.map(o=>split(o.text));
+  return rows.every(row=>row?.length===clues.length) ? {clues,rows} : null;
+}
+function evidenceReadout(components, lens) {
+  const indices=lens < 0 ? components.map((_,i)=>i) : [lens];
+  return indices.map(i=>'<span class="bf-evidence-row"><em aria-hidden="true">'+('①②③'[i])+
+    '</em><span>'+study(components[i])+'</span></span>').join('');
+}
+function evidenceNav(count,lens) {
+  const lensButton=(index,text)=>'<button type="button" data-act="lens" data-lens="'+index+'" aria-pressed="'+(lens===index)+'">'+text+'</button>';
+  return '<div class="bf-lenses" role="group" aria-label="'+msg('研读证据','Inspect evidence')+'">'+
+    lensButton(-1,msg('全览','All clues')) + Array.from({length:count},(_,i)=>lensButton(i,msg('线索 ','Clue ')+(i+1))).join('')+'</div>';
+}
+export function submitName(view, skill) {
+  if (view?.phase === 'sidequest') return msg('修复这一页','Mend this page');
+  return {strike:msg('刻印出击','Cast strike'),guard:msg('刻印架盾','Cast guard'),burst:heroInfo(view)[1]}[skill];
+}
+export function encounter(view, skill, option, picked=[], lens=-1, cargo=null) {
+  const {battle} = view, prompt = battle.prompt, side = battle.sidequest;
+  const left = side ? lessonPanel(side) : tacticsPanel(view,skill);
+  if (!prompt || !canPresent(prompt)) return left + `<section class="bf-paper"><h2>${msg('请核对课程题面','Review the course text')}</h2>
+    <p>${msg('这道题需要保留讲义原意。请返回课程页调整措辞后重新发布。','Open the course editor and revise the wording to preserve the source meaning.')}</p>
+    <button type="button" class="bf-primary" data-act="exit" data-testid="battle-exit">${msg('返回课程','Return to course')}</button></section>`;
+  const chain = chainPieces(prompt);
+  const evidence = view.mode === 'tower' ? towerEvidence(prompt) : null;
+  const speakerIndex = Math.max(0, atlas.findIndex(region=>region.id === regionId(view)));
+  const speaker = atlas[speakerIndex];
   return left + `<section class="bf-paper bf-quiz"><div class="bf-papertop">
-    <div class="bf-section-label">${icon('book-open')} ${side ? '巩固练习' : '战斗答题'}</div>
-    <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint"
-      ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? '已用提示' : '查看提示'}</button></div>
-    <h2 tabindex="-1" data-prompt-title>${h(prompt.text)}</h2>
-    ${prompt.hint ? `<p class="bf-clue">${h(prompt.hint)}</p>` : ''}
-    <div class="bf-options" role="group" aria-label="答案选项">${prompt.options.map((o,i) =>
-      `<button type="button" data-act="option" data-testid="battle-option" data-option-id="${escapeHtml(o.id)}"
-        aria-pressed="${o.id === option}"><b aria-hidden="true">${String.fromCharCode(65+i)}</b><span>${h(o.text)}</span></button>`).join('')}</div>
-    <div class="bf-send"><span>${side ? '阅读营地笔记后作答' : '选定战技和答案后出招'}</span>
+    <div class="bf-speaker"><i class="bf-scout-face" aria-hidden="true" style="--speaker:${speakerIndex}"></i>
+      <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${side ? msg('修复残页','Mend the field guide') : evidence ? msg('星轨校准','Align the star seals') : chain ? msg('双重刻印','Linked inscription') : msg('战技刻印','Inscribe a technique')}</span></div></div>
+    <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查阅营地笔记','Read the camp notes') : msg('翻阅手记会放弃本回合的连击暴击。','Opening the field notes forgoes a combo critical this turn.')}"
+      ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button></div>
+    <div class="bf-line" tabindex="-1" data-prompt-title role="heading" aria-level="2">${evidence ? evidenceNav(evidence.clues.length,lens)+evidenceReadout(evidence.clues,lens) : study(prompt.text)}</div>
+    ${cargoMarkup(cargo)}
+    ${prompt.hint ? '<div class="bf-clue">'+study(prompt.hint)+'</div>' : ''}
+    ${chain ? chainMarkup(prompt,picked) : '<div class="bf-options" role="group" aria-label="'+msg('选择刻印','Choose an inscription')+'">'+prompt.options.map((o,i)=>
+      '<button type="button" data-act="option" data-testid="battle-option" data-option-id="'+escapeHtml(o.id)+'" aria-pressed="'+(o.id===option)+'"><b aria-hidden="true">'+glyph(i)+'</b><span>'+(evidence?evidenceReadout(evidence.rows[i],lens):study(o.text))+'</span></button>').join('')+'</div>'}
+    <div class="bf-send"><span>${side ? msg('循着营地摘记修复书页','Use your camp notes to mend the page.') : evidence ? msg('切换线索，逐项核对同一枚刻印的星轨。','Focus each clue to inspect its binding on the same seal.') : chain ?
+       msg('按讲义里的顺序嵌入两枚刻印。','Set both seals in the order given by the clue.') :
+       msg('把线索刻入战技，再点亮战场上的目标。','Bind a clue, then trigger the marked target in the field.')}</span>
       <button type="button" class="bf-primary" data-act="submit" data-testid="battle-submit"
-        ${option ? '' : 'disabled'}>${icon(side ? 'book-open' : 'swords')} ${side ? '提交巩固答案' : '确认出招'}</button></div>
-    ${feedback(battle.last_event)}</section>`;
+        ${option ? '' : 'disabled'}>${icon(side?'book-open':'swords')} <span data-submit-label>${submitName(view,skill)}</span></button></div>
+    ${feedback(battle.last_event,view)}</section>`;
 }
-
 export function result(view, standalone, canReplay) {
-  const event = view.battle?.last_event, won = ['victory', 'reward'].includes(view.phase);
-  const title = {victory:'远征通关', reward:'本章胜利', route:'队伍已到达路口', retreated:'队伍已返回营地'}[view.phase] || '远征进度';
+  const event = view.battle?.last_event, won = ['victory','reward'].includes(view.phase), tower=view.mode === 'tower';
+  const title = {victory:tower?msg('塔层突破','Floor cleared'):msg('远征通关','Expedition complete'),reward:msg('本章胜利','Chapter cleared'),
+    route:msg('队伍已到达路口','At the crossroads'),retreated:msg('队伍已返回营地','Back at camp')}[view.phase] || msg('远征进度','Journey progress');
   const acquired = event?.loot_items ?? (event?.loot ? [event.loot] : []);
-  const next = standalone ? '回到主站' : ({reward:'前往营地', victory:'查看远征结果', route:'返回地图'}[view.phase] || '结束战斗');
-  return `<aside class="bf-orders"><div class="bf-section-label">${icon('flag')} 远征记录</div>
-    <h2>${view.cleared_chapters} / ${view.chapter_count} 章</h2><p>路币 ${view.coins} 枚</p></aside>
-    <section class="bf-paper bf-result" data-testid="battle-result"><div class="bf-section-label">
-    ${icon(won ? 'sparkles' : 'compass')} ${won ? '战斗结算' : '队伍行程'}</div><h2 tabindex="-1" data-prompt-title>${title}</h2>
-    <p>${h(view.narrative)}</p>${won ? `<ul class="bf-loot"><li>经验 +${event?.xp_gained ?? 0}</li>
-    ${event?.levels_gained ? `<li>升至 Lv. ${view.player.level}</li>` : ''}
-    ${acquired.map(item => `<li>${h(item.name)}</li>`).join('')}</ul>` : ''}
-    <div class="bf-actions">${canReplay ? '<button type="button" class="bf-primary" data-act="start">再战渡口</button>' : ''}
-    <button type="button" class="${canReplay ? 'bf-linkbtn' : 'bf-primary'}" data-act="exit" data-testid="battle-exit">${next}</button></div></section>`;
+  const next = standalone ? msg('回到主站','Return to studio') : tower ? msg('返回塔阶','Return to the stair') :
+    ({reward:msg('前往营地','Visit camp'),victory:msg('查看远征结果','View expedition'),route:msg('返回地图','Return to map')}[view.phase] || msg('结束战斗','Leave battle'));
+  return `<aside class="bf-orders"><div class="bf-section-label">${icon('flag')} ${msg('远征记录','Expedition record')}</div>
+    <h2>${tower ? msg('第 '+view.floor+' 层','Floor '+view.floor) : view.cleared_chapters+' / '+view.chapter_count+' '+msg('章','chapters')}</h2><p>${msg('路币 ','Trail coins ')}${view.coins}</p></aside>
+    <section class="bf-paper bf-result" data-testid="battle-result"><div class="bf-section-label">${icon(won?'sparkles':'compass')} ${won ? msg('战斗结算','After the battle') : msg('队伍行程','Journey')}</div>
+    <h2 tabindex="-1" data-prompt-title>${title}</h2><p>${h(msg(view.narrative, won ? eventText(event,view) || 'The way ahead is open.' : 'Your progress is safe in the expedition journal.'))}</p>
+    ${won ? '<ul class="bf-loot"><li>'+msg('经验','XP')+' +'+(event?.xp_gained ?? 0)+'</li>'+
+      (event?.levels_gained ? '<li>'+msg('升至 ','Level up: ')+'Lv. '+view.player.level+'</li>' : '')+
+      acquired.map(item=>'<li>'+h(gearName(item))+'</li>').join('')+'</ul>' : ''}
+    ${partnerNote(event)}<div class="bf-actions">${canReplay ? '<button type="button" class="bf-primary" data-act="start">'+msg('再战渡口','Replay the ferry')+'</button>' : ''}
+    <button type="button" class="${canReplay?'bf-linkbtn':'bf-primary'}" data-act="exit" data-testid="battle-exit">${next}</button></div></section>`;
 }

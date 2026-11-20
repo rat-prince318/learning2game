@@ -1,3 +1,5 @@
+import { msg } from '../../js/locale.js';
+import { enemyName, hasRegionalArt, intentCopy, regionId, regionName } from './words.js';
 import { drawHeroEffect } from './effects/hero-effects.js';
 import { drawEnemyCounter, drawEnemyImpact } from './effects/impact-effects.js';
 import { makeAudio } from './effects/audio.js';
@@ -83,6 +85,10 @@ export function createStage(container, preferences = {}) {
   world.setAttribute('role','img');
   const backdrop = element('div','rpg-stage-backdrop');
   const hero = makeActor('hero'), foe = makeActor('foe');
+  const ally = element('div','rpg-stage-ally'), allyName=element('span','rpg-ally-name');
+  ally.hidden=true;
+  ally.append(allyName,element('i','rpg-ally-sprite'));
+  const crew=['reed','flint','lumen'];
   const tell = element('span','rpg-stage-tell');
   tell.hidden = true;
   foe.body.append(tell);
@@ -94,22 +100,37 @@ export function createStage(container, preferences = {}) {
   const light = element('div','rpg-stage-light');
   const backCanvas = element('canvas','rpg-ferry-air'), frontCanvas = element('canvas','rpg-ferry-bank');
   const overlay = element('div','rpg-stage-overlay');
-  overlay.setAttribute('aria-hidden','true');
+  // The field target is interactive. Only title cards remain decorative.
   const storyMark = element('div','rpg-stage-storymark');
   storyMark.hidden = true;
   const title = element('span','rpg-stage-technique');
   title.hidden = true;
   const palette = createFerryPalette(backdrop);
   backdrop.append(backCanvas);
-  overlay.append(title,storyMark);
-  world.append(backdrop,element('div','rpg-stage-shade'),light,reflections,hero.body,foe.body,camp);
+  const orbit = element('span','rpg-field-orbit');
+  orbit.hidden = true;
+  orbit.setAttribute('aria-hidden','true');
+  hero.body.append(orbit);
+  const castButton = element('button','rpg-field-cast');
+  castButton.type = 'button';
+  castButton.dataset.act = 'field-cast';
+  castButton.dataset.testid = 'battle-target';
+  castButton.hidden = true;
+  const sigil = element('b','rpg-field-glyph'), castLabel = element('span','rpg-field-cast-name');
+  sigil.setAttribute('aria-hidden','true');
+  castButton.append(sigil,castLabel);
+  const weather = element('div','rpg-region-weather');
+  backdrop.append(weather);
+  title.setAttribute('aria-hidden','true'); storyMark.setAttribute('aria-hidden','true');
+  overlay.append(title,storyMark,castButton);
+  world.append(backdrop,element('div','rpg-stage-shade'),light,reflections,ally,hero.body,foe.body,camp);
   world.append(frontCanvas,canvas,numbers);
   container.append(world,overlay);
   const scenery = createLivingFerry(backCanvas,frontCanvas,preferences);
   const poses = createActorPoses(hero,foe);
   const sound = makeAudio(), life = new AbortController();
   let reduced = false, active = null, currentHero = '', currentFoe = '';
-  let storyTimer, storySession = '';
+  let storyTimer, storySession = '', currentRegion = '', seal = '';
 
   function hideStoryMark() {
     clearTimeout(storyTimer);
@@ -118,6 +139,14 @@ export function createStage(container, preferences = {}) {
 
   function setStory(view) {
     const next = ferryStory(view), previous = world.dataset.story;
+    const id = regionId(view), regional = hasRegionalArt(id);
+    if (id !== currentRegion) {
+      currentRegion = id;
+      world.dataset.region = id;
+      world.dataset.regional = String(regional);
+      backdrop.style.backgroundImage = regional ? 'url("/rpg/world/region-art/'+id+'.webp")' : '';
+      scenery.setEnabled(!regional);
+    }
     const sameRun = view?.session_id && storySession === view.session_id;
     if (previous !== next || !sameRun) hideStoryMark();
     if (previous !== next) {
@@ -125,7 +154,7 @@ export function createStage(container, preferences = {}) {
       scenery.setStory(next);
       world.dataset.story = next;
       if (sameRun && !reduced && !container.ownerDocument.hidden) {
-        const label = { surge:'闸水倒涌', open:'渡船通航', camp:'退回营地' }[next];
+        const label = {surge:msg('闸水倒涌','The sluice surges'),open:msg('渡船通航','The ferry sails'),camp:msg('退回营地','Return to camp')}[next];
         if (label) {
           storyMark.textContent = label;
           storyMark.dataset.story = next;
@@ -174,6 +203,13 @@ export function createStage(container, preferences = {}) {
     const combat = view?.phase === 'combat';
     const tactics = view?.battle?.tactics;
     const intent = tactics?.intent;
+    const member = crew.indexOf(tactics?.companion_id);
+    ally.hidden = member < 0;
+    if (member >= 0) {
+      const name=[msg('苇舟','Reed'),msg('铆青','Flint'),msg('星萤','Lumen')][member];
+      ally.style.setProperty('--ally',String(member));
+      allyName.textContent=name+'  Lv. '+tactics.companion_level;
+    }
     setStory(view);
     poses.setView(role,family,{combat, phase:tactics?.phase, intent:intent?.id, broken:tactics?.broken});
     world.dataset.camp = String(campOpen);
@@ -181,9 +217,12 @@ export function createStage(container, preferences = {}) {
     world.dataset.cleared = String(idle);
     world.dataset.intent = combat ? intent?.id || '' : '';
     tell.hidden = !combat || !enemy || !intent;
-    tell.textContent = combat && intent ? [tactics.broken ? '破势' : '',tactics.phase === 2 ? '二阶' : '',intent.name].filter(Boolean).join(' ') : '';
-    world.setAttribute('aria-label', campOpen ? '渡口营火旁的学习者' : idle ? '烟柳渡木桥上的冒险者' :
-      '烟柳渡木桥上的冒险者与' + (enemy?.name || '柳根闸主') + (tell.textContent ? '，'+tell.textContent : ''));
+    tell.textContent = combat && intent ? [tactics.broken ? msg('破势','Broken') : '',tactics.phase === 2 ? msg('二阶','Phase II') : '',intentCopy(intent)[0]].filter(Boolean).join(' ') : '';
+    const place = regionName(view);
+    const fieldDescription = campOpen ? msg(place+'营火旁的队伍','Party at the '+place+' campfire') :
+      idle ? msg(place+'的冒险者','The adventurer at '+place) :
+      msg(place+'的冒险者与','Adventurer at '+place+' facing ') + enemyName(view) + (tell.textContent ? ' / '+tell.textContent : '');
+    world.setAttribute('aria-label', fieldDescription + (member>=0 ? ' / '+allyName.textContent : ''));
   }
   function play({before, after, action, technique, onContact}) {
     active?.finish();
@@ -193,6 +232,8 @@ export function createStage(container, preferences = {}) {
     }
     action = receipt.skill || action;
     setView(before);
+    const inscription = seal;
+    const support = receipt.partner_assist;
     const role = currentHero, encounterId = before.battle.tactics?.encounter_id;
     const guard = action === 'guard' && receipt.correct === true;
     const broken = Boolean(receipt.tactics?.broke_shield);
@@ -226,9 +267,11 @@ export function createStage(container, preferences = {}) {
     world.dataset.fighting = 'true';
     hideStoryMark();
     scenery.setCombat(true);
+    castButton.hidden = true;
+    orbit.hidden = true;
     const showTitle = !still && outgoing && (action === 'burst' || (guard && receipt.tactics?.intercepted_charge));
     if (showTitle) {
-      title.textContent = action === 'burst' ? technique || '职业战技' : '截断蓄势';
+      title.textContent = action === 'burst' ? technique || msg('职业战技','Class skill') : msg('截断蓄势','Charge interrupted');
       title.hidden = false;
     }
 
@@ -242,21 +285,23 @@ export function createStage(container, preferences = {}) {
       if (outgoing && !struck && clock >= firstBeat) {
         struck = true;
         if (hit || broken) sound.impact({heavy:strong, broken, wood:encounterId === 'willow_lock'});
-        const tag = broken ? '破势' : receipt.critical ? '暴击' : receipt.tactics?.exploited_break ? '破绽' :
-          receipt.tactics?.phase_changed ? '形态转变' : '';
+        const tag = broken ? msg('破势','Break') : receipt.critical ? msg('暴击','Critical') : receipt.tactics?.exploited_break ? msg('破绽','Opening') :
+          receipt.tactics?.phase_changed ? msg('形态转变','Phase change') : '';
         const value = hit ? '−' + receipt.damage_dealt : '0';
         placeNumber(numbers, {x:f.x/width + .045, y:clamp(f.y/height - .21)},
           tag, value, 'foe', strong ? 'strong' : 'normal', still);
+        if (support && support.effect !== 'guard') ally.dataset.assist=support.effect;
         onContact?.('foe');
       }
       if (counter && !returned && clock >= secondBeat) {
         returned = true;
         sound.impact({parry:guard && blocked});
-        const label = guard ? '格挡' : '减伤';
+        const label = guard ? msg('格挡','Guard') : msg('减伤','Blocked');
         const tag = blocked && hurt ? label + ' ' + receipt.damage_blocked : blocked ? label : '';
         placeNumber(numbers, {x:h.x/width - .035, y:clamp(h.y/height - .18)},
           tag, hurt ? '−' + receipt.damage_received : String(receipt.damage_blocked),
           'hero', blocked && !hurt ? 'guard' : 'normal', still);
+        if (support?.effect === 'guard') ally.dataset.assist='guard';
         onContact?.('hero');
       }
     }
@@ -300,9 +345,27 @@ export function createStage(container, preferences = {}) {
       }
 
       ctx.clearRect(0, 0, width, height);
-      if (reflectionCtx) {
+      if (reflectionCtx && !hasRegionalArt(currentRegion)) {
         reflectionCtx.clearRect(0, 0, width, height);
         drawFerryLight(reflectionCtx, {width, from:h, to:f, role, action, clock, impactAt, outgoing, broken});
+      }
+      if (inscription && clock < impactAt + 90) {
+        // The very mark selected in the codex leaves the hand, catches the
+        // incoming blow on guard, or unravels locally on a missed inscription.
+        const travel = outgoing && !guard ? ease((clock-80)/(impactAt-80)) : 0;
+        const fade = outgoing ? 1-ease((clock-impactAt)/90) : 1-ease(clock/320);
+        const sx = h.x + (f.x-h.x)*travel;
+        const sy = h.y - 13 + (f.y-h.y+13)*travel - Math.sin(travel*Math.PI)*13;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ctx.translate(Math.round(sx),Math.round(sy));
+        ctx.fillStyle = guard ? '#a5fad5' : outgoing ? '#ffe3a2' : '#cca39c';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 3;
+        ctx.font = 'bold 13px Georgia,serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(inscription,0,0);
+        ctx.restore();
       }
       drawHeroEffect(ctx, {role, action, from:h, to:f, elapsed:clock, impactAt,
         incomingAt:counter ? counterAt : impactAt, hit:outgoing, isGuard:guard});
@@ -325,6 +388,7 @@ export function createStage(container, preferences = {}) {
           actor.image.style.removeProperty('filter');
         }
         world.dataset.fighting = 'false';
+        delete ally.dataset.assist;
         poses.reset();
         scenery.setCombat(false);
         numbers.replaceChildren();
@@ -354,8 +418,16 @@ export function createStage(container, preferences = {}) {
   }
   setView(null);
   setPreferences(preferences);
-  return {setView,play,setPreferences,setAim(skill, selected) {
+  return {setView,play,setPreferences,cargoCue:sound.dock,setAim(skill, selected, mark = '', label = '') {
     world.dataset.aim = selected ? skill : '';
+    seal = selected ? mark : '';
+    orbit.textContent = seal;
+    orbit.hidden = !seal;
+    sigil.textContent = seal;
+    castLabel.textContent = label;
+    castButton.dataset.skill = skill;
+    castButton.hidden = !selected || !label;
+    castButton.setAttribute('aria-label',msg('在战场上','On the field: ')+label);
   },destroy() {
     active?.finish(); hideStoryMark(); life.abort();
     poses.destroy(); scenery.destroy(); palette.destroy(); sound.destroy();

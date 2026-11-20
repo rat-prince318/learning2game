@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from ..models import Count, Identifier, StrictModel
+from .companions import PartnerAssist
 from .expedition_combat import EncounterState, Skill, TacticsView, TurnResult
 from .hero_catalog import ClassId, Gear, HeroStats, KitId, Loadout, class_info, stats_for
 from .models import Description, ReferenceText, ShortText, StudyFeedback
@@ -75,6 +76,7 @@ class BattleEvent(StrictModel):
     loot_items: list[Gear] = Field(default_factory=list)
     equipped_item: Gear | None = None
     hero_class: ClassId = "arcanist"
+    partner_assist: PartnerAssist | None = None
     damage_blocked: Count = 0
     explanation: StudyFeedback | None = None
     source_ref: ReferenceText | None = None

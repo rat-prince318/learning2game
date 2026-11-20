@@ -136,6 +136,17 @@
           "title": "Hero Class",
           "type": "string"
         },
+        "partner_assist": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartnerAssist"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "damage_blocked": {
           "default": 0,
           "minimum": 0,
@@ -475,6 +486,71 @@
       "title": "ChapterMap",
       "type": "object"
     },
+    "CompanionView": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "available": {
+          "title": "Available",
+          "type": "boolean"
+        },
+        "wins_required": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Wins Required",
+          "type": "integer"
+        },
+        "joined": {
+          "title": "Joined",
+          "type": "boolean"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        },
+        "bond": {
+          "minimum": 0,
+          "title": "Bond",
+          "type": "integer"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "next_level_bond": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Level Bond"
+        }
+      },
+      "required": [
+        "id",
+        "available",
+        "joined",
+        "active",
+        "bond",
+        "level",
+        "next_level_bond"
+      ],
+      "title": "CompanionView",
+      "type": "object"
+    },
     "EnemyView": {
       "additionalProperties": false,
       "properties": {
@@ -756,6 +832,47 @@
         "weapon"
       ],
       "title": "Loadout",
+      "type": "object"
+    },
+    "PartnerAssist": {
+      "additionalProperties": false,
+      "properties": {
+        "companion_id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Companion Id",
+          "type": "string"
+        },
+        "effect": {
+          "enum": [
+            "guard",
+            "strike",
+            "focus"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "amount": {
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "companion_id",
+        "effect",
+        "level",
+        "amount"
+      ],
+      "title": "PartnerAssist",
       "type": "object"
     },
     "PlayerView": {
@@ -1282,6 +1399,29 @@
     "TacticsView": {
       "additionalProperties": false,
       "properties": {
+        "companion_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "reed",
+                "flint",
+                "lumen"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Companion Id"
+        },
+        "companion_level": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Companion Level",
+          "type": "integer"
+        },
         "encounter_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1397,6 +1537,81 @@
         "guard_exposure"
       ],
       "title": "TacticsView",
+      "type": "object"
+    },
+    "TowerView": {
+      "additionalProperties": false,
+      "properties": {
+        "floor": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Floor",
+          "type": "integer"
+        },
+        "best_floor": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Best Floor",
+          "type": "integer"
+        },
+        "phase": {
+          "default": "idle",
+          "enum": [
+            "idle",
+            "combat",
+            "sidequest",
+            "cleared"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "region_id": {
+          "default": "",
+          "title": "Region Id",
+          "type": "string"
+        },
+        "next_guardian_hp": {
+          "default": 61,
+          "minimum": 0,
+          "title": "Next Guardian Hp",
+          "type": "integer"
+        },
+        "chain_target": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Chain Target",
+          "type": "integer"
+        },
+        "question_mode": {
+          "default": "recognition",
+          "enum": [
+            "recognition",
+            "recall",
+            "paired",
+            "synthesis"
+          ],
+          "title": "Question Mode",
+          "type": "string"
+        },
+        "difficulty": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "battle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BattleView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "TowerView",
       "type": "object"
     },
     "TurnResult": {
@@ -1530,6 +1745,26 @@
   },
   "additionalProperties": false,
   "properties": {
+    "field_signals": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Field Signals",
+      "type": "array"
+    },
+    "companions": {
+      "items": {
+        "$ref": "#/$defs/CompanionView"
+      },
+      "title": "Companions",
+      "type": "array"
+    },
+    "tower": {
+      "$ref": "#/$defs/TowerView"
+    },
     "session_id": {
       "maxLength": 128,
       "minLength": 1,

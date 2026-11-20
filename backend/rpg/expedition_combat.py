@@ -8,6 +8,7 @@ from pydantic import Field, model_validator
 
 from ..models import Count, Identifier, StrictModel
 from . import expedition_world as world
+from .companions import CompanionId
 from .hero_catalog import LEVEL_THRESHOLDS, HeroStats, class_info, stats_for
 from .models import Description, ShortText
 
@@ -36,6 +37,9 @@ class EncounterState(StrictModel):
     edge_ranks: ForgeRank = 0
     plating_ranks: ForgeRank = 0
     relic_ids: list[Identifier] = Field(default_factory=list)
+    tower_floor: Count = 0
+    companion_id: CompanionId | None = None
+    companion_level: Count = 0
     turn: Count = 0
     pattern_index: Count = 0
     phase: Literal[1, 2] = 1
@@ -51,6 +55,8 @@ class EncounterState(StrictModel):
 
 
 class TacticsView(StrictModel):
+    companion_id: CompanionId | None = None
+    companion_level: Count = 0
     encounter_id: Identifier
     tier: Literal["normal", "elite", "boss"]
     veteran: bool
@@ -89,6 +95,15 @@ def effective_stats(state, relic_ids, edge_ranks, plating_ranks) -> HeroStats:
     stats.defense = max(0, stats.defense + hero.defense_growth * extra_levels + bonus.defense + 2 * plating_ranks)
     stats.burst_percent = max(100, stats.burst_percent + bonus.burst_percent)
     return stats
+
+
+def tower_health(floor):
+    return 50 + 11 * floor + floor * floor // 15
+
+
+def tower_chain(floor):
+    # An extra linked solution every three floors. There is always another floor.
+    return 1 + (floor - 1) // 3
 
 
 def unit_health(ctx: EncounterState, stage_index: int) -> int:
@@ -163,6 +178,8 @@ def exchange(ctx, stats, stage_index, correct, skill, power):
     # A wrong response normally invites a counter even while the foe braces.
     # An answered guard intercepts a heavy blow, including a charged blow.
     strength = 9 + stage_index * 2 + ctx.region_index * 2 + (3 if ctx.veteran else 0)
+    if ctx.tower_floor:
+        strength = 8 + ctx.tower_floor * 2
     raw = {"strike": (strength + 1) // 2, "heavy": strength + 5,
            "ward": 0, "charge": 0, "expose": 0}[intent]
     if not correct:
@@ -177,6 +194,8 @@ def exchange(ctx, stats, stage_index, correct, skill, power):
         damage = 0
     elif parry:
         damage = max(0, damage - max(0, 4 + bonus.guard))
+    if correct and ctx.companion_id == "reed":
+        damage = max(0, damage - (1 + ctx.companion_level))
     return Exchange(power, raw, damage, poise_loss, breaks, counter_stance and intent == "charge", intent)
 
 
@@ -210,6 +229,7 @@ def tactics_view(state, stats):
     strike = exchange(ctx, stats, state.stage_index, True, "strike", stats.attack) if playing else None
     guard = exchange(ctx, stats, state.stage_index, True, "guard", stats.attack) if playing else None
     return TacticsView(encounter_id=spec.id, tier=spec.tier, veteran=ctx.veteran,
+                       companion_id=ctx.companion_id, companion_level=ctx.companion_level if ctx.companion_id else 0,
                        edge_ranks=ctx.edge_ranks, plating_ranks=ctx.plating_ranks, trait_name=spec.trait_name,
                        trait_description=spec.trait_description, turn=ctx.turn + 1,
                        phase=ctx.phase, shield=ctx.shield, shield_max=spec.shield + veteran_edge(ctx, spec),

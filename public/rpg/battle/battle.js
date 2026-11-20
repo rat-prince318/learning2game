@@ -1,24 +1,27 @@
+import { animateParcel, cargoFor, cargoMarkup, cargoOption, operateCargo } from './cargo.js';
 import { BattleController } from './controller.js';
 import { forgetSavedSession, rememberSession, startDemo } from './demo.js';
 import { createStage } from './stage.js';
-import { briefing, encounter, heading, heroInfo, hud, icon, result, showContact } from './panels.js';
+import { briefing, chainPieces, consequence, encounter, glyph, heading, heroInfo, hud, icon, result, showContact, submitName } from './panels.js';
 import { displayText, readLocal, saveLocal } from '../../js/utils.js';
+
+import { getLocale, msg, setLocale } from '../../js/locale.js';
+import { eventText } from './words.js';
 
 const prefKey = 'l2g.battle.preferences.v1';
 
-export function mountBattle(container, { sessionId, standalone = false, savedEntry = false,
+export function mountBattle(container, { sessionId, controller: suppliedController, standalone = false, savedEntry = false,
   onExit, onViewChange } = {}) {
-  if (!container || (!standalone && !sessionId)) throw new Error('请选择一个远征存档和战场容器。');
+  if (!container || (!standalone && !sessionId && !suppliedController)) throw new Error(msg('请选择一个远征存档和战场容器。','Choose an expedition and a battle container.'));
   const root = container.ownerDocument.createElement('div');
   root.className = 'l2g-battle';
   root.innerHTML = `<header class="bf-bar"><div class="bf-brand">
-      <span class="bf-crest" aria-hidden="true">${icon('compass')}</span><span>远征战场</span></div>
-      <div class="bf-system"><button type="button" data-act="sound"></button>
+      <span class="bf-crest" aria-hidden="true">${icon('compass')}</span><span data-brand></span></div>
+      <div class="bf-system"><button type="button" data-act="lang"></button><button type="button" data-act="sound"></button>
         <button type="button" data-act="motion"></button></div></header>
     <div class="bf-wrap"><div class="bf-location"></div>
       <div class="bf-frame"><div class="bf-stage-slot"><div class="bf-stage" data-testid="battle-arena"></div></div>
-        <div class="bf-hud" aria-label="战斗状态"></div></div>
-      <div class="bf-board"></div>
+        <div class="bf-hud"></div><div class="bf-board"></div></div>
       <div class="bf-status" role="status" aria-live="polite" aria-atomic="true"></div></div>`;
   container.append(root);
   const find = (selector) => root.querySelector(selector);
@@ -30,23 +33,31 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
   const arena = find('.bf-stage');
   const stage = createStage(arena, prefs());
   const lifetime = new AbortController();
-  let controller = sessionId ? new BattleController(sessionId) : null;
+  let controller = suppliedController || (sessionId ? new BattleController(sessionId) : null);
   let view = null, choice = '', skill = 'strike', busy = false, destroyed = false;
-  let retryAction = '', exiting = false;
+  let retryAction = '', exiting = false, picked = [], lens = -1;
+  let lastStatus = '', cargo = null;
 
   function preferences() {
+    find('[data-brand]').textContent = msg('远征战场','Battlefield');
+    find('.bf-hud').setAttribute('aria-label',msg('战斗状态','Combat status'));
+    const lang = find('[data-act="lang"]');
+    lang.textContent = msg('EN','中文');
+    lang.setAttribute('aria-label',msg('Switch to English','切换至中文'));
+    if (standalone) document.title = msg('烟柳渡首领战','Willow Ferry Battle')+' | Learning2Game';
     const sound = find('[data-act="sound"]'), motion = find('[data-act="motion"]');
     sound.setAttribute('aria-pressed', String(!muted));
-    sound.setAttribute('aria-label', '战斗音效');
-    sound.innerHTML = icon(muted ? 'volume-x' : 'volume-2') + (muted ? '音效关' : '音效开');
+    sound.setAttribute('aria-label', msg('战斗音效','Battle audio'));
+    sound.innerHTML = icon(muted ? 'volume-x' : 'volume-2') + (muted ? msg('音效关','Sound off') : msg('音效开','Sound on'));
     motion.setAttribute('aria-pressed', String(prefs().reducedMotion));
-    motion.setAttribute('aria-label', '简化动效');
-    motion.innerHTML = icon('activity') + (prefs().reducedMotion ? '简化动效' : '完整动效');
+    motion.setAttribute('aria-label', msg('简化动效','Reduced motion'));
+    motion.innerHTML = icon('activity') + (prefs().reducedMotion ? msg('简化动效','Reduced motion') : msg('完整动效','Full motion'));
     stage.setPreferences(prefs());
     root.classList.toggle('bf-reduced', prefs().reducedMotion);
   }
 
   function tell(message = '', action = '') {
+    lastStatus = message;
     retryAction = action;
     status.replaceChildren();
     status.append(displayText(message));
@@ -54,7 +65,7 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.dataset.act = 'retry';
-      retry.textContent = '重新连接';
+      retry.textContent = msg('重新连接','Reconnect');
       status.append(retry);
     }
     status.hidden = !message;
@@ -73,12 +84,13 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     find('.bf-location').innerHTML = heading(view);
     find('.bf-hud').innerHTML = hud(view);
     if (!view && controller) {
-      board.innerHTML = '<section class="bf-paper bf-loading"><h2>读取远征存档</h2><p>正在与战场会合。</p></section>';
+      board.innerHTML = '<section class="bf-paper bf-loading"><h2>'+msg('读取远征存档','Opening your expedition')+'</h2><p>'+msg('正在与战场会合。','Joining the battlefield…')+'</p></section>';
     } else if (!view) board.innerHTML = briefing();
-    else if (view.phase === 'combat' || view.phase === 'sidequest') board.innerHTML = encounter(view, skill, choice);
+    else if (view.phase === 'combat' || view.phase === 'sidequest') board.innerHTML = encounter(view, skill, choice, picked, lens, cargo);
     else board.innerHTML = result(view, standalone, standalone && savedEntry);
+    watchCargo();
     stage.setView(view);
-    stage.setAim(skill, Boolean(choice) && view?.phase === 'combat');
+    syncAim();
   }
 
   function accept(next) {
@@ -88,6 +100,9 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     if (previous?.session_id !== next.session_id ||
         previous?.battle?.prompt?.prompt_id !== next.battle?.prompt?.prompt_id || previous?.phase !== next.phase) {
       choice = '';
+      picked = [];
+      cargo = next.phase === 'combat' ? cargoFor(next.battle?.prompt) : null;
+      lens = -1;
       skill = 'strike';
     }
     if (skill === 'burst' && !next.player.burst_ready) skill = 'strike';
@@ -120,8 +135,8 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     if (busy || destroyed) return;
     const before = view, fromKeyboard = find(':focus-visible') != null, previousSkill = skill;
     lock(true);
-    tell(type === 'start' ? '正在准备讲义和渡口存档…' :
-      type === 'load' ? '正在读取存档…' : '正在确认本回合…');
+    tell(type === 'start' ? msg('正在准备讲义和渡口存档…','Preparing the field guide…') :
+      type === 'load' ? msg('正在读取存档…','Loading the expedition…') : msg('正在确认本回合…','Resolving this turn…'));
     try {
       let next;
       if (type === 'start') {
@@ -143,17 +158,17 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
       if (destroyed) return;
       const receipt = next.battle?.last_event;
       if (type === 'submit' && !controller.resynced && before.phase === 'combat' && receipt) {
-        tell(receipt.message);
+        tell(eventText(receipt,next));
         // Progress is already saved. A rendering failure must never repeat this answer.
         try { await playTurn(before, next, previousSkill); }
         catch (error) { console.warn('Battle animation skipped', error); }
       }
       if (destroyed) return;
       accept(next);
-      const progress = next.phase === 'sidequest' ? ' 营地讲义已展开。' : '';
-      tell(controller.resynced ? '已同步最新战况。' :
-        type === 'submit' ? displayText(receipt?.message || '回合已结算。') + progress :
-        type === 'hint' ? '讲义提示已展开。' : '');
+      const progress = next.phase === 'sidequest' ? msg(' 营地讲义已展开。',' The camp guide is open.') : '';
+      tell(controller.resynced ? msg('已同步最新战况。','Battle synchronized.') :
+        type === 'submit' ? displayText(eventText(receipt,next) || msg('回合已结算。','Turn resolved.')) + progress :
+        type === 'hint' ? msg('讲义提示已展开。','The field note is open.') : '');
       if (fromKeyboard && type === 'submit') {
         lock(false);
         find('[data-prompt-title]')?.focus({preventScroll:true});
@@ -164,13 +179,13 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
         forgetSavedSession(sessionId);
         controller = null;
         render();
-        tell('上次的课程存档已清理，可重新进入渡口。');
+        tell(msg('上次的课程存档已清理，可重新进入渡口。','The old course save has expired. You can begin a new crossing.'));
       } else {
-        const msg = displayText(error.message, '连接遇到问题，请再试一次。');
-        tell(msg, type === 'start' ? 'start' : controller?.hasPending ? 'restore' : !view ? 'load' : '');
+        const errorMessage = displayText(error.message, msg('连接遇到问题，请再试一次。','Connection interrupted. Try again.'));
+        tell(errorMessage, type === 'start' ? 'start' : controller?.hasPending ? 'restore' : !view ? 'load' : '');
         if (!view && controller) {
-          board.innerHTML = `<section class="bf-paper bf-loading"><h2>等待连接存档</h2><p>检查课程服务和远征编号后可重新连接。</p>
-            ${standalone ? '<a class="bf-linkbtn" href="/rpg/battle/">前往独立试玩</a>' : ''}</section>`;
+          board.innerHTML = `<section class="bf-paper bf-loading"><h2>${msg('等待连接存档','Waiting for your save')}</h2><p>${msg('检查课程服务和远征编号后可重新连接。','Check the server and expedition ID, then reconnect.')}</p>
+            ${standalone ? '<a class="bf-linkbtn" href="/rpg/battle/">'+msg('前往独立试玩','Open the demo')+'</a>' : ''}</section>`;
         }
       }
     } finally {
@@ -178,23 +193,74 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     }
   }
 
+  function syncAim() {
+    const options = view?.battle?.prompt?.options || [];
+    const index = options.findIndex(option => option.id === choice);
+    stage.setAim(skill, index >= 0 && view?.phase === 'combat', glyph(Math.max(0,index)), submitName(view,skill));
+  }
   function select(act, element) {
     if (!view?.battle?.prompt) return;
     if (act === 'skill') skill = element.dataset.id;
-    else choice = element.dataset.optionId;
+    else if (act === 'fragment' || act === 'erase') {
+      if (act === 'erase') picked.pop();
+      else if (picked.length < 2) picked.push(element.dataset.fragment);
+      const prompt = view.battle.prompt, pairs = chainPieces(prompt);
+      const index = pairs.findIndex(pair => pair.length === picked.length && pair.every((v,i)=>v === picked[i]));
+      choice = prompt.options[index]?.id || '';
+      render();
+      const next = find(picked.length === 2 ? '[data-act="submit"]' : '[data-act="fragment"]');
+      next?.focus({preventScroll:true});
+      return;
+    } else choice = element.dataset.optionId;
     for (const btn of board.querySelectorAll('[data-act="skill"], [data-act="option"]')) {
       btn.setAttribute('aria-pressed', String(btn.dataset.act === 'skill' ?
         btn.dataset.id === skill : btn.dataset.optionId === choice));
     }
     const submit = board.querySelector('[data-act="submit"]');
     if (submit) submit.disabled = !choice;
-    stage.setAim(skill, Boolean(choice) && view.phase === 'combat');
+    const label = board.querySelector('[data-submit-label]');
+    if (label) label.textContent = submitName(view,skill);
+    const exposure = board.querySelector('[data-exposure]');
+    if (exposure) exposure.textContent = consequence(view,skill);
+    syncAim();
+  }
+
+  function watchCargo() {
+    const details = find('.bf-cargo');
+    if (!details || !cargo) return;
+    details.addEventListener('toggle', () => { if (details.isConnected && cargo) cargo.open = details.open; });
+  }
+  function useCargo(button) {
+    if (!cargo || !view?.battle?.prompt) return;
+    const {op,value} = button.dataset;
+    if (op === 'bind') {
+      const id = cargoOption(cargo);
+      const option = [...board.querySelectorAll('[data-act="option"]')].find(node=>node.dataset.optionId===id);
+      if (option) { select('option',option); find('[data-act="submit"]')?.focus({preventScroll:true}); }
+      return;
+    }
+    const source=op==='load' ? button.querySelector('.bf-crate') : op==='unload' ? find('.bf-bin.bf-next .bf-crate') : null;
+    const from=source?.getBoundingClientRect();
+    operateCargo(cargo,op,value);
+    cargo.open=true;
+    find('.bf-cargo').outerHTML=cargoMarkup(cargo);
+    watchCargo();
+    if (source && !prefs().reducedMotion) {
+      const target=op==='load' ? [...board.querySelectorAll('.bf-bin .bf-crate')].at(-1) : find('.bf-cargo-log strong');
+      animateParcel(find('.bf-cargo'),source,from,target);
+    }
+    stage.cargoCue(op);
+    const focus = [...board.querySelectorAll('[data-act="cargo"]:enabled')].find(node=>
+      node.dataset.op===op && (!value || node.dataset.value===value)) ||
+      find('[data-op="load"]:enabled') || find('[data-op="unload"]:enabled') || find('[data-op="bind"]') || find('[data-op="reset"]');
+    focus?.focus({preventScroll:true});
   }
 
   async function click(event) {
     const button = event.target.closest('button[data-act]');
     if (!button || !root.contains(button) || button.disabled || destroyed) return;
     const act = button.dataset.act;
+    if (act === 'lang') { setLocale(getLocale() === 'en' ? 'zh' : 'en'); return; }
     if (act === 'motion' || act === 'sound') {
       if (act === 'motion') reduceOverride = !prefs().reducedMotion;
       else muted = !muted;
@@ -205,7 +271,14 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
     if (busy || exiting) return;
     if (act === 'retry' && retryAction) return run(retryAction);
     if (controller?.hasPending) return run('restore');
-    if (act === 'option' || act === 'skill') return select(act, button);
+    if (act === 'cargo') return useCargo(button);
+    if (act === 'lens') {
+      lens = Number(button.dataset.lens);
+      render();
+      find('[data-lens="'+lens+'"]')?.focus({preventScroll:true});
+      return;
+    }
+    if (['option','skill','fragment','erase'].includes(act)) return select(act, button);
     if (act === 'exit') {
       exiting = true;
       try {
@@ -215,10 +288,28 @@ export function mountBattle(container, { sessionId, standalone = false, savedEnt
       } finally { exiting = false; }
       return;
     }
+    if (act === 'field-cast' && choice && view?.phase === 'combat') return run('submit');
     if (['submit', 'start', 'hint'].includes(act)) return run(act);
   }
 
   root.addEventListener('click', click, {signal:lifetime.signal});
+  root.addEventListener('keydown', event => {
+    if (busy || event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
+        !['combat','sidequest'].includes(view?.phase) || event.target.closest('.bf-cargo, input, textarea, select, [contenteditable="true"]')) return;
+    const keys = {q:'strike',w:'guard',e:'burst'};
+    let button;
+    if (keys[event.key.toLowerCase()]) button = find('[data-id="'+keys[event.key.toLowerCase()]+'"]');
+    else if (/^[1-9]$/.test(event.key)) button = [...board.querySelectorAll('[data-act="option"],[data-act="fragment"]')][Number(event.key)-1];
+    if (button && !button.disabled) { event.preventDefault(); button.click(); button.focus({preventScroll:true}); }
+  }, {signal:lifetime.signal});
+  window.addEventListener('learning2game:locale', () => {
+    preferences();
+    render();
+    if (!lastStatus) return;
+    if (retryAction) tell(msg('连接遇到问题，请再试一次。','Connection interrupted. Try again.'),retryAction);
+    else if (busy) tell(msg('正在确认当前操作。','Resolving your action…'));
+    else tell(eventText(view?.battle?.last_event,view));
+  }, {signal:lifetime.signal});
   media.addEventListener('change', preferences, {signal:lifetime.signal});
   preferences();
   render();

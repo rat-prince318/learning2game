@@ -10,6 +10,7 @@ from ..db import connection
 from ..models import Identifier, StrictModel
 from . import expedition
 from .battle_rules import BattleError
+from .battle_reports import BattleConcept, concept_rows
 from .expedition import ExpeditionAction, ExpeditionReport, ExpeditionState, ExpeditionView
 from .expedition_world import ExpeditionCatalog, expedition_catalog
 from .games import read_rpg_courses
@@ -138,3 +139,23 @@ def learning_report(session_id: str, request: Request):
         if result is None:
             raise HTTPException(409, "通关或撤离后即可查看本次远征战报。")
         return ExpeditionReport.model_validate_json(result)
+
+
+class JournalPage(StrictModel):
+    region_index: int
+    entries: list[BattleConcept]
+
+
+@router.get("/expeditions/{session_id}/notebook", response_model=list[JournalPage])
+def field_notebook(session_id: str, request: Request):
+    """The live fieldbook contains evidence for concepts the player has actually tried."""
+    with connection(request.app) as conn:
+        state = ExpeditionState.model_validate_json(_run(conn, session_id)["state_json"])
+        pages = {index: volume.concepts for index, volume in enumerate(state.completed_volumes)}
+        index = state.game_ids.index(state.battle.game_id)
+        if index not in pages:
+            course = read_rpg_courses(conn, [state.battle.game_id])[state.battle.game_id]
+            pages[index] = concept_rows(state.battle.concepts, *course)
+        return [JournalPage(region_index=i, entries=[row for row in rows
+                            if row.combat_attempts or row.review_attempts])
+                for i, rows in sorted(pages.items())]

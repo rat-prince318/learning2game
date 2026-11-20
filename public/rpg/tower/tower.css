@@ -1,0 +1,49 @@
+.rpg-expansion {
+  --ex-bg:#151d26; --ex-edge:#5e6463; --ex-gold:#f2d094; --ex-ink:#e9e5d7;
+  color:var(--ex-ink); background:var(--ex-bg); max-width:82rem; margin-inline:auto;
+  font-family:inherit; border:1px solid var(--ex-edge); border-radius:10px; overflow:hidden;
+}
+.rpg-expansion .ex-content { min-width:0; }
+.rpg-expansion [data-tower], .ex-heading button, .ex-card button, .ex-status button {
+  border:1px solid #a38861; background:#2a3438; color:#fff0cf; font:inherit;
+  font-weight:650; border-radius:5px; padding:.6rem 1rem; cursor:pointer; min-height:44px;
+}
+.rpg-expansion [data-tower]:focus-visible, .rpg-expansion button:focus-visible { outline:3px solid #9ce5dd; outline-offset:3px; }
+.rpg-expansion button:disabled { opacity:.72; cursor:default; }
+.ex-heading,.ex-towerbar { display:flex; align-items:center; justify-content:space-between; gap:1em; }
+.ex-heading { padding:clamp(1rem,2vw,2rem) clamp(1rem,3vw,2.5rem) .4rem; }
+.ex-heading p,.ex-eyebrow,.ex-card small,.ex-bond,.ex-spire-stats dt { color:var(--ex-gold); font-size:.8rem; letter-spacing:.06em; }
+.ex-heading p,.ex-spire p,.ex-card h3 { margin:0; }
+.ex-heading h2,.ex-spire h2 { font-family:Georgia,'Songti SC','SimSun',serif; font-size:clamp(1.8rem,4vw,3.2rem); line-height:1.12; margin:.22em 0; }
+.ex-note { margin:.4rem clamp(1rem,3vw,2.5rem) 1.1rem; color:#cfcfc4; }
+.ex-crew { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,13.2rem),1fr)); gap:1rem; padding:0 clamp(1rem,3vw,2.5rem) 1.7rem; }
+.ex-card { background:#202c31; border:1px solid #526168; border-radius:.4rem; overflow:hidden; display:flex; flex-direction:column; }
+.ex-card.ex-active { border-color:#c69c5c; }
+.ex-portrait { height:clamp(12rem,22vw,16rem); position:relative;
+  background-image:url('./crew-portraits.webp'); background-size:300% auto;
+  background-position:calc(50% * var(--frame)) 38%; background-repeat:no-repeat; }
+.ex-portrait i { display:block; position:absolute; width:44px; height:44px; bottom:7px; right:9px;
+  border-radius:50%; background:#203238e3 url('./companions.png') 0 0 / 132px 44px no-repeat;
+  box-shadow:0 0 0 1px #e1c697a6; background-position-x:calc(-44px * var(--frame)); image-rendering:pixelated; }
+.ex-card-body { display:flex; flex-direction:column; align-items:flex-start; gap:.4rem; padding:1rem; flex:1; }
+.ex-card-body p { margin:.2rem 0 .55rem; line-height:1.45; }.ex-card h3 { font-size:1.6rem; color:var(--ex-ink); }
+.ex-card .ex-quote { color:#c3c9be; font-family:Georgia,'Songti SC',serif; }
+.ex-card button { margin-top:auto; width:100%; }
+.ex-bond { display:flex; justify-content:space-between; width:100%; padding:.5rem 0; border-top:1px solid #455452; }
+.ex-spire { position:relative; isolation:isolate; overflow:hidden; min-height:clamp(19rem,37vw,26rem); display:grid; align-items:end;
+  background:#1b2534 url('/rpg/world/region-art/orrery.webp') 65% 51%/cover; image-rendering:pixelated; }
+.ex-spire::before { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(75deg,#101924f7 1%,#162332c2 40%,transparent 78%),linear-gradient(0deg,#131d2ad9,transparent 65%); }
+.ex-spire-body { max-width:40rem; padding:clamp(1.2rem,4vw,3.3rem); color:#fff3d3; }
+.ex-spire-body p { max-width:35em; line-height:1.6; }
+.ex-spire-actions { margin-top:1.25rem; display:flex; gap:.55rem; flex-wrap:wrap; }
+.ex-spire .ex-spire-actions button:first-child { background:#f0d095; color:#202b31; border-color:#f7dda9; }
+.ex-spire-stats { display:grid; grid-template-columns:repeat(3,1fr); margin:0; padding:.85rem clamp(.7rem,3vw,2rem); gap:.6rem; }
+.ex-spire-stats div { padding:.5rem; border-inline-start:1px solid #4d6065; }.ex-spire-stats dd { font-size:clamp(1rem,2vw,1.5rem); margin:.2em 0; font-weight:700; }
+.ex-status { padding:0 1rem; }.ex-status:empty { display:none; }
+.ex-towerbar { padding:.55rem 1rem; background:#1e2930; color:#d8ded9; }.ex-towerbar strong { margin-inline-end:.5em; color:var(--ex-gold); }
+.ex-stars { z-index:-1; position:absolute; inset:0; opacity:.65; background-image:radial-gradient(circle at 71% 21%,#ffe1a3 1px,transparent 2px),
+  radial-gradient(circle at 67% 31%,#fff 1px,transparent 2px), radial-gradient(circle at 91% 14%,#ffe1a3 1px,transparent 2px),
+  radial-gradient(circle at 80% 27%,#c8e9ff 1px,transparent 3px); animation:ex-starlight 5s ease-in-out infinite alternate; }
+@keyframes ex-starlight { to { transform:translateY(-4px); opacity:.22; } }
+@media(prefers-reduced-motion:reduce) { .ex-stars { animation:none; } }
+@media(max-width:480px) { .ex-spire { background-position:62% center; }.ex-spire-body { background:#15233265; }.ex-spire-stats dt { font-size:.7rem; } }
