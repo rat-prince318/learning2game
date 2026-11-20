@@ -37,6 +37,13 @@ class ChooseReward(StrictModel):
     replace_relic_id: Identifier | None = None
 
 
+class StoryChoice(StrictModel):
+    action: Literal["story_choice"]
+    event_id: Identifier
+    expected_revision: Count
+    choice: Identifier
+
+
 class PartyCommand(StrictModel):
     action: Literal["recruit_companion", "assign_companion"]
     event_id: Identifier
@@ -63,7 +70,7 @@ class TowerEquip(Equip):
 
 
 ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | ChooseReward | Retreat |
-                             PartyCommand | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark,
+                             PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark,
                              Field(discriminator="action")]
 
 
@@ -137,6 +144,9 @@ class TowerView(StrictModel):
 
 
 class ExpeditionState(StrictModel):
+    campaign_story: bool = False
+    story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
+    story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
     session_id: Identifier
     game_ids: list[Identifier] = Field(min_length=1, max_length=8)
     hero_class: ClassId
@@ -179,6 +189,10 @@ class RegionMap(StrictModel):
 
 
 class ExpeditionView(StrictModel):
+    legacy_exam_cover: bool = False
+    campaign_story: bool = False
+    story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
+    story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
     field_signals: list[Identifier] = Field(default_factory=list)
     companions: list[CompanionView] = Field(default_factory=list)
     tower: TowerView = Field(default_factory=TowerView)
@@ -209,6 +223,8 @@ class ExpeditionView(StrictModel):
 
 
 class ExpeditionReport(StrictModel):
+    story_marks: dict[Identifier, Identifier] = Field(default_factory=dict)
+    story_ending: Literal["shatter_crown", "keep_watch", "wake_towns"] | None = None
     session_id: Identifier
     veteran: bool
     inherited_relic_id: Identifier | None

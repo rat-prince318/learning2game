@@ -319,6 +319,43 @@
       "title": "Retreat",
       "type": "object"
     },
+    "StoryChoice": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "story_choice",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "choice": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Choice",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision",
+        "choice"
+      ],
+      "title": "StoryChoice",
+      "type": "object"
+    },
     "TowerAnswer": {
       "additionalProperties": false,
       "properties": {
@@ -489,6 +526,7 @@
       "inspect_landmark": "#/$defs/InspectLandmark",
       "recruit_companion": "#/$defs/PartyCommand",
       "retreat": "#/$defs/Retreat",
+      "story_choice": "#/$defs/StoryChoice",
       "tower_answer": "#/$defs/TowerAnswer",
       "tower_enter": "#/$defs/TowerCommand",
       "tower_equip": "#/$defs/TowerEquip",
@@ -517,6 +555,9 @@
     },
     {
       "$ref": "#/$defs/PartyCommand"
+    },
+    {
+      "$ref": "#/$defs/StoryChoice"
     },
     {
       "$ref": "#/$defs/TowerCommand"

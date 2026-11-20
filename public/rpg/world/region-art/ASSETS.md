@@ -12,4 +12,16 @@
 
 角色素材固定至上游提交 6ac78232d5aedcc85ce5f27d060ea92366f7c24a。[蓝衣忍者](https://github.com/pixel-boy/NinjaAdventure/blob/6ac78232d5aedcc85ce5f27d060ea92366f7c24a/content/character/ninja_blue/sprite.png) | [蓝衣武士](https://github.com/pixel-boy/NinjaAdventure/blob/6ac78232d5aedcc85ce5f27d060ea92366f7c24a/content/character/samurai_blue/sprite.png) | [绿衣武士](https://github.com/pixel-boy/NinjaAdventure/blob/6ac78232d5aedcc85ce5f27d060ea92366f7c24a/content/character/samurai_green/samurai_green.png) | [CC0 随附全文](../../battle/art/CC0-1.0.txt)
 
-各区配乐与确认、调节、警戒、修复提示音由本项目使用 Web Audio 合成。作品资料与关卡引擎分开维护；替换地图后可调整 atlas.js 的地标位置以及 weather.js 的主光源。
+## 可步行场景
+
+| 文件 | 来源与制作 |
+| --- | --- |
+| walkers.png | 从上方 Ninja Adventure 的三个职业行走原图裁出正面、背面、左侧、右侧，每个朝向保留站姿与两帧行走。图集横向四个朝向，纵向按职业各排三帧。原素材采用 CC0。 |
+| village-tiles.png | Pixel-Boy 和 AAA 的 CC0 村落图集，场景内的住宅按地区调色。下载的版本固定至角色图集使用的同一提交。[原图](https://github.com/pixel-boy/NinjaAdventure/blob/6ac78232d5aedcc85ce5f27d060ea92366f7c24a/content/map/tileset_village_abandoned.png) |
+| stations.webp | 项目内建 ImageGen，透明背景三分之四俯视。为八个地区绘制渡口木楼、港口灯塔、工场、谷仓风车、档案馆、雪地木屋、钟楼和星轨天台。裁边、统一脚点并缩成八幅横排 112 像素方格。 |
+| field-props.webp | 项目内建 ImageGen，透明背景俯视像素道具。柳树、樱树、雪松、枫树、市集摊位、喷泉、水井、木车、芦苇、花丛、鱼篓、花藤拱门共十二种，四列三行，每格 80 像素。 |
+| field-keepers.webp | 项目内建 ImageGen，绘制八名村民的三分之四朝南全身像，分别搭配绳索、海员帽、锻工围裙、花篮、书卷、雪镜、黄铜钥匙、星纹头饰。将人物按脚点对齐，每格 64 像素。 |
+| ghost-ship.webp | 项目内建 ImageGen，根据渡口剧情绘制幽灵船、红灯、木制船身和鬼火，整理为独立透明像素精灵，绘制时随水面起伏。 |
+| war-posts.webp | 项目内建 ImageGen，断旗瞭望塔、先锋军帐篷、裂隙水晶，三幅 96 像素方格。营帐会随第一站救援抉择出现在渡口。 |
+
+游玩时由场景绘制器将透明精灵按脚点纵坐标排序。地形的位置、两座桥和阻挡区域共同来自 overland-map.js。环境光和天气在 overland-art.js 中绘制。各区配乐与确认、调节、警戒、修复提示音由本项目使用 Web Audio 合成。

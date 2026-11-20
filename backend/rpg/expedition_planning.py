@@ -1,6 +1,7 @@
 """Split verified lecture concepts into ordered, publishable RPG plan requests."""
 
 from math import ceil
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import Field, model_validator
@@ -21,6 +22,7 @@ class OutlineSource(StrictModel):
 
 
 class OutlineRequest(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     sources: list[OutlineSource] = Field(min_length=1, max_length=8)
     concepts_per_volume: int = Field(default=8, strict=True, ge=3, le=8)
     scenes_per_volume: int = Field(default=4, strict=True, ge=1, le=4)
@@ -74,11 +76,13 @@ def outline(body: OutlineRequest, request: Request):
                 length = size // count + int(index < size % count)
                 group = concepts[offset:offset + length]
                 offset += length
-                prefs = RPGPreferences(goal=body.goal, learner_level=body.learner_level,
+                prefs = RPGPreferences(question_language=body.question_language, goal=body.goal, learner_level=body.learner_level,
                                        difficulty=body.difficulty, theme=body.theme,
                                        selected_knowledge_ids=[item.knowledge_id for item in group],
                                        challenge_count=length, scene_count=min(length, body.scenes_per_volume))
-                volumes.append(OutlineVolume(number=len(volumes) + 1, terms=[item.term for item in group],
+                terms = [getattr(item.exam_question, body.question_language).term
+                         if item.exam_question and body.question_language else item.term for item in group]
+                volumes.append(OutlineVolume(number=len(volumes) + 1, terms=terms,
                                              plan_request=PlanRequest(material_id=source.material_id, preferences=prefs)))
     return ExpeditionOutline(volumes=volumes, concept_count=sum(len(v.terms) for v in volumes),
                              scene_count=sum(v.plan_request.preferences.scene_count for v in volumes))

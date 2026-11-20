@@ -1,17 +1,19 @@
 import { ApiClient } from '../../js/api.js';
+import { getLocale } from '../../js/locale.js';
 import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { tabRecords } from '../battle/controller.js';
 import { fieldbook } from './fieldbook.js';
 import { rememberMaterial } from '../../js/material-library.js';
 
 const api = new ApiClient();
-const jobKey = 'l2g.lantern.build.1';
-export const savedBuild = () => tabRecords.read(jobKey);
-export function discardBuild() {
-  tabRecords.write(jobKey, null);
+const buildKey = (locale) => 'l2g.lantern.build.2.' + locale;
+export const savedBuild = (locale = getLocale()) => tabRecords.read(buildKey(locale));
+export function discardBuild(locale = getLocale()) {
+  tabRecords.write(buildKey(locale), null);
 }
 export async function commission({ files = [], role, locale, difficulty, onStep }) {
-  let task = savedBuild();
+  const jobKey = buildKey(locale);
+  let task = savedBuild(locale);
   if (!task) {
     const builtin = files.length === 0;
     task = {
@@ -24,7 +26,7 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
       books: [],
       startId: newId(),
     };
-    const cached = builtin && readLocal('l2g.fieldbook.1.' + locale + '.' + difficulty);
+    const cached = builtin && readLocal('l2g.fieldbook.2.' + locale + '.' + difficulty);
     if (cached?.length) task.books = cached.map((game) => ({ game }));
     tabRecords.write(jobKey, task);
   }
@@ -73,8 +75,10 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
         concepts_per_volume: task.builtin ? 4 : 8,
         scenes_per_volume: 2,
         difficulty: task.difficulty,
+        question_language: task.locale,
       });
       task.outline = outline.volumes.map((v) => v.plan_request);
+      task.exerciseCount = outline.concept_count;
       task.books = task.outline.map(() => ({}));
       save();
     }
@@ -82,7 +86,7 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
     for (let i = 0; i < task.books.length; i++) {
       const book = task.books[i];
       if (book.game) continue;
-      onStep('book', i + 1, task.books.length);
+      onStep('book', i + 1, task.books.length, task.exerciseCount);
       if (!book.plan) {
         if (!book.planJob) {
           book.planJob = (await post('/rpg/plans', task.outline[i])).job_id;
@@ -105,16 +109,17 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
     const view = await post('/rpg/expeditions', {
       game_ids: ids,
       hero_class: task.role,
+      campaign_story: true,
       kit: task.role === 'vanguard' ? 'ward' : 'trail',
       request_id: task.startId,
     });
-    if (task.builtin) saveLocal('l2g.fieldbook.1.' + task.locale + '.' + task.difficulty, ids);
-    discardBuild();
+    if (task.builtin) saveLocal('l2g.fieldbook.2.' + task.locale + '.' + task.difficulty, ids);
+    discardBuild(locale);
     return view;
   } catch (error) {
     if (error.status === 404) {
-      if (task.builtin) saveLocal('l2g.fieldbook.1.' + task.locale + '.' + task.difficulty, null);
-      discardBuild();
+      if (task.builtin) saveLocal('l2g.fieldbook.2.' + task.locale + '.' + task.difficulty, null);
+      discardBuild(locale);
     }
     throw error;
   }

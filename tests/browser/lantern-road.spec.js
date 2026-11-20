@@ -1,5 +1,71 @@
 import { test, expect } from '@playwright/test';
 
+async function openTravel(page, key) {
+  await page.locator('.lr-travel-list summary').click();
+  await page.locator('[data-do="spot"][data-key="' + key + '"]').click();
+}
+async function menu(page, action) {
+  const button = page.locator('#top [data-do="' + action + '"]');
+  if (!(await button.isVisible())) await page.locator('[data-theater="menu"]').first().click();
+  await button.click();
+}
+async function move(page, key, axis, delta) {
+  const field = page.locator('.lr-world');
+  await expect(field).toHaveAttribute('data-position-' + axis, /\d+/);
+  const start = Number(await field.getAttribute('data-position-' + axis));
+  const camera = Number(await field.getAttribute('data-camera-' + axis));
+  await page.keyboard.down(key);
+  try {
+    await expect
+      .poll(
+        async () =>
+          (Number(await field.getAttribute('data-position-' + axis)) - start) * Math.sign(delta),
+      )
+      .toBeGreaterThan(Math.abs(delta));
+  } finally {
+    await page.keyboard.up(key);
+  }
+  await expect
+    .poll(
+      async () => (Number(await field.getAttribute('data-camera-' + axis)) - camera) * Math.sign(delta),
+    )
+    .toBeGreaterThan(1);
+}
+
+async function touchDiagonal(page) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const center = async (dir, id) => {
+    const b = await page.locator('[data-walk-dir="' + dir + '"]').boundingBox();
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2, id, radiusX: 3, radiusY: 3, force: 1 };
+  };
+  const here = () =>
+    page
+      .locator('.lr-world')
+      .evaluate((el) => [Number(el.dataset.positionX), Number(el.dataset.positionY)]);
+  const [startX, startY] = await here();
+  try {
+    const east = await center('east', 1),
+      south = await center('south', 2);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [east, south] });
+    await expect
+      .poll(async () => {
+        const [x, y] = await here();
+        return Math.min(x - startX, y - startY);
+      })
+      .toBeGreaterThan(9);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect(page.locator('.lr-touchpad .pressed')).toHaveCount(0);
+    // Let the position readout catch the final touch event, then check its stability.
+    await page.evaluate(() => new Promise((r) => setTimeout(r, 120)));
+    const released = await here();
+    await page.evaluate(() => new Promise((r) => setTimeout(r, 150)));
+    expect(await here()).toEqual(released);
+  } finally {
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await cdp.detach();
+  }
+}
 test('start the bilingual eight-post campaign, operate a station, find a companion and walk into a real encounter', async ({
   page,
 }) => {
@@ -20,7 +86,21 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
   const read = async () => (await page.request.get(endpoint)).json();
   expect((await read()).map).toHaveLength(8);
   expect((await read()).chapter_count).toBe(16);
-  await page.locator('[data-do="spot"][data-key="site"]').click();
+  await page.locator('.lr-viewport').focus();
+  await move(page, 'w', 'y', -11);
+  await move(page, 's', 'y', 13);
+  await move(page, 'a', 'x', -12);
+  await move(page, 'd', 'x', 14);
+  const geometry = await page.locator('.lr-field-canvas').boundingBox();
+  expect(Math.round(geometry.width)).toBe(await page.evaluate(() => innerWidth));
+  expect(Math.round(geometry.height)).toBe(await page.evaluate(() => innerHeight));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await touchDiagonal(page);
+  await page.setViewportSize({ width: 844, height: 390 });
+  const landscape = await page.locator('.lr-field-canvas').boundingBox();
+  expect(landscape).toMatchObject({ x: 0, y: 0, width: 844, height: 390 });
+  await page.setViewportSize({ width: 1360, height: 900 });
+  await openTravel(page, 'site');
   await page.locator('[data-do="inspect"]').click();
   expect((await read()).field_signals).toEqual([]);
   await page.locator('[data-do="tune"]').click();
@@ -29,17 +109,38 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
   await expect.poll(async () => (await read()).field_signals).toEqual(['willow_ferry']);
   await page.reload();
   await expect(page.locator('.lr-world')).toBeVisible();
-  await page.getByRole('button', { name: 'Journal', exact: false }).click();
+  await menu(page, 'journal');
   await expect(page.locator('.lr-route-list')).toContainText('River lamp');
-  await page.locator('#top [data-do="party"]').click();
+  await menu(page, 'party');
   await page.locator('[data-crew="reed"]').click();
   await expect
     .poll(async () => (await read()).companions.find((c) => c.id === 'reed')?.active)
     .toBe(true);
-  await page.locator('#top [data-do="scene"]').click();
+  await menu(page, 'scene');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.lr-viewport').focus();
-  for (let i = 0; i < 18; i++) await page.keyboard.press('ArrowRight');
+  // Use the riverside trail. Walk down from the gauge to the bridge approach,
+  // then keep D held as the camera follows the character into the sentry.
+  const map = await page.evaluate(async () => {
+    const m = await import('/rpg/world/overland-map.js');
+    const map = m.buildMap(0, [{ id: 'normal' }, { id: 'elite' }]);
+    return { target: map.dots.normal, bridgeY: (map.bridges[0].top + map.bridges[0].bottom) / 2 };
+  });
+  await page.keyboard.down('s');
+  try {
+    await page.waitForFunction(
+      (y) => Number(document.querySelector('.lr-world').dataset.positionY) >= y - 4,
+      map.target.y,
+    );
+  } finally {
+    await page.keyboard.up('s');
+  }
+  await page.keyboard.down('d');
+  try {
+    await expect(page.locator('[data-battle-phase="combat"]')).toBeVisible({ timeout: 8500 });
+  } finally {
+    await page.keyboard.up('d');
+  }
   await expect(page.locator('[data-battle-phase="combat"]')).toBeVisible();
   expect((await read()).phase).toBe('combat');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -59,7 +160,7 @@ test('start the bilingual eight-post campaign, operate a station, find a compani
   });
   const shortcut = await alternate.json();
   await page.goto('/rpg/?session=' + shortcut.session_id);
-  await page.getByRole('button', { name: 'Mooring snare' }).click();
+  await openTravel(page, 'elite');
   await page.getByRole('button', { name: 'Spring the trap' }).click();
   await expect(page.locator('[data-battle-phase="combat"]')).toBeVisible();
   const ambush = await (await page.request.get('/rpg/expeditions/' + shortcut.session_id)).json();

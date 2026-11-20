@@ -3,13 +3,14 @@
 from collections import Counter
 
 from ..models import KnowledgeItem
-from . import battle_rules, companions, expedition_combat, tower
+from ..legacy_exam import has_legacy_exam_cover
+from . import battle_rules, companions, expedition_combat, quest_story, tower
 from .battle_models import BattleState, Equip, Retreat
 from .battle_reports import concept_rows
 from .battle_rules import BattleError
 from .expedition_models import (
     BountySeal, ChapterMap, ChooseReward, ChooseRoute, ExpeditionAction, ExpeditionReport, ExpeditionState,
-    ExpeditionView, HeldRelic, InspectLandmark, PartyCommand, RegionMap, RewardChoice, Visit, VolumeStudy,
+    ExpeditionView, HeldRelic, InspectLandmark, PartyCommand, RegionMap, RewardChoice, StoryChoice, Visit, VolumeStudy,
 )
 from .expedition_world import region_at, relic_for, reward_relics, routes_for
 from .hero_catalog import ClassId, KitId
@@ -21,7 +22,7 @@ RELIC_SLOTS = 4
 
 def new_expedition(session_id: str, courses: Courses, hero_class: ClassId = "arcanist",
                    kit: KitId = "trail", *, veteran: bool = False,
-                   inherited_relic_id: str | None = None) -> ExpeditionState:
+                   inherited_relic_id: str | None = None, campaign_story: bool = False) -> ExpeditionState:
     if not 1 <= len(courses) <= 8:
         raise BattleError(422, "请选择一至八卷已经发布的课程。")
     first = next(iter(courses))
@@ -33,14 +34,17 @@ def new_expedition(session_id: str, courses: Courses, hero_class: ClassId = "arc
         except (KeyError, ValueError):
             raise BattleError(422, "请选择图鉴中的传承遗物。") from None
     battle = battle_rules.new_battle(session_id, first, *courses[first], hero_class=hero_class, kit=kit)
-    return ExpeditionState(session_id=session_id, game_ids=list(courses), hero_class=hero_class,
+    return ExpeditionState(session_id=session_id, game_ids=list(courses), hero_class=hero_class, campaign_story=campaign_story,
                            kit=kit, battle=battle, veteran=veteran, inherited_relic_id=inherited_relic_id,
                            relic_ids=[inherited_relic_id] if inherited_relic_id else [])
 
 
 def _routes(state, courses):
     game = courses[state.game_ids[state.region_index]][0]
-    return routes_for(state.region_index, state.scene_index, len(game.scenes))
+    routes = routes_for(state.region_index, state.scene_index, len(game.scenes))
+    if state.campaign_story and state.region_index == len(state.game_ids) - 1 and routes[0].boss:
+        return [r.model_copy(update={"encounter_id": "ash_crown"}) for r in routes]
+    return routes
 
 
 def _current_route(state, courses):
@@ -118,6 +122,12 @@ def _enter(state, courses, selected):
         stats = battle_rules.player_stats(fight)
         fight.hp += _heal_limit(fight.hp, stats.max_hp, 30)
         fight.focus = min(stats.focus_max, fight.focus + 1)
+    if route.encounter_id == "ash_crown":
+        # The resistance sends medics for rescued locals and sappers for stolen plans.
+        rescued = sum(quest_story.CHOICES[region][0] == mark for region, mark in state.story_marks.items())
+        raids = len(state.story_marks) - rescued
+        fight.hp = min(battle_rules.player_stats(fight).max_hp, fight.hp + min(8, rescued * 2))
+        fight.expedition.shield = max(1, fight.expedition.shield - min(2, raids))
     state.battle = fight
     state.route_id = route.id
     state.phase = "combat"
@@ -196,9 +206,11 @@ def _take_reward(state, courses, action):
 def advance(state: ExpeditionState, action: ExpeditionAction, courses: Courses) -> ExpeditionState:
     if action.expected_revision != state.revision:
         raise BattleError(409, "远征进度已更新，请读取当前存档。")
-    if action.action.startswith("tower_") or isinstance(action, PartyCommand):
+    if action.action.startswith("tower_") or isinstance(action, (PartyCommand, StoryChoice)):
         result = state.model_copy(deep=True)
-        if isinstance(action, PartyCommand):
+        if isinstance(action, StoryChoice):
+            quest_story.decide(result, action.choice)
+        elif isinstance(action, PartyCommand):
             companions.set_companion(result, action)
         else:
             tower.advance(result, action, courses)
@@ -300,6 +312,11 @@ def view(state: ExpeditionState, courses: Courses) -> ExpeditionView:
     narrative = region.objective
     if state.phase == "retreated":
         narrative = "队伍已返回营地，沿路的发现写入了远征日志。"
+    elif state.campaign_story and state.phase == "victory":
+        narrative = "灰冠碎裂，星门后的敌军开始撤退。先锋队等候战后的第一道命令。"
+    elif state.campaign_story and state.phase == "combat" and state.battle.expedition.encounter_id == "ash_crown":
+        narrative = ("龙将撕开破甲，熔炉的火光照亮胸口。看准重击后的空隙出手。"
+                     if state.battle.expedition.phase == 2 else "灰冠龙将压低长角，架起铁盾。先锋队在翼下列阵。")
     elif state.phase == "victory" and len(_bounty_seals(state)) == len(state.game_ids):
         narrative = "各地悬赏印记在终点连成一线，队伍带着整套首领战绩归航。"
     elif state.phase == "victory" or (state.phase == "reward" and state.battle.phase == "victory"):
@@ -310,7 +327,9 @@ def view(state: ExpeditionState, courses: Courses) -> ExpeditionView:
         narrative = _current_route(state, courses).description
     elif state.phase == "sidequest":
         narrative = "打开讲义摘记，完成本章复习后重返刚才的战场。"
-    return ExpeditionView(field_signals=state.field_signals, companions=companions.roster(state), tower=tower.projection(state, courses),
+    return ExpeditionView(legacy_exam_cover=has_legacy_exam_cover(courses[game_id][1]),
+                          campaign_story=state.campaign_story, story_marks=state.story_marks, story_ending=state.story_ending,
+                          field_signals=state.field_signals, companions=companions.roster(state), tower=tower.projection(state, courses),
                           session_id=state.session_id, veteran=state.veteran, inherited_relic_id=state.inherited_relic_id,
                           bounty_seals=_bounty_seals(state), revision=state.revision, phase=state.phase,
                           region_index=state.region_index, scene_index=state.scene_index, game_id=game_id,
@@ -339,7 +358,8 @@ def report(state: ExpeditionState, courses: Courses) -> ExpeditionReport:
     reviews, solved = sum(c.review_attempts for c in rows), sum(c.review_correct for c in rows)
     chapters = sum(volume.chapters for volume in volumes)
     player = _player(state, battle_rules.view(state.battle, *courses[state.battle.game_id]))
-    return ExpeditionReport(session_id=state.session_id, veteran=state.veteran, inherited_relic_id=state.inherited_relic_id,
+    return ExpeditionReport(story_marks=state.story_marks, story_ending=state.story_ending,
+                            session_id=state.session_id, veteran=state.veteran, inherited_relic_id=state.inherited_relic_id,
                             bounty_seals=_bounty_seals(state), outcome=state.phase, chapter_count=chapters,
                             cleared_chapters=len(state.journal), completed_volumes=len(state.completed_volumes),
                             completion_rate=len(state.journal) / chapters, volumes=volumes,

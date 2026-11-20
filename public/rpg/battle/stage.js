@@ -187,18 +187,21 @@ export function createStage(container, preferences = {}) {
     const enemy = view?.battle?.enemy;
     const role = heroes.has(player?.hero_class) ? player.hero_class : 'arcanist';
     const encounter = view?.battle?.tactics?.encounter_id;
-    const family = creatures.has(enemy?.sprite) ? enemy.sprite :
+    const ash = encounter === 'ash_crown';
+    const family = ash ? 'ash-crown' : creatures.has(enemy?.sprite) ? enemy.sprite :
       encounter && encounter !== 'willow_lock' ? 'warden' : 'willow';
     if (role !== currentHero) {
       hero.image.src = asset('hero-' + role + '.png');
       hero.body.style.setProperty('--rpg-silhouette', 'url("' + hero.image.src + '")');
       currentHero = role;
     }
-    if (family !== currentFoe) {
-      foe.image.src = asset(family === 'willow' ? 'willow-keeper.png' : 'foe-' + family + '.png');
+    const form = ash ? 'ash-crown-' + (view?.battle?.tactics?.phase === 2 ? 'enraged' : 'armored') : family;
+    if (form !== currentFoe) {
+      foe.image.src = asset(ash ? form + '.png' : family === 'willow' ? 'willow-keeper.png' : 'foe-' + family + '.png');
       foe.body.style.setProperty('--rpg-silhouette', 'url("' + foe.image.src + '")');
-      foe.body.dataset.family = family; currentFoe = family;
+      foe.body.dataset.family = family; currentFoe = form;
     }
+    world.dataset.ash = ash ? form : '';
     const campOpen = view?.phase === 'sidequest';
     const combat = view?.phase === 'combat';
     const tactics = view?.battle?.tactics;

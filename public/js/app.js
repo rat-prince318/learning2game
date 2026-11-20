@@ -57,6 +57,7 @@ const persist = () => {
 };
 function preferences() {
   return {
+    question_language: getLocale(),
     learner_level: $('learner-level').value,
     goal: $('learning-goal').value,
     difficulty: $('difficulty').value,

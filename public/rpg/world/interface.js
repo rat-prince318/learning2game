@@ -41,8 +41,8 @@ export function header(page, view, sound) {
   <div class="lr-settings">${button('sound', ico('sound') + '<span>' + (sound ? msg('音乐开', 'Sound on') : msg('音乐关', 'Sound off')) + '</span>', '', 'aria-pressed="' + sound + '"')}${button('language', getLocale() === 'en' ? '中文' : 'English', '', 'aria-label="' + msg('切换为英语', 'Switch to Chinese') + '"')}</div></div>`;
 }
 export function title(hasSave) {
-  return `<section class="lr-title"><div class="lr-sparks" aria-hidden="true"></div><div class="lr-titlecopy"><div class="lr-kicker">${msg('八站送灯之旅', 'An eight-station adventure')}</div>
- <h1>${msg('灯路远征', 'The Lantern<br>Road')}</h1><p>${msg('守灯人的信断了。沿着河灯、桥钟与星轨，把八个驿站的消息带回家。', 'The keepers have gone silent. Follow river lamps, bridge bells and star paths to bring their letters home.')}</p>
+  return `<section class="lr-title"><div class="lr-sparks" aria-hidden="true"></div><div class="lr-titlecopy"><div class="lr-kicker">${msg('灰冠战役', 'The Ashcrown Campaign')}</div>
+ <h1>${msg('灯路远征', 'The Lantern<br>Road')}</h1><p>${msg('一艘灵船逆流靠岸。船舱里，失踪的斥候敲响了只有你听得懂的暗号。', 'A ghost ship draws alongside the pier. From below deck, a missing scout taps a code only you would know.')}</p>
  <div class="lr-actions">${hasSave ? button('resume', msg('继续旅程', 'Continue journey') + '　→', 'lr-gold') : ''}${button('setup', msg('启程', 'New journey') + '　→', hasSave ? 'lr-glass' : 'lr-gold')}${button('title-atlas', msg('翻开舆图', 'Open the atlas'), 'lr-glass')}</div></div>
  <a class="lr-studio" href="/">← ${msg('课程工坊', 'Learning studio')}</a></section>`;
 }
@@ -56,6 +56,7 @@ export function setup(role, difficulty, count, pending) {
  <form id="lr-depart"><fieldset><legend>${msg('选择职业', 'Choose a class')}</legend><div class="lr-roles">${roles.map(([id, zh, en], i) => `<label><input type="radio" name="role" value="${id}" ${role === id ? 'checked' : ''} ${pending ? 'disabled' : ''}><span class="lr-roleface" style="--face:${i}"></span><span><strong>${heroNames(id)[0]}</strong><small>${msg(zh, en)}</small></span></label>`).join('')}</div></fieldset>
  <fieldset><legend>${msg('随身讲义', 'Your fieldbook')}</legend><p>${msg('直接出发可玩八地、十六章的驿站通识故事。也可带入自己的课程，地区数和章节数随讲义内容生成。', 'Set out with the bundled eight-region, sixteen-chapter campaign, or bring a course of your own. Its concepts determine the number of regions and chapters.')}</p>
  <label class="lr-file">${msg('选取课程文件', 'Choose course files')} <input id="lr-files" type="file" multiple accept=".txt,.md,.pdf,.pptx,.docx,.png,.jpg,.jpeg"> </label><small id="lr-count">${count ? h(count) : msg('当前使用驿站通识手册', 'Using the courier fieldbook')}</small></fieldset>
+ <div class="lr-level">${msg('出题语言', 'Question language')} ${button('language', msg('简体中文　⇄', 'English　⇄'), 'lr-glass', 'aria-label="' + msg('切换到英文出题', 'Switch to Chinese questions') + '"')}</div>
  <label class="lr-level">${msg('题目难度', 'Question difficulty')} <select name="difficulty" ${pending ? 'disabled' : ''}>${[
    ['easy', '入门', 'Easy'],
    ['medium', '标准', 'Standard'],
@@ -97,14 +98,6 @@ const routeCost = (r) =>
     : r.risk === 'elite'
       ? msg('强敌据守，胜利获得五枚路币', 'An elite holds this route. Earn five coins.')
       : msg('巡守出没，胜利获得三枚路币', 'A roaming foe guards this path. Earn three coins.');
-function spot(key, label, icon, x, y, cls = '') {
-  return button(
-    'spot',
-    `<b aria-hidden="true">${ico(icon)}</b><span>${label}</span>`,
-    'lr-spot ' + cls,
-    `data-key="${key}" style="--x:${x}%;--y:${y}%"`,
-  );
-}
 const traps = [
   ['缆绳绊索', 'Mooring snare'],
   ['沉钟浮索', 'Bell buoy trap'],
@@ -115,7 +108,7 @@ const traps = [
   ['钟槌绊线', 'Bellwire'],
   ['星环光栅', 'Solar tripwire'],
 ];
-export function scene(view, selection, px) {
+export function stationDialog(view, selection) {
   const reg = regionOf(view),
     done = view.field_signals?.includes(reg.id),
     i = view.region_index,
@@ -167,12 +160,60 @@ export function scene(view, selection, px) {
       'lr-gold',
     );
   }
-  return `<section class="lr-world" data-region="${reg.id}"><div class="lr-viewport" tabindex="0" aria-label="${msg('可探索的驿站，方向键移动，回车互动', 'Explorable post. Arrow keys move. Press Enter to interact.')}" style="--land:url('${asset(reg.id)}')">
- <div class="lr-sparks" aria-hidden="true"></div><div class="lr-caption"><span class="lr-kicker">${msg('驿站', 'Station')} ${String(i + 1).padStart(2, '0')} / ${String(view.map.length).padStart(2, '0')}</span><h1>${line(reg.name)}</h1></div>
- <div class="lr-vitals"><span>Lv. ${view.player.level}</span><span>♥ ${view.player.hp}/${view.player.max_hp}</span><span>${ico('coin')} ${view.coins}</span></div>
- ${phase === 'route' ? spot('keeper', line(reg.keeper), 'talk', 18, 53) + spot('site', line(reg.site), 'signal', 41, 75, 'lr-site') + routes.map((r, j) => spot(r.id, r.risk === 'elite' ? line(traps[i]) : routeName(r, view), r.risk === 'elite' ? 'trap' : 'road', j ? 85 : 65, j ? 46 : 63, 'lr-risk')).join('') : ''}
- <div class="lr-courier" style="--px:${px}%;--role:${roleIndex(view.player.hero_class)}" aria-hidden="true"><i></i></div></div>
- <div class="lr-dialog">${plate(i)}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div></div></section>`;
+  if (!selection && phase === 'route') return '';
+  return `<div class="lr-dialog" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${plate(i)}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div>${phase === 'route' ? button('walk', msg('返回行走', 'Resume walking'), 'lr-glass lr-dismiss') : ''}</div>`;
+}
+export function fieldLabels(view) {
+  const reg = regionOf(view);
+  const labels = { keeper: line(reg.keeper), site: line(reg.site) };
+  if (!view.region_index) labels.ship = msg('灵船船首', 'Ghost ship prow');
+  for (const r of view.routes)
+    labels[r.id] = r.risk === 'elite' ? line(traps[view.region_index]) : routeName(r, view);
+  return labels;
+}
+export function scene(view, selection) {
+  const region = regionOf(view),
+    labels = fieldLabels(view);
+  let objective = '';
+  if (view.campaign_story && view.phase === 'route') {
+    const hasOrder = view.story_marks?.[region.id];
+    if (!hasOrder && view.region_index === 0)
+      objective = msg('向东南走，调查船首', 'Investigate the ship at the southeast dock');
+    else if (!hasOrder)
+      objective = msg('去驿站会合，听取军情', 'Meet the keeper for the field report');
+    else if (view.routes.some((route) => route.encounter_id === 'ash_crown'))
+      objective = msg('穿过河桥，迎战灰冠龙将', 'Cross the river and challenge Ashcrown');
+    else objective = msg('过桥，突破东岸守军', 'Cross the bridge and break the eastern line');
+  }
+  return `<section class="lr-world" data-region="${region.id}"><div class="lr-viewport" tabindex="0"
+ aria-label="${msg('自由探索。WASD 或方向键移动，E 调查。', 'Free exploration. Move with WASD or arrows. Press E to inspect.')}">
+ <canvas class="lr-field-canvas" aria-hidden="true"></canvas>
+ <div class="lr-field-hud"><div class="lr-field-address"><small>${msg('驿站', 'Station')} ${String(view.region_index + 1).padStart(2, '0')} / ${String(view.map.length).padStart(2, '0')}</small><h1>${line(region.name)}</h1>${objective ? '<p class="lr-field-objective">' + objective + '</p>' : ''}</div>
+ <div class="lr-field-stats"><strong>Lv. ${view.player.level}</strong><span aria-label="${msg('生命', 'Health')}">♥ ${view.player.hp}/${view.player.max_hp}</span><span aria-label="${msg('路币', 'Coins')}">◈ ${view.coins}</span></div></div>
+ <button type="button" class="lr-radar-link" data-do="atlas" aria-label="${msg('查看舆图', 'View atlas')}"><canvas class="lr-radar" width="68" height="46" aria-hidden="true"></canvas></button>
+ <div class="lr-walk-hint">${msg('WASD 移动　E 互动', 'WASD Move　E Interact')}</div>
+ <button type="button" class="lr-field-action" hidden><kbd>E</kbd> <span></span></button>
+ <div class="lr-touchpad" aria-label="${msg('方向控制', 'Movement controls')}">${[
+   ['north', '↑', '向上', 'Up'],
+   ['west', '←', '向左', 'Left'],
+   ['south', '↓', '向下', 'Down'],
+   ['east', '→', '向右', 'Right'],
+ ]
+   .map(
+     ([d, i, zh, en]) =>
+       `<button type="button" data-walk-dir="${d}" aria-label="${msg(zh, en)}">${i}</button>`,
+   )
+   .join('')}</div>
+ ${
+   view.phase === 'route'
+     ? `<details class="lr-travel-list"><summary>${msg('寻路', 'Wayfinder')}</summary><div>${Object.entries(
+         labels,
+       )
+         .map(([key, text]) => button('spot', h(text), '', `data-key="${h(key)}"`))
+         .join('')}</div></details>`
+     : '<details class="lr-travel-list" hidden></details>'
+ }
+ <div class="lr-dialog-layer">${stationDialog(view, selection)}</div></div></section>`;
 }
 export function atlasPage(view, idx) {
   const reg = atlas[idx],
@@ -290,8 +331,8 @@ export function epilogue(v, report) {
         '你把本站的平安信交给下一班邮船。船离了岸，留给你的回执上盖着这一程最后一枚邮戳。',
         'You pass the letters to the next mail boat. As it casts off, the stationmaster stamps the receipt that closes this stretch of your journey.',
       );
-  return `<section class="lr-sheet lr-ending" style="--land:url('${asset(last.id)}')"><div class="lr-kicker">${msg('归航手记', 'Journey’s end')}</div><h1>${v.phase === 'retreated' ? msg('平安返营', 'Home from the road') : full ? msg('八灯归航', 'Eight lights home') : msg('这一程，灯已亮', 'A light for the journey')}</h1><p>${v.phase === 'retreated' ? msg('队伍把路上收到的消息带回了驿站。', 'The party returns to the post with its dispatches.') : line(last.end)}</p><p>${msg('收集信物', 'Signals found')} ${seals} / ${v.map.length}　　${msg('攻克章节', 'Chapters cleared')} ${v.cleared_chapters} / ${v.chapter_count}</p>
- ${v.phase === 'victory' ? '<p>' + homeLetter + '</p>' : ''}
+  return `<section class="lr-sheet lr-ending" style="--land:url('${asset(last.id)}')"><div class="lr-kicker">${v.campaign_story ? msg('决战之后', 'After the dragon falls') : msg('归航手记', 'Journey’s end')}</div><h1>${v.phase === 'retreated' ? msg('平安返营', 'Home from the road') : v.campaign_story ? msg('夺回明日', 'Claim the dawn') : full ? msg('八灯归航', 'Eight lights home') : msg('这一程，灯已亮', 'A light for the journey')}</h1><p>${v.phase === 'retreated' ? msg('队伍已经安全回到营地。', 'The party returns safely to camp.') : v.story_ending ? msg('先锋队已经收到你的命令，战报和沿路的抉择均已记入手记。', 'The vanguard has your orders. Your campaign and decisions are recorded in the journal.') : v.campaign_story ? msg('灰冠龙将倒在古钟之下。现在轮到你作最后的决定。', 'Ashcrown falls beneath the ancient bell. The final decision is yours.') : line(last.end)}</p><p>${msg('收集信物', 'Signals found')} ${seals} / ${v.map.length}　　${msg('攻克章节', 'Chapters cleared')} ${v.cleared_chapters} / ${v.chapter_count}</p>
+ ${v.phase === 'victory' && !v.campaign_story ? '<p>' + homeLetter + '</p>' : ''}
  ${report ? `<p>${msg('战斗答对', 'Correct in battle')} ${report.combat_correct} / ${report.combat_attempts}　　${msg('完成修习', 'Camp recoveries')} ${report.sidequests_completed}</p>` : ''}
  <div class="lr-actions">${button('journal', msg('查看手记', 'Read the journal'), 'lr-glass')}${button('tower', msg('挑战回声塔', 'Climb the Echo Tower'), 'lr-glass')}${v.phase === 'victory' ? button('encore', msg('开启进阶周目', 'Start a veteran run'), 'lr-gold') : ''}${button('home', msg('回到标题', 'Title screen'), 'lr-glass')}</div></section>`;
 }

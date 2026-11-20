@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
 const strip = text => text.replace(/[\s。.!！]/gu, '');
-const notes = readFileSync(new URL('../../public/examples/cell-notes.txt', import.meta.url), 'utf8')
-  .trim().split(/\r?\n/).map(row => row.split('：').map(strip));
+const notes = readFileSync(new URL('../../public/examples/cell-notes-en.txt', import.meta.url), 'utf8')
+  .trim().split(/\r?\n/).map(row => row.split(':').map(strip));
 
 test('a recruited pilot joins the spire, a turn survives remount, and a clear opens the next floor', async ({page}) => {
   await page.setViewportSize({width:390,height:844});
@@ -39,7 +39,8 @@ test('a recruited pilot joins the spire, a turn survives remount, and a clear op
     const {tower} = await fetchRun();
     if (tower.phase==='cleared') break;
     const {prompt} = tower.battle;
-    const term = notes.find(([label,meaning]) => strip(prompt.text).includes('「'+label+'」') || strip(prompt.text).includes(meaning));
+    const clue = strip(prompt.text);
+    const term = notes.find(([label,meaning]) => clue.includes('“'+label+'”') || clue.includes(meaning));
     expect(term).toBeTruthy();
     const choice = prompt.options.find(o=>term.includes(strip(o.text)));
     await page.locator(`.rpg-expansion [data-option-id="${choice.id}"]`).click();

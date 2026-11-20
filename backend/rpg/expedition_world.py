@@ -90,6 +90,7 @@ class TraitBonuses(StrictModel):
 
 
 class ExpeditionCatalog(StrictModel):
+    story_finale: EncounterSpec | None = None
     regions: list[RegionSpec]
     encounters: list[EncounterSpec]
     relics: list[RelicSpec]
@@ -203,7 +204,7 @@ _ENCOUNTERS = {entry.id: entry for entry in (
 
 def trait_bonuses(encounter_id: str, *, intent_id: IntentId, turn: int,
                   enraged: bool, skill: str) -> TraitBonuses:
-    trait = _ENCOUNTERS[encounter_id].trait_id
+    trait = encounter_for(encounter_id).trait_id
     if trait == "root_latch" and intent_id == "charge" and skill == "guard":
         return TraitBonuses(break_power=2)
     if trait == "tideglass" and intent_id == "expose":
@@ -301,8 +302,12 @@ _REGIONS = (
 )
 
 
+ASH_CROWN = _foe("ash_crown", "灰冠龙将", "boss", "warden", "黑铁王冠把八座烽台接成战阵。举爪蓄势时铠甲合拢，重击落空后胸炉暴露。",
+                 "charge heavy expose ward", "ward heavy expose charge heavy expose", 4, 155, "eclipse")
+
+
 def expedition_catalog() -> ExpeditionCatalog:
-    return ExpeditionCatalog(regions=list(_REGIONS), encounters=list(_ENCOUNTERS.values()),
+    return ExpeditionCatalog(story_finale=ASH_CROWN, regions=list(_REGIONS), encounters=list(_ENCOUNTERS.values()),
                              relics=list(_RELICS.values()), intents=list(_INTENTS.values()))
 
 
@@ -313,6 +318,8 @@ def region_at(index: int) -> RegionSpec:
 
 
 def encounter_for(encounter_id: str) -> EncounterSpec:
+    if encounter_id == ASH_CROWN.id:
+        return ASH_CROWN.model_copy(deep=True)
     return _ENCOUNTERS[encounter_id].model_copy(deep=True)
 
 

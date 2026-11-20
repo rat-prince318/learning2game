@@ -1,0 +1,228 @@
+/* Campaign battles share the viewport between the battlefield and the player's active inscription.
+   The standalone encounter retains its original stacked layout. */
+.lr-host > .l2g-battle[data-battle-phase='combat'] {
+  --battle-edge: clamp(8px, 1.5vw, 22px);
+  --battle-stroke: #a78e66;
+}
+.lr-host > .l2g-battle[data-battle-phase='combat'] .bf-location {
+  min-height: 44px;
+}
+.lr-host > .l2g-battle[data-battle-phase='combat'] .bf-location h1 {
+  font-size: clamp(21px, 2.4vw, 33px);
+}
+.lr-host > .l2g-battle[data-battle-phase='combat'] .bf-bar {
+  min-height: 48px;
+}
+.lr-host > .l2g-battle[data-battle-phase='combat'] .bf-status:empty {
+  display: none;
+}
+.lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-line {
+  font: 600 clamp(18px, 1.65vw, 24px) / 1.48 var(--serif);
+}
+.lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-send {
+  margin: 9px 0 0;
+  padding-top: 8px;
+}
+
+@media (min-width: 760px) {
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-wrap {
+    padding: 0 var(--battle-edge) 10px;
+    height: calc(100dvh - 48px);
+    display: flex;
+    flex-direction: column;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-frame {
+    flex: 1 0 0;
+    min-height: 240px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.29fr) minmax(0, 1fr);
+    grid-template-rows: minmax(100px, 1fr) auto auto;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-stage-slot {
+    grid-area: 1/1;
+    min-height: 0;
+    height: 100%;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-hud {
+    grid-area: 2/1;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-board {
+    display: contents;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics {
+    grid-area: 3/1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    align-items: start;
+    padding: 10px 14px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-command-top {
+    grid-area: 1/1;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-intent {
+    grid-area: 2/1;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-intent h2 {
+    font-size: 18px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-skills {
+    grid-area: 1/2/3/3;
+    gap: 3px;
+    align-self: center;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-skill {
+    flex-direction: column;
+    padding: 3px 5px;
+    gap: 2px;
+    min-width: 48px;
+    max-width: 77px;
+    min-height: 44px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-skill-pic {
+    width: 23px;
+    height: 23px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-exposure {
+    grid-area: 3/1/4/3;
+    margin: 2px 0;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-frame .bf-board > .bf-paper {
+    grid-area: 1/2/4/3;
+    align-self: stretch;
+    display: block;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+    border: 0;
+    border-left: 2px solid var(--battle-stroke);
+    padding: clamp(13px, 2.2vw, 30px);
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-papertop {
+    padding-bottom: 11px;
+    border-bottom: 1px solid #cfb9814f;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-line {
+    margin: 13px 0 17px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-options {
+    gap: 6px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-send {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-send > span {
+    flex: 1 1 135px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-cardinal,
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-foe {
+    grid-template-columns: 34px minmax(0, 1fr);
+    padding: 5px 11px;
+    gap: 0 7px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-cardinal .bf-portrait {
+    width: 34px;
+    grid-area: 1/1/4;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-cardinal .bf-identity {
+    grid-area: 1/2;
+    text-align: left;
+    justify-content: flex-start;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-identity strong {
+    order: 0;
+    width: auto;
+    font-size: 16px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-cardinal .bf-meter {
+    grid-column: 2;
+    font-size: 12px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] :is(.bf-hp, .bf-enemyhp) {
+    grid-row: 2;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] :is(.bf-focus, .bf-poise) {
+    grid-row: 3;
+  }
+}
+@media (min-width: 760px) and (max-height: 510px) {
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-wrap {
+    padding: 0 4px 3px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics {
+    max-height: 80px;
+    overflow: auto;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-frame .bf-board > .bf-paper {
+    padding: 9px 12px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-line {
+    margin: 5px 0;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-papertop {
+    padding-bottom: 3px;
+  }
+}
+@media (max-width: 759px) {
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-wrap {
+    padding: 0 4px 7px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-stage-slot {
+    height: clamp(100px, 18dvh, 167px);
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-frame {
+    display: flex;
+    flex-direction: column;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] :is(.bf-board, .bf-tactics) {
+    display: contents;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-stage-slot {
+    order: 1;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-hud {
+    order: 2;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-skills {
+    order: 3;
+    margin: 0;
+    padding: 4px 7px;
+    gap: 5px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz {
+    order: 4;
+    display: block;
+    padding: 10px 12px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-command-top {
+    order: 5;
+    padding: 12px 12px 0;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-intent {
+    order: 6;
+    margin: 2px 12px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-tactics .bf-exposure {
+    order: 7;
+    margin: 3px 12px 12px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-line {
+    margin: 8px 0;
+    font-size: 18px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-scout-face {
+    width: 34px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-speaker strong {
+    font-size: 17px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-quiz .bf-options button {
+    min-height: 44px;
+    padding: 5px 9px;
+  }
+  .lr-host > .l2g-battle[data-battle-phase='combat'] .bf-brand {
+    font-size: 14px;
+  }
+}

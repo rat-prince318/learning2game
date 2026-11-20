@@ -3,6 +3,7 @@ import { displayText, escapeHtml, h, sourceCitation } from '../../js/utils.js';
 import { msg } from '../../js/locale.js';
 import { studyMarkup } from '../../js/study.js';
 import { atlas, line } from '../world/atlas.js';
+import { reuploadNotice } from '../world/exam-recovery.js';
 import { enemyName, eventText, gearName, heroNames, intentCopy, lessonText, regionId, regionName } from './words.js';
 
 const numbers = ['一', '二', '三', '四', '五', '六', '七', '八'];
@@ -196,7 +197,9 @@ export function submitName(view, skill) {
 export function encounter(view, skill, option, picked=[], lens=-1, cargo=null) {
   const {battle} = view, prompt = battle.prompt, side = battle.sidequest;
   const left = side ? lessonPanel(side) : tacticsPanel(view,skill);
-  if (!prompt || !canPresent(prompt)) return left + `<section class="bf-paper"><h2>${msg('请核对课程题面','Review the course text')}</h2>
+  const recovery = view.legacy_exam_cover ? `<aside class="bf-clue" data-testid="legacy-exam-recovery">
+    <p>${reuploadNotice()}</p><a href="/rpg/?prepare=1">${msg('选择原试卷','Choose the original paper')}</a></aside>` : '';
+  if (!prompt || !canPresent(prompt)) return left + `<section class="bf-paper">${recovery}<h2>${msg('请核对课程题面','Review the course text')}</h2>
     <p>${msg('这道题需要保留讲义原意。请返回课程页调整措辞后重新发布。','Open the course editor and revise the wording to preserve the source meaning.')}</p>
     <button type="button" class="bf-primary" data-act="exit" data-testid="battle-exit">${msg('返回课程','Return to course')}</button></section>`;
   const chain = chainPieces(prompt);
@@ -208,7 +211,7 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null) {
       <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${side ? msg('修复残页','Mend the field guide') : evidence ? msg('星轨校准','Align the star seals') : chain ? msg('双重刻印','Linked inscription') : msg('战技刻印','Inscribe a technique')}</span></div></div>
     <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查阅营地笔记','Read the camp notes') : msg('翻阅手记会放弃本回合的连击暴击。','Opening the field notes forgoes a combo critical this turn.')}"
       ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button></div>
-    <div class="bf-line" tabindex="-1" data-prompt-title role="heading" aria-level="2">${evidence ? evidenceNav(evidence.clues.length,lens)+evidenceReadout(evidence.clues,lens) : study(prompt.text)}</div>
+    ${recovery}<div class="bf-line" tabindex="-1" data-prompt-title role="heading" aria-level="2">${evidence ? evidenceNav(evidence.clues.length,lens)+evidenceReadout(evidence.clues,lens) : study(prompt.text)}</div>
     ${cargoMarkup(cargo)}
     ${prompt.hint ? '<div class="bf-clue">'+study(prompt.hint)+'</div>' : ''}
     ${chain ? chainMarkup(prompt,picked) : '<div class="bf-options" role="group" aria-label="'+msg('选择刻印','Choose an inscription')+'">'+prompt.options.map((o,i)=>

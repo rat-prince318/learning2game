@@ -1,11 +1,11 @@
-import { msg } from '../../js/locale.js';
+import { getLocale, msg } from '../../js/locale.js';
 import { ApiClient, ApiError } from '../../js/api.js';
 import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController, tabRecords } from './controller.js';
 
 const LAST_SESSION = 'l2g.battle.last-session.v1';
-const SAMPLE_GAME = 'l2g.battle.cell-notes-six.v1';
-const BUILD = 'l2g.battle.preparation.v1';
+const SAMPLE_GAME = 'l2g.battle.cell-notes-six.v2';
+const BUILD = 'l2g.battle.preparation.v2';
 let starting = null;
 
 export function getSavedSession() {
@@ -34,7 +34,9 @@ async function prepare(options) {
     throw new ApiError('OFFLINE_DEMO', msg('试玩需要离线远征服务。可从主站打开已有存档，或用 EDUGAME_MODE=offline 启动本地服务。','The demo uses offline expedition mode. Open an existing save in the studio or start the service with EDUGAME_MODE=offline.'));
   }
 
-  const checkpointKey = BUILD + '.' + heroClass;
+  const language = getLocale();
+  const sampleKey = SAMPLE_GAME + '.' + language;
+  const checkpointKey = [BUILD, language, heroClass].join('.');
   let saved = storage.read(checkpointKey);
   const persist = (fields) => {
     Object.assign(saved, fields);
@@ -60,9 +62,10 @@ async function prepare(options) {
       if (saved.materialId) {
         receipt = await api.retryMaterial(saved.materialId);
       } else {
-        const response = await fetchImpl('/examples/cell-notes.txt');
+        const sample = language === 'en' ? 'cell-notes-en.txt' : 'cell-notes.txt';
+        const response = await fetchImpl('/examples/' + sample);
         if (!response.ok) throw new Error(msg('示例讲义读取失败，请刷新后重试。','The sample field guide could not be opened. Refresh to retry.'));
-        const file = new File([await response.blob()], 'cell-notes.txt', { type: 'text/plain' });
+        const file = new File([await response.blob()], sample, { type: 'text/plain' });
         receipt = await api.upload(file);
       }
       // The upload response also contains a deletion credential. Keep only
@@ -81,7 +84,7 @@ async function prepare(options) {
         material_id: saved.materialId,
         preferences: {
           scene_count: 1, challenge_count: 6, theme: 'fantasy', difficulty: 'medium',
-          goal: 'review', learner_level: 'beginner',
+          goal: 'review', learner_level: 'beginner', question_language: language,
         },
       } });
       persist({ planJob: receipt.job_id });
@@ -101,14 +104,14 @@ async function prepare(options) {
     }
     const published = await wait('publishJob', 'completed');
     persist({ gameId: published.game_id });
-    saveLocal(SAMPLE_GAME, saved.gameId);
+    saveLocal(sampleKey, saved.gameId);
   }
 
   // Only rebuild once when the database was replaced and persisted IDs have
   // expired. Network errors preserve every received job and request handle.
   for (let attempt = 0; attempt < 2; attempt++) {
     if (!saved) {
-      saved = { requestId: newId(), gameId: readLocal(SAMPLE_GAME) };
+      saved = { requestId: newId(), gameId: readLocal(sampleKey) };
       storage.write(checkpointKey, saved);
     }
     try {
@@ -135,7 +138,7 @@ async function prepare(options) {
       if (error.status !== 404 || attempt === 1) throw error;
       saved = null;
       storage.write(checkpointKey, null);
-      saveLocal(SAMPLE_GAME, null);
+      saveLocal(sampleKey, null);
     }
   }
 }

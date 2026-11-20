@@ -41,6 +41,22 @@
   },
   "additionalProperties": false,
   "properties": {
+    "question_language": {
+      "anyOf": [
+        {
+          "enum": [
+            "zh",
+            "en"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Question Language"
+    },
     "sources": {
       "items": {
         "$ref": "#/$defs/OutlineSource"

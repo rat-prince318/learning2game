@@ -34,6 +34,29 @@ def _display_key(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
 
 
+class ExamWording(StrictModel):
+    term: Title
+    definition: Annotated[str, StringConstraints(min_length=4, max_length=500)]
+    prompt: Annotated[str, StringConstraints(min_length=8, max_length=800)]
+    options: list[Annotated[str, StringConstraints(min_length=1, max_length=200)]] = Field(min_length=3, max_length=4)
+    hint: Annotated[str, StringConstraints(min_length=4, max_length=300)]
+    explanation: Annotated[str, StringConstraints(min_length=4, max_length=1000)]
+
+
+class ExamQuestion(StrictModel):
+    zh: ExamWording
+    en: ExamWording
+    correct_index: int = Field(ge=0, le=3, strict=True)
+
+    @model_validator(mode="after")
+    def check_choices(self) -> Self:
+        if len(self.zh.options) != len(self.en.options) or self.correct_index >= len(self.zh.options):
+            raise ValueError("Exam translations must have aligned choices")
+        for text in (self.zh, self.en):
+            _unique([_display_key(option) for option in text.options], "Exam options")
+        return self
+
+
 class KnowledgeItem(StrictModel):
     knowledge_id: Identifier
     term: Title
@@ -45,6 +68,7 @@ class KnowledgeItem(StrictModel):
     evidence: CardText | None = None
     source_ids: list[Identifier] = Field(default_factory=list, max_length=100)
     page: int | None = Field(default=None, ge=1)
+    exam_question: ExamQuestion | None = None
 
 
 class MaterialResult(StrictModel):
@@ -58,6 +82,7 @@ class MaterialResult(StrictModel):
 
 
 class UserPreferences(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     goal: LearningGoal = "review"
     learner_level: LearnerLevel = "beginner"
     difficulty: Difficulty = "medium"
@@ -65,6 +90,7 @@ class UserPreferences(StrictModel):
 
 
 class MatchingPlan(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     title: Title
     goal: LearningGoal = "review"
     learner_level: LearnerLevel = "beginner"
@@ -81,6 +107,7 @@ class MatchingPlan(StrictModel):
 
 
 class MatchingPair(StrictModel):
+    study_term: Title | None = None
     pair_id: Identifier
     knowledge_id: Identifier
     left: CardText
@@ -139,6 +166,7 @@ class ConceptPerformance(StrictModel):
 
 
 class LearningReport(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     session_id: Identifier
     game_id: Identifier
     total_pairs: PairCount

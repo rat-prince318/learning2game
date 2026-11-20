@@ -53,6 +53,7 @@ def _distinct(values: list[str], label: str) -> None:
 
 
 class RPGPreferences(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     goal: LearningGoal = "review"
     learner_level: LearnerLevel = "beginner"
     difficulty: Difficulty = "medium"
@@ -94,6 +95,7 @@ class _Versioned(StrictModel):
 
 
 class RPGPlan(_Versioned):
+    question_language: Literal["zh", "en"] | None = None
     title: ShortText
     goal: LearningGoal
     learner_level: LearnerLevel
@@ -160,6 +162,8 @@ class RPGChallengePublic(StrictModel):
 
 
 class RPGChallengeInternal(RPGChallengePublic):
+    study_term: TermText | None = None
+    study_definition: Explanation | None = None
     knowledge_id: Identifier
     correct_option_id: Identifier
     hint: HintText
@@ -208,6 +212,7 @@ _SceneType = TypeVar("_SceneType", RPGScenePublic, RPGSceneInternal)
 
 
 class _Game(_Versioned, Generic[_SceneType]):
+    question_language: Literal["zh", "en"] | None = None
     title: ShortText
     rules: Explanation
     theme: Theme
@@ -374,6 +379,7 @@ class RPGConceptPerformance(StrictModel):
 
 
 class RPGLearningReport(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     game_type: Literal["rpg_quest"] = "rpg_quest"
     session_id: Identifier
     game_id: Identifier

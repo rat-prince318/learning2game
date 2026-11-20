@@ -9,6 +9,7 @@ const heroes = {
 };
 const regions = new Map(atlas.map(region => [region.id,region]));
 const foes = {
+  ash_crown:'Ashcrown, Warlord of the Rift',
   reed_runner:'Reedcap Otter', pollen_lantern:'Lanternfly', ferry_ram:'Ferry Ram', willow_lock:'Willow Gatekeeper',
   salt_skate:'Saltwing Ray', buoy_crab:'Buoy Claw', reef_diver:'Sunken Bell Diver', tidal_engine:'Tide Engine',
   ember_tick:'Ember Hopper', kiln_carrier:'Kilnback Cart', anvil_knight:'Anvil Knight', copper_drake:'Rivetwing Drake',

@@ -6,6 +6,7 @@ from hashlib import sha256
 from pydantic import TypeAdapter, ValidationError
 
 from ..models import KnowledgeItem
+from ..question_language import accepts
 from .battle_models import BattleOption, BattlePrompt, BattleState, StudyLesson
 from .models import RPGChallengeInternal, RPGGameInternal, StudyFeedback
 from .validation import key
@@ -42,8 +43,10 @@ def _review(state, token, question, game, knowledge):
     # definition must both distinguish a foil from the target and the other foils.
     target = next((k for k in knowledge if k.knowledge_id == question.knowledge_id
                    and _displayable(k)), None)
-    lesson = StudyLesson(term=target.term if target else "本章知识回顾",
-                         definition=target.definition if target else question.explanation,
+    lesson = StudyLesson(term=target.term if target else question.study_term or (
+                             "Chapter review" if game.question_language == "en" else "本章知识回顾"),
+                         definition=question.hint if target and target.exam_question else (
+                             target.definition if target else question.explanation),
                          source_ref=question.source_ref)
     peers = []
     if target is not None:
@@ -76,7 +79,7 @@ def _review(state, token, question, game, knowledge):
             peers.append(item)
             if len(peers) == 3:
                 break
-    if len(peers) >= 2:
+    if len(peers) >= 2 and not target.exam_question:
         # Prefer the reverse direction to the published challenge. Long definitions
         # remain intact on the study card, while compact terms fit the choice buttons.
         names_on_board = {key(o.text) for o in question.options}
@@ -84,9 +87,13 @@ def _review(state, token, question, game, knowledge):
                              any(len(k.definition) > 200 for k in [target, *peers]))
         if choices_are_terms:
             text = "补给站的索引卡缺少标题。请根据这条资料说明选出标题：\n" + target.definition
+            if game.question_language == "en":
+                text = "Which term belongs to this entry?\n" + target.definition
             values = [(k.knowledge_id, k.term) for k in [target, *peers]]
         else:
             text = f"为「{target.term}」修复档案页。哪一条记录与本章讲义相符？"
+            if game.question_language == "en":
+                text = f"Restore the entry for “{target.term}”. Which description fits?"
             values = [(k.knowledge_id, k.definition) for k in [target, *peers]]
         correct_key = target.knowledge_id
     else:
@@ -94,6 +101,8 @@ def _review(state, token, question, game, knowledge):
         # Their validated choices still form a sound exercise when the reference
         # sheet supplies fewer than two independently distinguishable distractors.
         text = "补给站交回一份待核对的作业。先读资料摘记，再重新判断：\n" + question.prompt
+        if game.question_language == "en":
+            text = "Use the field note to solve this problem again:\n" + question.prompt
         values = [(o.id, o.text) for o in question.options]
         correct_key = question.correct_option_id
     # The material roster is available to its owner, so a public turn ID and
@@ -101,7 +110,7 @@ def _review(state, token, question, game, knowledge):
     options = [BattleOption(id="bo_" + _token(state.camp_key, token, ident), text=value) for ident, value in values]
     answer = "bo_" + _token(state.camp_key, token, correct_key)
     options.sort(key=lambda o: _token(token, o.id))
-    tip = "留意资料里的动作、对象和条件，再逐项比较。"
+    tip = question.hint if game.question_language else "留意资料里的动作、对象和条件，再逐项比较。"
     return Exam(BattlePrompt(prompt_id=token, text=text, options=options,
                              hint=tip if state.hinted else None), answer, tip, question, lesson)
 
@@ -133,7 +142,7 @@ def _tower_exam(state, token, question, scene, knowledge):
     text = question.prompt
     # Reverse retrieval with independently distinguishable terms and definitions.
     # Only concepts already published for this floor can appear as new options.
-    if mode == "recall" and question.knowledge_id in records:
+    if mode == "recall" and question.knowledge_id in records and not records[question.knowledge_id].exam_question:
         target = records[question.knowledge_id]
         terms, meanings, distractors = {key(target.term)}, {key(target.definition)}, []
         for q in scene.challenges:
@@ -182,6 +191,18 @@ def active_exam(state: BattleState, game: RPGGameInternal, knowledge: list[Knowl
         q = questions[state.finishing_turn % len(questions)]
     # Options of a newly drawn camp exercise cannot be applied to an older turn.
     token = "turn_" + _token(state.session_id, state.phase, str(state.prompt_serial), q.challenge_id)
+    if game.question_language and (state.phase == "sidequest" or (state.expedition and state.expedition.tower_floor)):
+        # Unselected source records can be in the opposite language. Use the immutable
+        # teaching copy from publication so camp/tower never retranslates a save.
+        published = {c.knowledge_id: c for s in game.scenes for c in s.challenges}
+        roster = []
+        for item in knowledge:
+            record = published.get(item.knowledge_id)
+            if record and record.study_term and record.study_definition:
+                roster.append(item.model_copy(update={"term": record.study_term, "definition": record.study_definition}))
+            elif accepts(item.term, game.question_language) and accepts(item.definition, game.question_language):
+                roster.append(item)
+        knowledge = roster
     if state.phase == "sidequest":
         return _review(state, token, q, game, knowledge)
     if state.expedition and state.expedition.tower_floor:

@@ -8,6 +8,7 @@ from math import ceil
 from matching_agent.wording import has_unwanted_wording
 
 from ..models import KnowledgeItem
+from ..question_language import accepts
 from .models import RPGGameInternal, RPGIssue, RPGPlan, RPGPreferences, RPGValidationReport
 
 
@@ -71,7 +72,7 @@ def select(knowledge, preferences: RPGPreferences, previous_report=None):
         warnings.append(f"本轮按可用范围生成 {len(selected)} 道挑战。")
     if preferences.scene_count > len(selected):
         warnings.append(f"场景数已随题量调整为 {len(selected)}。")
-    if not any(k.example or (k.source_type in {"image", "mixed", "diagram", "visual"}) for k in selected):
+    if not any(k.example or k.exam_question or (k.source_type in {"image", "mixed", "diagram", "visual"}) for k in selected):
         warnings.append("资料主要提供定义，本轮以辨认和比较资料中的描述为主。")
     if len(pool) < len(knowledge):
         warnings.append("部分条目缺少清楚、可区分的来源，本轮已采用其余条目。")
@@ -162,6 +163,15 @@ def check_game(game: RPGGameInternal, plan: RPGPlan, knowledge) -> RPGValidation
             if any(_COMBINATION.search(o.text) for o in q.options):
                 issue("combined_choice", "请使用各自独立的选项。", q.challenge_id)
             answer = next(o.text for o in q.options if o.id == q.correct_option_id)
+            language = plan.question_language
+            if language and (game.question_language != language or not all(accepts(t, language)
+                    for t in [q.prompt, q.hint, q.explanation, *[o.text for o in q.options]])):
+                issue("question_language", "请用所选语言撰写完整题目、选项、线索和解析。", q.challenge_id)
+            if item and item.exam_question:
+                spec = getattr(item.exam_question, language or "en")
+                if (q.prompt != spec.prompt or {o.text for o in q.options} != set(spec.options)
+                        or answer != spec.options[item.exam_question.correct_index] or q.explanation != spec.explanation):
+                    issue("exam_binding", "试题的已知条件、答案或推导与提取记录有出入。", q.challenge_id)
             options = {key(o.text) for o in q.options}
             if item is not None:
                 # The rule generator uses verbatim descriptions or terms. When

@@ -251,6 +251,10 @@ const english = new Map(
   }),
 );
 const servicePhrases = {
+  '已识别出试卷。本次未找到能在当前模式下核验答案的完整试题。请上传含题干和解答的版本，或选取带完整条件的题页。':
+    'This file is an exam. Upload a paper with complete questions and worked answers, or select pages containing all the conditions needed to solve a problem.',
+  '每份资料至少需要三个可区分且有出处的知识点。':
+    'Each course needs at least three distinct, source-backed exercises or concepts.',
   '资料达到单次文字处理上限，可按章节拆分后继续。':
     'The text limit was reached. Upload the remaining material by chapter.',
   '本轮提取文字内容。图示关系可在启用视觉模型后提取。':

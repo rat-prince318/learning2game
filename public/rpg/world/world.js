@@ -1,6 +1,6 @@
 import { ApiClient } from '../../js/api.js';
 import { msg, getLocale, setLocale } from '../../js/locale.js';
-import { h, newId, readLocal, saveLocal } from '../../js/utils.js';
+import { newId, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController } from '../battle/controller.js';
 import { mountBattle } from '../battle/battle.js';
 import { atlas, line, regionOf } from './atlas.js';
@@ -9,6 +9,8 @@ import {
   title,
   setup,
   scene,
+  stationDialog,
+  fieldLabels,
   atlasPage,
   journal,
   rewardPage,
@@ -17,7 +19,8 @@ import {
 } from './interface.js';
 import { commission, savedBuild, discardBuild } from './provision.js';
 import { createMusic } from './music.js';
-import { animateWeather } from './weather.js';
+import { mountOverland } from './overland.js';
+import { reuploadNotice } from './exam-recovery.js';
 
 const main = document.querySelector('#journey'),
   top = document.querySelector('#top'),
@@ -29,12 +32,11 @@ let page = 'home',
   view = null,
   controller = null,
   mounted = null,
-  stopWeather = null,
+  world = null,
   epoch = 0,
   locked = false;
 let pin = 0,
   pick = '',
-  px = 30,
   role = 'arcanist',
   difficulty = 'medium',
   files = [],
@@ -57,12 +59,19 @@ function tell(text = '') {
   notice.hidden = !text;
 }
 function errorText(e) {
+  if (e.message?.includes('旧版试卷题库')) return reuploadNotice();
   if (e.message === 'RESELECT_FILES')
     return msg(
       '请重新选择相同的课程文件，以接续准备。',
       'Select the original course files to resume preparation.',
     );
-  if (getLocale() === 'zh' && !['JOB_RESULT', 'JOB_FAILED'].includes(e.message)) return h(e.message);
+  if (
+    e.message &&
+    !['JOB_RESULT', 'JOB_FAILED'].includes(e.message) &&
+    (getLocale() === 'zh' ||
+      ((e.code === 'JOB_FAILED' || e.status === 422) && !/[\u3400-\u9fff]/u.test(e.message)))
+  )
+    return e.message;
   if (e.status === 404)
     return msg(
       '这份存档或课程已过期，可重新启程。',
@@ -84,6 +93,7 @@ function mem(next) {
   view = next;
   saveLocal(saveKey, next.session_id);
   const url = new URL(location.href);
+  url.searchParams.delete('prepare');
   url.searchParams.set('session', next.session_id);
   history.replaceState(null, '', url);
 }
@@ -94,17 +104,18 @@ function drawHeader() {
   top.innerHTML = header(page, view, sound);
   document.title = msg('灯路远征', 'The Lantern Road');
 }
-function clearWeather() {
-  stopWeather?.();
-  stopWeather = null;
+function clearField() {
+  world?.destroy();
+  world = null;
 }
 function release() {
   epoch++;
-  clearWeather();
+  clearField();
   mounted?.destroy?.();
   mounted = null;
 }
 function stationPhase() {
+  if (view?.campaign_story && view.phase === 'victory') return 'ending';
   return ['combat', 'sidequest'].includes(view?.phase)
     ? 'battle'
     : view?.phase === 'retreated'
@@ -116,8 +127,9 @@ async function active(id) {
   mem(await controller.load());
   report = null;
   pick = '';
-  px = 30;
-  return goto(stationPhase());
+
+  await goto(stationPhase());
+  if (view.legacy_exam_cover) tell(reuploadNotice());
 }
 function statusPage(text) {
   main.innerHTML =
@@ -134,9 +146,12 @@ function signalPanel() {
   box.innerHTML = `<div class="lr-dial"><button type="button" data-do="tune" aria-label="${msg('切换刻度', 'Adjust setting')}">↻　${line(list[dial])}</button>${button('inspect', line(r.tool), 'lr-gold')}</div>`;
 }
 function draw() {
-  clearWeather();
+  clearField();
   drawHeader();
-  music.scene(view?.region_index || 0, page === 'battle' && view?.phase === 'sidequest' ? 'camp' : page);
+  music.scene(
+    view?.region_index || 0,
+    page === 'battle' && view?.phase === 'sidequest' ? 'camp' : page,
+  );
   if (page === 'home') main.innerHTML = title(Boolean(bookmark()));
   if (page === 'setup') {
     const build = savedBuild();
@@ -148,28 +163,39 @@ function draw() {
     );
   }
   if (page === 'scene') {
-    main.innerHTML = scene(view, pick, px);
+    main.innerHTML = scene(view, pick);
     signalPanel();
-    const area = main.querySelector('.lr-viewport');
-    stopWeather = animateWeather(
-      area,
-      view.region_index,
-      view.field_signals?.includes(regionOf(view).id),
+    const spot = main.querySelector('.lr-world');
+    world = mountOverland(spot, view, {
+      labels: fieldLabels(view),
+      onStation: choose,
+      onContact: (key) => run(() => engage(key)),
+      onLeaveDialogue: resumeField,
+      canMove: () => view.phase === 'route' && !pick,
+      blocked: () => locked,
+    });
+    spot.dispatchEvent(
+      new CustomEvent('lantern:scene-ready', { bubbles: true, detail: storyContext() }),
     );
-    if (view.phase === 'route')
-      area.insertAdjacentHTML(
-        'beforeend',
-        '<span class="lr-controls">' + msg('← → 行走　E 互动', '← → Move　E Interact') + '</span>',
-      );
   }
   if (page === 'atlas') main.innerHTML = atlasPage(view, pin);
-  if (page === 'journal') main.innerHTML = journal(view, notes);
+  if (page === 'journal') {
+    main.innerHTML = journal(view, notes);
+    main.dispatchEvent(
+      new CustomEvent('lantern:journal', { bubbles: true, detail: storyContext() }),
+    );
+  }
   if (page === 'reward') main.innerHTML = rewardPage(view);
-  if (page === 'ending') main.innerHTML = epilogue(view, report);
+  if (page === 'ending') {
+    main.innerHTML = epilogue(view, report);
+    main.dispatchEvent(
+      new CustomEvent('lantern:ending', { bubbles: true, detail: storyContext() }),
+    );
+  }
 }
 async function goto(dest) {
   const ticket = ++epoch;
-  clearWeather();
+  clearField();
   mounted?.destroy?.();
   mounted = null;
   page = dest;
@@ -187,7 +213,7 @@ async function goto(dest) {
         if (ticket !== epoch) return;
         mem(await controller.load());
         pick = '';
-        px = 30;
+
         await goto(stationPhase());
       },
       onViewChange: (next) => {
@@ -257,42 +283,45 @@ async function engage(key) {
   pick = '';
   await goto('battle');
 }
-function choose(key) {
-  const anchors = { keeper: 18, site: 41, [view.routes[0]?.id]: 65, [view.routes[1]?.id]: 85 };
-  const before = px;
-  px = anchors[key] ?? px;
-  pick = key;
-  dial = (dials[view.region_index][3] + 1) % 3;
-  music.cue('pick');
-  draw();
-  const figure = main.querySelector('.lr-courier'),
-    reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (figure && !reduce) {
-    figure.classList.add('walking');
-    const a = figure.animate([{ left: before + '%' }, { left: px + '%' }], {
-      duration: Math.min(850, Math.abs(px - before) * 19),
-      easing: 'ease-out',
-    });
-    a.onfinish = () => figure.classList.remove('walking');
+function storyContext() {
+  return {
+    view,
+    world,
+    interact: choose,
+    resume: resumeField,
+    openParty: () => run(() => goto('party')),
+    issue: async (choice) => {
+      const result = await command({ action: 'story_choice', choice });
+      pick = '';
+      draw();
+      return result;
+    },
+  };
+}
+function refreshDialogue() {
+  const layer = main.querySelector('.lr-dialog-layer');
+  if (layer) {
+    layer.innerHTML = stationDialog(view, pick);
+    signalPanel();
   }
 }
-function travel(target, collided = true) {
-  const before = px;
-  px = Math.min(96, Math.max(4, target));
-  const figure = main.querySelector('.lr-courier');
-  if (!figure) return;
-  figure.style.setProperty('--px', px + '%');
-  figure.classList.toggle('reverse', px < before);
-  figure.classList.add('walking');
-  clearTimeout(travel.stop);
-  travel.stop = setTimeout(() => figure.classList.remove('walking'), 160);
-  if (collided && view.phase === 'route') {
-    for (const [i, x] of [65, 85].entries())
-      if (((before < x && px >= x) || (before > x && px <= x)) && view.routes[i]) {
-        run(() => engage(view.routes[i].id));
-        break;
-      }
+function resumeField() {
+  pick = '';
+  refreshDialogue();
+  world?.pause(false);
+  world?.focus();
+}
+function choose(key) {
+  music.cue('pick');
+  if (view.campaign_story && (key === 'keeper' || key === 'ship')) {
+    main
+      .querySelector('.lr-world')
+      ?.dispatchEvent(new CustomEvent('lantern:story', { bubbles: true, detail: storyContext() }));
+    return;
   }
+  pick = key === 'ship' ? 'keeper' : key;
+  dial = (dials[view.region_index][3] + 1) % 3;
+  refreshDialogue();
 }
 async function run(fn) {
   if (locked) return;
@@ -352,7 +381,9 @@ async function act(action, b) {
       draw();
       return;
     case 'spot':
-      return choose(b.dataset.key);
+      return world?.navigate(b.dataset.key);
+    case 'walk':
+      return resumeField();
     case 'engage':
       return engage(b.dataset.key);
     case 'tune':
@@ -377,7 +408,8 @@ async function act(action, b) {
         draw();
         const healed = view.player.hp - hp;
         tell(
-          msg('驿站信物已收录。', 'Station signal recorded.') + (healed > 0 ? '　HP +' + healed : ''),
+          msg('驿站信物已收录。', 'Station signal recorded.') +
+            (healed > 0 ? '　HP +' + healed : ''),
         );
         return;
       }
@@ -389,7 +421,7 @@ async function act(action, b) {
         ...(swap ? { replace_relic_id: swap.value } : {}),
       });
       pick = '';
-      px = 30;
+
       return goto(stationPhase());
     }
     case 'encore': {
@@ -420,36 +452,6 @@ document.addEventListener('click', (event) => {
   }
   run(() => act(b.dataset.do, b));
 });
-main.addEventListener('click', (event) => {
-  if (
-    page !== 'scene' ||
-    locked ||
-    event.target.closest('button') ||
-    !event.target.closest('.lr-viewport') ||
-    view.phase !== 'route'
-  )
-    return;
-  const rect = main.querySelector('.lr-viewport').getBoundingClientRect();
-  travel(((event.clientX - rect.left) / rect.width) * 100);
-});
-main.addEventListener('keydown', (event) => {
-  if (
-    page !== 'scene' ||
-    locked ||
-    view.phase !== 'route' ||
-    event.target.closest('button,select,input')
-  )
-    return;
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-    event.preventDefault();
-    travel(px + (event.key === 'ArrowLeft' ? -2 : 2));
-  }
-  if (event.key.toLowerCase() === 'e' || event.key === 'Enter') {
-    event.preventDefault();
-    const nodes = [['keeper', 18], ['site', 41], ...view.routes.map((r, j) => [r.id, j ? 85 : 65])];
-    choose(nodes.sort((a, b) => Math.abs(px - a[1]) - Math.abs(px - b[1]))[0][0]);
-  }
-});
 main.addEventListener('change', (e) => {
   if (e.target.id === 'lr-files') {
     files = [...e.target.files];
@@ -462,7 +464,9 @@ main.addEventListener('submit', (event) => {
   if (event.target.id !== 'lr-depart') return;
   event.preventDefault();
   if (files.length > 8)
-    return tell(msg('每趟远征可携带最多八份讲义。', 'Bring up to eight course files per expedition.'));
+    return tell(
+      msg('每趟远征可携带最多八份讲义。', 'Bring up to eight course files per expedition.'),
+    );
   run(async () => {
     page = 'loading';
     tell();
@@ -473,13 +477,17 @@ main.addEventListener('submit', (event) => {
       role,
       difficulty,
       locale: getLocale(),
-      onStep: (step, i, n) => {
+      onStep: (step, i, n, exercises) => {
         const label = {
           source: msg('读取讲义', 'Reading sources'),
           book: msg('编排地区遭遇', 'Preparing regional encounters'),
           depart: msg('接通驿路', 'Opening the road'),
         }[step];
-        document.querySelector('#lr-progress').textContent = label + '　' + i + ' / ' + n;
+        const coverage = exercises
+          ? msg('　共 ' + exercises + ' 道练习', '　' + exercises + ' exercises in total')
+          : '';
+        document.querySelector('#lr-progress').textContent =
+          label + '　' + i + ' / ' + n + coverage;
       },
     });
     files = [];
@@ -505,3 +513,4 @@ window.addEventListener('pageshow', (e) => {
 draw();
 const requested = new URL(location.href).searchParams.get('session');
 if (requested) run(() => active(requested));
+else if (new URL(location.href).searchParams.get('prepare') === '1') run(() => goto('setup'));

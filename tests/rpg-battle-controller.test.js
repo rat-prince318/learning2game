@@ -159,7 +159,7 @@ test('standalone sample resumes existing jobs, recovers stale game IDs and opens
   const first = startDemo(options);
   assert.equal(first, startDemo(options));
   await assert.rejects(first, { code: 'NETWORK_ERROR' });
-  assert.equal(JSON.stringify(storage.read('l2g.battle.preparation.v1.arcanist')).includes('private-token'), false);
+  assert.equal(JSON.stringify(storage.read('l2g.battle.preparation.v2.zh.arcanist')).includes('private-token'), false);
   assert.equal((await startDemo(options)).phase, 'combat');
   assert.equal((await startDemo(options)).session_id, 'run2');
   assert.equal(calls.filter((url) => url === '/rpg/plans').length, 1);

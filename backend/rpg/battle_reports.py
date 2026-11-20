@@ -71,7 +71,7 @@ def concept_rows(tallies: dict[str, BattleTally], game: RPGGameInternal,
             tally = tallies.get(kid, BattleTally())
             # Material adapters accept richer text than the game's plain-text recap.
             try:
-                term = _term.validate_python(terms.get(kid))
+                term = _term.validate_python(question.study_term or terms.get(kid))
             except ValidationError:
                 term = f"知识点 {len(concepts) + 1}"
             concepts.append(BattleConcept(

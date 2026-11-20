@@ -18,6 +18,7 @@ from pathlib import Path
 from matching_agent.wording import has_unwanted_wording
 
 from .material_processing import MaterialError, TextBlock, read_material, validate_office_archive
+from .exam_material import parse_exam, knowledge_from_exam
 from .models import KnowledgeItem, MaterialResult
 from .provider import trace_tool
 
@@ -136,13 +137,15 @@ class MaterialProvider:
         if not self.key:
             raise MaterialError("视觉与文字提取需要配置 LLM_API_KEY。离线模式可读取文字讲义。")
 
-    def complete(self, content, *, vision: bool) -> list[dict]:
+    def complete(self, content, *, vision: bool, system: str = _SYSTEM, json_mode=False) -> list[dict]:
         remaining = self.deadline - time.monotonic()
         if remaining <= .1:
             raise MaterialError("资料分析已达时间上限，请缩小选页范围后重试。")
         payload = {"model": self.vision_model if vision else self.text_model,
-                   "messages": [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": content}],
+                   "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}],
                    "max_tokens": 2200}
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
         req = urllib.request.Request(f"{self.base_url}/chat/completions",
                                      data=json.dumps(payload).encode(),
                                      headers={"Authorization": "Bearer " + self.key, "Content-Type": "application/json"})
@@ -276,6 +279,14 @@ def extract_material(path: Path, *, live=False, pages=None, include_images=True,
     path = Path(path)
     with trace_tool("read_course_material"):
         material = read_material(path, pages=pages, figures=live and include_images)
+    filename = _display(Path(original_name or path.name).name)[:180]
+    if has_unwanted_wording(filename):
+        filename = "上传资料"
+    exam = parse_exam(material, filename)
+    if exam is not None:
+        with trace_tool("extract_verified_exam_problems"):
+            return knowledge_from_exam(material, exam, filename,
+                                       live_provider=MaterialProvider() if live else None)
     candidates = []
     provider = MaterialProvider() if live else None
     if material.blocks:
@@ -306,9 +317,6 @@ def extract_material(path: Path, *, live=False, pages=None, include_images=True,
             if live:
                 raise MaterialError("所选资料暂未提取到有来源的配对关系，请选择标注更清晰的图示或包含定义的段落。")
             raise MaterialError("请上传包含「术语：定义」的讲义，或启用模型分析叙述性资料与图示。")
-        filename = _display(Path(original_name or path.name).name)[:180]
-        if has_unwanted_wording(filename):
-            filename = "上传资料"
         knowledge = []
         for point in playable:
             # The ID is stable across runs and independent of upload paths and display order.

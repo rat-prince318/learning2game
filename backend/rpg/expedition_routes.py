@@ -20,6 +20,7 @@ router = APIRouter(prefix="/rpg", tags=["RPG expeditions"])
 
 
 class ExpeditionStart(StrictModel):
+    campaign_story: bool = False
     game_ids: list[Identifier] = Field(min_length=1, max_length=8)
     hero_class: ClassId = "arcanist"
     kit: KitId = "trail"
@@ -66,13 +67,16 @@ def _open(conn, body, *, predecessor=None, inherited_relic_id=None):
         old = conn.execute("SELECT id, settings_json, state_json FROM expedition_runs "
                            "WHERE anchor_game_id=? AND request_id=?", (anchor, body.request_id)).fetchone()
         if old:
-            if settings != json.loads(old["settings_json"]):
+            old_settings = json.loads(old["settings_json"])
+            old_settings.setdefault("campaign_story", False)
+            if settings != old_settings:
                 raise HTTPException(409, "这个开局编号已绑定另一份远征配置。")
             return expedition.view(ExpeditionState.model_validate_json(old["state_json"]), _courses(conn, old["id"]))
     courses = read_rpg_courses(conn, body.game_ids)
     session_id = uuid4().hex
     state = expedition.new_expedition(session_id, courses, body.hero_class, body.kit,
-                                      veteran=predecessor is not None, inherited_relic_id=inherited_relic_id)
+                                      veteran=predecessor is not None, inherited_relic_id=inherited_relic_id,
+                                      campaign_story=body.campaign_story)
     conn.execute("INSERT INTO expedition_runs(id,anchor_game_id,request_id,settings_json,state_json) "
                  "VALUES(?,?,?,?,?)", (session_id, anchor, body.request_id, json.dumps(settings), state.model_dump_json()))
     conn.executemany("INSERT INTO expedition_books(run_id,book_index,game_id) VALUES(?,?,?)",
@@ -95,7 +99,8 @@ def play_again(session_id: str, request: Request, body: EncoreStart | None = Non
             raise HTTPException(409, "完成远征后即可开启进阶周目。")
         if choices.inherited_relic_id is not None and choices.inherited_relic_id not in previous.relic_ids:
             raise HTTPException(422, "请选择这次通关持有的遗物。")
-        settings = ExpeditionStart(game_ids=previous.game_ids, hero_class=choices.hero_class or previous.hero_class,
+        settings = ExpeditionStart(game_ids=previous.game_ids, campaign_story=previous.campaign_story,
+                                   hero_class=choices.hero_class or previous.hero_class,
                                    kit=choices.kit or previous.kit, request_id=choices.request_id)
         return _open(conn, settings, predecessor=session_id, inherited_relic_id=choices.inherited_relic_id)
 

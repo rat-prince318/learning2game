@@ -95,7 +95,7 @@ def _make_plan(job, material_id, material, prefs, scope, practice_session_id, pr
                 or not minimum <= plan.challenge_count <= prefs.challenge_count
                 or plan.scene_count > prefs.scene_count
                 or any(getattr(plan, f) != getattr(prefs, f)
-                       for f in ("difficulty", "learner_level", "theme", "goal"))):
+                       for f in ("difficulty", "learner_level", "theme", "goal", "question_language"))):
             raise OutputError("方案与选定的范围或偏好不一致，请重新规划。")
         warnings = list(dict.fromkeys([*plan.warnings, *material.warnings]))
         plan = RPGPlan.model_validate({**plan.model_dump(), "warnings": warnings[:12]})
@@ -211,7 +211,7 @@ def feedback(session_id: str, request: Request, tasks: BackgroundTasks):
         if last and last["status"] != "failed":
             return FeedbackJob(session_id=session_id, job_id=last["id"])
         _require_rpg(request.app)
-        knowledge = _knowledge(conn, row["material_id"]).knowledge
+        knowledge = _knowledge(conn, row["material_id"], for_generation=False).knowledge
         job_id = insert_job(conn, "feedback", session_id, request.app.state.mode, GAME)
     tasks.add_task(_execute, request.app, job_id, _feedback, session_id, report, knowledge)
     return FeedbackJob(session_id=session_id, job_id=job_id)

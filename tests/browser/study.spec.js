@@ -69,6 +69,7 @@ test('an uploaded expedition publishes course math, settles a turn and shares it
       buffer: Buffer.from(lesson),
     });
   await page.locator('#lr-depart button[type=submit]').click();
+  await page.locator('.lr-travel-list summary').click();
   await page.locator('[data-do=spot][data-key=normal]').click();
   await page.locator('[data-do=engage]').click();
   await expect(page.locator('.bf-quiz math').first()).toBeAttached();
