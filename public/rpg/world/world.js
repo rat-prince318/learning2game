@@ -27,10 +27,11 @@ import { stationInstrument } from './station-tools.js';
 import { openDistrictTool, operateDistrictTool, districtToolReady } from './district-tools.js';
 import { reuploadNotice } from './exam-recovery.js';
 import { openPack } from './pack.js';
+import { CONFIRMATION_MS } from '../feedback.js';
+import { tell } from './notice.js';
 
 const main = document.querySelector('#journey'),
-  top = document.querySelector('#top'),
-  notice = document.querySelector('#notice');
+  top = document.querySelector('#top');
 const api = new ApiClient(),
   music = createMusic(),
   saveKey = 'l2g.lantern.last.1';
@@ -68,19 +69,6 @@ const controlNames = [
   ['选缆桩', 'Choose a post'], ['换链环', 'Move the chain'], ['扳道岔', 'Throw the switch'], ['调帆向', 'Trim the sail'],
   ['移灯', 'Move the lamp'], ['试铃绳', 'Test a bell line'], ['拨音簧', 'Select a reed'], ['转日环', 'Turn the meridian'],
 ];
-let noticeTimer;
-function tell(text = '', durationMs = 0) {
-  clearTimeout(noticeTimer);
-  notice.textContent = text;
-  notice.hidden = !text;
-  const supplyStatus = main.querySelector('.lr-field-supplies [role="status"]');
-  if (supplyStatus) supplyStatus.textContent = text;
-  if (durationMs > 0) {
-    noticeTimer = setTimeout(() => {
-      if (notice.textContent === text) tell();
-    }, durationMs);
-  }
-}
 function errorText(e) {
   if (e.message?.includes('旧版试卷题库')) return reuploadNotice();
   if (e.message === 'RESELECT_FILES')
@@ -188,7 +176,7 @@ async function active(id) {
   pick = '';
 
   await goto(stationPhase());
-  if (view.legacy_exam_cover) tell(reuploadNotice());
+  if (view.legacy_exam_cover) tell(reuploadNotice(), 0);
 }
 function statusPage(text) {
   main.innerHTML =
@@ -327,8 +315,8 @@ async function goto(dest) {
       if (ticket !== epoch) return;
       notes = notebook.status === 'fulfilled' ? notebook.value : [];
       coverage = sources.status === 'fulfilled' ? sources.value : null;
-      if (notebook.status === 'rejected') tell(errorText(notebook.reason));
-      else if (sources.status === 'rejected') tell(errorText(sources.reason));
+      if (notebook.status === 'rejected') tell(errorText(notebook.reason), 0);
+      else if (sources.status === 'rejected') tell(errorText(sources.reason), 0);
     }
     if (dest === 'ending' && view && !report) {
       try {
@@ -336,7 +324,7 @@ async function goto(dest) {
           '/rpg/expeditions/' + encodeURIComponent(view.session_id) + '/report',
         );
       } catch (e) {
-        tell(errorText(e));
+        tell(errorText(e), 0);
       }
       if (ticket !== epoch) return;
     }
@@ -441,10 +429,11 @@ async function recordSignal() {
   const hp = view.player.hp;
   await command({ action: 'inspect_landmark' });
   music.cue('seal');
+  pick = '';
   draw();
   const healed = view.player.hp - hp;
   tell(line(regionOf(view).signal) + msg('已记入手记。', ' recorded in your journal.') +
-    (healed > 0 ? '　HP +' + healed : ''), 3000);
+    (healed > 0 ? '　HP +' + healed : ''), CONFIRMATION_MS);
 }
 async function run(fn) {
   if (locked) return;
@@ -457,7 +446,7 @@ async function run(fn) {
       page = 'setup';
       draw();
     }
-    tell(errorText(e));
+    tell(errorText(e), 0);
   } finally {
     locked = false;
     main.removeAttribute('aria-busy');
@@ -637,6 +626,7 @@ main.addEventListener('submit', (event) => {
   if (files.length > 8)
     return tell(
       msg('每趟远征可携带最多八份讲义。', 'Bring up to eight course files per expedition.'),
+      0,
     );
   run(async () => {
     page = 'loading';

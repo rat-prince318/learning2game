@@ -267,6 +267,7 @@ test('defeat opens sourced camp exercises; refresh restores them and recovery re
 test('mobile reduced-motion controls, hint receipt and a bookmarked battle survive reload', async ({
   page, startDemo,
 }) => {
+  await page.clock.install();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   let view = await startDemo();
@@ -285,6 +286,18 @@ test('mobile reduced-motion controls, hint receipt and a bookmarked battle survi
   await expectView(page, view);
   expect(view.battle.prompt.hint).toBeTruthy();
   await expect(page.locator('body')).toContainText(view.battle.prompt.hint);
+  const status = page.locator('.bf-status');
+  await expect(status).toHaveText('讲义提示已展开。');
+  await page.clock.fastForward(1600);
+  await settings.click();
+  const language = page.locator('.bf-settings [data-act="lang"]');
+  await language.click();
+  await expect(status).toHaveText('The field note is open.');
+  await page.clock.fastForward(1500);
+  await expect(status).toBeHidden({timeout:500});
+  await language.click();
+  await expect(status).toBeHidden();
+  await expect(page.locator('.bf-clue')).toContainText(view.battle.prompt.hint);
   await page.goto(battlePath + '?session=' + encodeURIComponent(view.session_id));
   await expectView(page, view);
   await expect(page.locator('body')).toContainText(view.battle.prompt.hint);
@@ -292,6 +305,10 @@ test('mobile reduced-motion controls, hint receipt and a bookmarked battle survi
   await expect(sound).toHaveAttribute('aria-pressed', 'true');
   await settings.click();
   const next = await playTurn(page, view);
+  await expect(status).toHaveAttribute('data-kind', 'receipt');
+  await page.clock.fastForward(5100);
+  await expect(status).toBeHidden();
+  await expect(page.locator('[data-act="receipt"]')).toBeEnabled();
   await page.reload();
   await expectView(page, next);
   await expect(page.locator('body')).toContainText(next.battle.prompt.text);
@@ -302,6 +319,7 @@ test('mobile reduced-motion controls, hint receipt and a bookmarked battle survi
 test('an interrupted hint replays the same event on reload and a competing tab refreshes the view', async ({
   page, request, startDemo,
 }) => {
+  await page.clock.install();
   let view = await startDemo();
   const actionUrl = '/rpg/expeditions/' + view.session_id + '/actions';
   const sent = [];
@@ -313,6 +331,15 @@ test('an interrupted hint replays the same event on reload and a competing tab r
   const failed = page.waitForEvent('requestfailed', (r) => new URL(r.url()).pathname === actionUrl);
   await page.getByTestId('battle-hint').click();
   await failed;
+  const retry = page.locator('.bf-status [data-act="retry"]');
+  await expect(retry).toBeVisible();
+  await page.locator('.bf-settings summary').click();
+  const language = page.locator('.bf-settings [data-act="lang"]');
+  await language.click();
+  await page.clock.fastForward(6000);
+  await expect(retry).toHaveText('Reconnect');
+  await expect(retry).toBeVisible();
+  await language.click();
   const restored = page.waitForResponse((r) => isAction(r, 'hint', view.session_id));
   await page.reload();
   view = await (await restored).json();
@@ -331,6 +358,10 @@ test('an interrupted hint replays the same event on reload and a competing tab r
   await page.getByTestId('battle-submit').click();
   expect((await rejected).status()).toBe(409);
   await expectView(page, advanced);
+  const status = page.locator('.bf-status');
+  await expect(status).toHaveText('已同步最新战况。');
+  await page.clock.fastForward(3100);
+  await expect(status).toBeHidden();
   await expect(page.locator('body')).toContainText(advanced.battle.prompt.text);
 });
 

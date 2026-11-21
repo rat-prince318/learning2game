@@ -1,4 +1,5 @@
 import { msg } from '../../js/locale.js';
+import { CONFIRMATION_MS, createFeedbackTimer } from '../feedback.js';
 import { packLabel, packRows, packList, packDetail, heroPanel } from './pack-content.js';
 
 const tabs = ['gear', 'supplies', 'relics'];
@@ -12,6 +13,16 @@ export function openPack({ view: initial, send, onClose }) {
   const events = new AbortController();
   let view = initial, tab = 'gear', dropping = false, busy = false;
   let selected = {}, notice = '', failed = false, disposed = false;
+  const expireAfter = createFeedbackTimer(() => {
+    notice = '';
+    dialog.querySelector('[data-pack-status]').textContent = '';
+  });
+
+  function clearNotice() {
+    expireAfter();
+    notice = '';
+    failed = false;
+  }
 
   function render(focusSelector) {
     if (disposed) return;
@@ -36,7 +47,7 @@ export function openPack({ view: initial, send, onClose }) {
       '">' + packDetail(view, tab, row, dropping) + '</div><div class="pack-status" data-pack-status role="status" aria-live="polite"></div></section></div></div>';
     dialog.querySelector('.pack-items').scrollTop = scroll;
     const status = dialog.querySelector('[data-pack-status]');
-    status.textContent = notice;
+    status.textContent = busy ? msg('正在保存…', 'Saving…') : notice;
     status.classList.toggle('is-error', failed);
     if (focusSelector) dialog.querySelector(focusSelector)?.focus({preventScroll:true});
   }
@@ -44,6 +55,7 @@ export function openPack({ view: initial, send, onClose }) {
   const dispose = notify => {
     if (disposed) return;
     disposed = true;
+    expireAfter();
     events.abort();
     if (dialog.open) dialog.close();
     dialog.remove();
@@ -53,17 +65,20 @@ export function openPack({ view: initial, send, onClose }) {
   const close = () => { if (!busy) dispose(true); };
   function pickTab(id) {
     tab = id;
-    dropping = false; notice = ''; failed = false;
+    dropping = false;
+    clearNotice();
     render('[data-pack-tab="' + id + '"]');
   }
   function pickItem(button) {
     selected[tab] = button.dataset.packItem;
-    dropping = false; notice = ''; failed = false;
+    dropping = false;
+    clearNotice();
     render('[data-pack-item][aria-pressed="true"]');
     dialog.querySelector('[data-pack-item][aria-pressed="true"]')?.scrollIntoView({block:'nearest'});
   }
   function cancelDrop() {
     dropping = false;
+    clearNotice();
     render('[data-pack-action="discard"]');
   }
   async function apply(action) {
@@ -75,6 +90,7 @@ export function openPack({ view: initial, send, onClose }) {
       fields.quantity = input.valueAsNumber;
     }
     if (!fields.action || !item_id) return;
+    clearNotice();
     busy = true;
     dialog.setAttribute('aria-busy','true');
     const status = dialog.querySelector('[data-pack-status]');
@@ -91,6 +107,7 @@ export function openPack({ view: initial, send, onClose }) {
         equip: msg('已换上装备。', 'Equipment changed.'), unequip: msg('已收回背包。', 'Returned to pack.'),
         use: msg('已使用一份道具。', 'One item used.'), 'confirm-discard': msg('已丢弃所选物品。', 'Selected items discarded.')
       }[action];
+      expireAfter(CONFIRMATION_MS);
     } catch (error) {
       if (error?.status === 409) dropping = false;
       failed = true;
@@ -111,7 +128,8 @@ export function openPack({ view: initial, send, onClose }) {
     if (button.dataset.packWorn) {
       tab = 'gear';
       selected.gear = button.dataset.packWorn;
-      dropping = false; notice = ''; failed = false;
+      dropping = false;
+      clearNotice();
       render('[data-pack-item][aria-pressed="true"]');
       dialog.querySelector('[data-pack-item][aria-pressed="true"]')?.scrollIntoView({block:'nearest'});
       return;
@@ -122,7 +140,8 @@ export function openPack({ view: initial, send, onClose }) {
     if (action === 'close') return close();
     if (action === 'cancel') return cancelDrop();
     if (action === 'discard') {
-      dropping = true; notice = ''; failed = false;
+      dropping = true;
+      clearNotice();
       render('[data-pack-action="cancel"]');
       return;
     }
@@ -154,7 +173,10 @@ export function openPack({ view: initial, send, onClose }) {
     if (tabButton) pickTab(buttons[next].dataset.packTab);
     else pickItem(buttons[next]);
   });
-  window.addEventListener('learning2game:locale', () => {notice = ''; render();}, {signal:events.signal});
+  window.addEventListener('learning2game:locale', () => {
+    if (!failed) clearNotice();
+    render();
+  }, {signal:events.signal});
   render();
   document.body.append(dialog);
   dialog.showModal();

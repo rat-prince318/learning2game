@@ -37,6 +37,14 @@ async function walkTo(page, key) {
   await page.locator(`.lr-travel-list [data-do="spot"][data-key="${key}"]`).click();
 }
 
+async function expectJournalConfirmation(page, text) {
+  const notice = page.locator('#notice');
+  await expect(notice).toContainText(text);
+  await expect(notice).toBeVisible();
+  await expect(page.locator('.lr-dialog-layer .lr-dialog')).toHaveCount(0);
+  await expect(notice).toBeHidden({timeout:6500});
+}
+
 async function expectFullField(page) {
   const geometry = await page.getByTestId('battle-arena').evaluate(stage => {
     const rect = stage.getBoundingClientRect();
@@ -85,6 +93,22 @@ function answerForFixture(prompt) {
   expect(answers).toHaveLength(1);
   return answers[0].id;
 }
+
+test('a blocked course upload remains readable until the player dismisses the message', async ({page}) => {
+  await page.clock.install();
+  await page.goto('/rpg/?prepare=1');
+  await page.locator('#lr-files').setInputFiles(Array.from({length:9}, (_, index) => ({
+    name: `notes-${index + 1}.txt`, mimeType:'text/plain', buffer:Buffer.from('notes'),
+  })));
+  await page.locator('#lr-depart button[type="submit"]').click();
+  const notice = page.locator('#notice');
+  await expect(notice.getByRole('status')).toContainText('最多八份讲义');
+  await page.clock.fastForward(10000);
+  await expect(notice).toBeVisible();
+  await notice.getByRole('button', {name:'关闭提示'}).click();
+  await expect(notice).toBeHidden();
+  await expect(page.locator('#lr-files')).toBeVisible();
+});
 
 test('rescue the ferry crew, master both dragon phases and reload the final order', async ({ page }) => {
   test.setTimeout(120000);
@@ -176,6 +200,7 @@ test('take a short save into eight chapters, follow the moving guide and leave t
     action: 'retreat', event_id: crypto.randomUUID(), expected_revision: original.revision,
   }});
   expect(end.ok()).toBe(true);
+  await page.clock.install();
   await page.goto('/rpg/?session=' + original.session_id);
   await page.getByRole('button', {name: '用这份资料开始八章主线'}).click();
   const marker = page.locator('.lr-guide');
@@ -199,8 +224,37 @@ test('take a short save into eight chapters, follow the moving guide and leave t
   await story.getByRole('button', {name:/砸开船牢/}).click();
   await story.getByRole('button', {name:'回到战场'}).click();
   await expect(marker).toHaveAttribute('data-target', 'site');
+  const notice = page.locator('#notice');
+  const exit = page.locator('.lr-field-action[data-key="ship"]');
+  await expect(exit).toBeVisible();
+  await page.keyboard.press('f');
+  await expect(notice).toContainText('水尺');
+  await page.clock.fastForward(3000);
+  await page.keyboard.press('f');
+  await page.clock.fastForward(2500);
+  // The previous hint's five seconds are up; the second F has its own reading time.
+  await expect(notice).toBeVisible();
+  await page.clock.fastForward(3000);
+  await expect(notice).toBeHidden();
   await page.locator('.lr-track-quest').click();
-  await page.locator('[data-do=tune]').click({timeout:20000});
+  await page.locator('[data-do=inspect]').click({timeout:20000});
+  await expect(notice).toContainText('调整刻度');
+  await page.clock.fastForward(5500);
+  await expect(notice).toBeHidden();
+  await expect(page.locator('[data-do=tune]')).toBeVisible();
+  await page.locator('[data-do=inspect]').click();
+  await expect(notice).toContainText('调整刻度');
+  await page.clock.fastForward(3000);
+  await page.evaluate(() => {
+    document.documentElement.requestFullscreen = () => Promise.reject(new DOMException('Fullscreen denied', 'NotAllowedError'));
+  });
+  await page.locator('#game-fullscreen-toggle').click();
+  await expect(notice).toContainText('F11');
+  await page.clock.fastForward(2500);
+  await expect(notice).toBeVisible();
+  await page.clock.fastForward(3000);
+  await expect(notice).toBeHidden();
+  await page.locator('[data-do=tune]').click();
   await page.locator('[data-do=tune]').click();
   // A phone can dismiss the station sheet while the server is saving the reading.
   let releaseSignal;
@@ -221,6 +275,7 @@ test('take a short save into eight chapters, follow the moving guide and leave t
   }
   await expect(marker).toHaveAttribute('data-target', 'ship');
   await page.unroute('**/actions', slowSignal);
+  await expectJournalConfirmation(page, '河灯已记入手记。');
   await page.locator('.lr-track-quest').click();
   await page.locator('[data-do=depart-region]').click({timeout:20000});
   await expect.poll(async () => (await state()).region_index).toBe(1);
@@ -235,7 +290,7 @@ test('take a short save into eight chapters, follow the moving guide and leave t
   expect((await state()).field_signals).not.toContain('salt_harbor');
   await buoy.getByRole('button', {name:/中槽/}).click();
   await expect(buoy).toBeHidden();
-  await page.locator('[data-do=walk]').click();
+  await expectJournalConfirmation(page, '航灯已记入手记。');
   await expect(marker).toHaveAttribute('data-target','keeper');
   expect((await state()).field_signals).toContain('salt_harbor');
   expect((await (await page.request.get(oldPath)).json()).phase).toBe('retreated');
@@ -279,9 +334,15 @@ test('steady the terrace winch and read the archive dispatch before meeting the 
   const windNotice = page.locator('#notice');
   await expect(windNotice).toContainText('风旗已记入手记。');
   await expect(windNotice).toBeVisible();
-  // The confirmation should expire while the player stays at the winch.
+  const station = page.getByRole('region', {name:'现场交互'});
+  await expect(station).toHaveCount(0);
+  await expect(page.locator('.lr-field-action[data-key="site"]')).toBeVisible();
+  await page.keyboard.press('f');
+  await expect(station).toContainText('已记入手记');
+  // The timed confirmation must leave a deliberately reopened field note alone.
   await expect(windNotice).toBeHidden({timeout:8000});
-  await page.locator('[data-do=walk]').click();
+  await expect(station).toBeVisible();
+  await station.locator('[data-do=walk]').click();
   await expect(marker).toHaveAttribute('data-target','keeper');
   await page.locator('#game-menu-toggle').click();
   await page.locator('#top [data-do="journal"]').click();
@@ -302,6 +363,7 @@ test('steady the terrace winch and read the archive dispatch before meeting the 
   await expect(lamp.getByRole('status')).toContainText('木铃一响');
   await lamp.locator('[data-do=inspect]').click();
   await expect(lamp).toBeHidden();
+  await expectJournalConfirmation(page, '书灯已记入手记。');
   await page.reload();
   await expect(marker).toHaveAttribute('data-target','keeper');
   expect((await (await page.request.get(endpoint)).json()).field_signals).toContain('palimpsest');
@@ -326,12 +388,12 @@ test('work the rail brake, feel the ice line, signal the bridge and sight the su
     view = await response.json();
   };
   const districts = [
-    {region:2, kind:'rail', id:'copper_yard', wrong:['hopper'], reading:'炉门', right:['cooling','brake']},
-    {region:5, kind:'lines', id:'mirror_pass', wrong:['ice'], reading:'脆响', right:['post']},
-    {region:6, kind:'bell', id:'bell_bridges', wrong:['ring','ring'], reading:'west bank', right:['ring']},
-    {region:7, kind:'orrery', id:'orrery', wrong:['lower','lower'], reading:'north', right:['rotate']},
+    {region:2, kind:'rail', id:'copper_yard', wrong:['hopper'], reading:'炉门', right:['cooling','brake'], confirmation:'炉火已记入手记。'},
+    {region:5, kind:'lines', id:'mirror_pass', wrong:['ice'], reading:'脆响', right:['post'], confirmation:'雪铃已记入手记。'},
+    {region:6, kind:'bell', id:'bell_bridges', wrong:['ring','ring'], reading:'west bank', right:['ring'], confirmation:'Bridge bell recorded in your journal.'},
+    {region:7, kind:'orrery', id:'orrery', wrong:['lower','lower'], reading:'north', right:['rotate'], confirmation:'Solar dial recorded in your journal.'},
   ];
-  for (const {region,kind,id,wrong,reading,right} of districts) {
+  for (const {region,kind,id,wrong,reading,right,confirmation} of districts) {
     while (view.region_index < region) {
       if (!view.field_signals.includes(view.map[view.region_index].region_id)) await order('inspect_landmark');
       await order('story_choice', {choice: orders[view.region_index]});
@@ -358,6 +420,7 @@ test('work the rail brake, feel the ice line, signal the bridge and sight the su
     view = await (await receipt).json();
     expect(view.field_signals).toContain(id);
     await expect(panel).toHaveCount(0);
+    await expectJournalConfirmation(page, confirmation);
     await page.reload();
     expect((await (await page.request.get(url)).json()).field_signals).toContain(id);
   }

@@ -647,17 +647,32 @@ body.lantern {
   font-size: 72px;
   color: var(--gold);
 }
-#notice:not([hidden]):not(:empty) {
+#notice:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  pointer-events: none;
   position: fixed;
-  bottom: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  max-width: min(640px, 95vw);
+  width: max-content;
+  max-width: min(640px, calc(100vw - 24px));
+  overflow-wrap: anywhere;
   z-index: 8;
   padding: 12px 18px;
   border: 1px solid #dabc80;
   background: #162a32f5;
   box-shadow: 0 3px 12px #07111988;
+}
+#notice button {
+  pointer-events: auto;
+  flex: none;
+  padding: .15em .45em;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  cursor: pointer;
 }
 .lr-host {
   min-width: 0;

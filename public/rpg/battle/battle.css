@@ -232,6 +232,7 @@
   font-size: 14px;
 }
 .l2g-battle .bf-status button { margin-left: 12px; padding: 3px 10px; border: 1px solid #d3af71; color: inherit; background: transparent; }
+.l2g-battle .bf-status:is([data-kind="confirmation"], [data-kind="receipt"]) { pointer-events: none; }
 .l2g-battle .bf-board { display: grid; grid-template-columns: minmax(215px, 30fr) minmax(0, 70fr); gap: 14px; margin-top: 15px; }
 .l2g-battle .bf-orders, .l2g-battle .bf-paper {
   min-width: 0;

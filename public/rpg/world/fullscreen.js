@@ -1,4 +1,5 @@
 import { msg } from '../../js/locale.js';
+import { tell } from './notice.js';
 
 const wrap = document.querySelector('#road');
 const menu = document.querySelector('#game-menu-toggle');
@@ -78,12 +79,10 @@ full.addEventListener('click', async () => {
     if (document.fullscreenElement) await document.exitFullscreen();
     else await document.documentElement.requestFullscreen();
   } catch {
-    const n = document.querySelector('#notice');
-    n.hidden = false;
-    n.textContent = msg(
+    tell(msg(
       '当前窗口已铺满游戏。浏览器可通过 F11 进入屏幕全屏。',
       'The game fills this window. Your browser can also enter fullscreen with F11.',
-    );
+    ));
   }
 });
 document.addEventListener('fullscreenchange', sync);

@@ -61,6 +61,11 @@ test('use the field pack at Willow Ferry, keep the hero still, and speak with F'
   await action(page, 'use').click();
   expect((await use).ok()).toBe(true);
   await expect(stat(page, 'focus')).toHaveText('1 / ' + start.player.focus_max);
+  const notice = pack(page).locator('[data-pack-status]');
+  await expect(notice).toHaveText('One item used.');
+  await action(page, 'close').focus();
+  await expect(notice).toBeHidden({timeout: 6000});
+  await expect(action(page, 'close')).toBeFocused();
   await item(page, 'field_bandage').click();
   await expect(action(page, 'use')).toBeDisabled();
   await action(page, 'discard').click();
@@ -159,6 +164,7 @@ test('inspect during combat, resume answering and swap an earned weapon at the s
   expect(start.map).toHaveLength(2);
   const path = '/rpg/expeditions/' + start.session_id;
   const read = async () => (await page.request.get(path)).json();
+  await page.clock.install();
   await page.goto('/rpg/?session=' + start.session_id);
   await travel(page, 'boss_steady');
   await page.locator('[data-do="engage"]').click();
@@ -207,4 +213,16 @@ test('inspect during combat, resume answering and swap an earned weapon at the s
   const unequipped = await (await remove).json();
   expect(unequipped.player.loadout.armor).toBe(null);
   await expect(stat(page, 'hp')).toHaveText(unequipped.player.hp + ' / ' + unequipped.player.max_hp);
+  const notice = pack(page).locator('[data-pack-status]');
+  await expect(notice).toHaveText('已收回背包。');
+  const error = '保存暂时中断，请重试。';
+  await page.route('**' + path + '/actions', route =>
+    route.fulfill({status:503, json:{error:{message:error}}}), {times:1});
+  await action(page, 'equip').click();
+  await expect(notice).toHaveText(error);
+  await page.clock.fastForward(5000);
+  await expect(notice).toHaveText(error);
+  await action(page, 'equip').click();
+  await expect(notice).toHaveText('已换上装备。');
+  expect((await read()).player.loadout.armor).toBe('ward_vest');
 });

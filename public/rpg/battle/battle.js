@@ -8,6 +8,7 @@ import { displayText, readLocal, saveLocal } from '../../js/utils.js';
 
 import { getLocale, msg, setLocale } from '../../js/locale.js';
 import { eventText } from './words.js';
+import { createFeedbackTimer, CONFIRMATION_MS, GUIDANCE_MS } from '../feedback.js';
 
 const prefKey = 'l2g.battle.preferences.v1';
 const campNoteKey = 'l2g.battle.open-camp-note.v1';
@@ -25,7 +26,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
     <div class="bf-wrap"><div class="bf-location"></div>
       <div class="bf-frame"><div class="bf-stage-slot"><div class="bf-stage" data-testid="battle-arena"></div></div>
         <div class="bf-hud"></div><div class="bf-board"></div></div>
-      <div class="bf-status" role="status" aria-live="polite" aria-atomic="true"></div></div>
+      <div class="bf-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
       ${immersive ? '<dialog class="bf-field-notes" data-testid="battle-field-notes"></dialog>' : ''}`;
   container.append(root);
   const find = (selector) => root.querySelector(selector);
@@ -40,7 +41,8 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   let controller = suppliedController || (sessionId ? new BattleController(sessionId) : null);
   let view = null, choice = '', skill = 'strike', busy = false, destroyed = false;
   let retryAction = '', exiting = false, picked = [], lens = -1;
-  let lastStatus = '', cargo = null;
+  let statusText = null, cargo = null;
+  const expireStatusAfter = createFeedbackTimer(() => tell());
   const notes = find('.bf-field-notes');
   const dockSize = notes && new ResizeObserver(() => alignNotes());
   let receipt = null;
@@ -72,13 +74,19 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
     root.classList.toggle('bf-reduced', prefs().reducedMotion);
   }
 
-  function tell(message = '', action = '', kind = '') {
-    lastStatus = message;
+  function tell(localize = null, {action = '', kind = '', duration = 0} = {}) {
+    expireStatusAfter(duration);
+    statusText = localize;
     retryAction = action;
+    status.dataset.kind = kind || (duration ? 'confirmation' : '');
+    paintStatus();
+  }
+
+  function paintStatus() {
+    const message = statusText?.() || '';
     status.replaceChildren();
-    status.dataset.kind = kind;
     status.append(displayText(message));
-    if (action) {
+    if (retryAction) {
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.dataset.act = 'retry';
@@ -175,14 +183,19 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   async function run(type) {
     if (busy || destroyed) return;
     const before = view, fromKeyboard = find(':focus-visible') != null, previousSkill = skill;
+    if (['hint', 'submit'].includes(type) && (!before?.battle?.prompt || (type === 'submit' && !choice))) return;
     lock(true);
-    tell(type === 'start' ? msg('正在准备讲义和渡口存档…','Preparing the field guide…') :
-      type === 'load' ? msg('正在读取存档…','Loading the expedition…') : msg('正在确认本回合…','Resolving this turn…'));
+    const pendingText = () => type === 'start' ? msg('正在准备讲义和渡口存档…','Preparing the field guide…') :
+      type === 'load' ? msg('正在读取存档…','Loading the expedition…') : msg('正在确认本回合…','Resolving this turn…');
+    tell(pendingText);
     try {
       let next;
       if (type === 'start') {
         next = await startDemo({ heroClass: 'arcanist',
-          onProgress: (message) => { if (!destroyed) tell(message); } });
+          onProgress: (message) => {
+            const locale = getLocale();
+            if (!destroyed) tell(() => getLocale() === locale ? message : pendingText());
+          } });
         if (destroyed) return;
         controller = new BattleController(next.session_id, {initialView:next});
         rememberSession(next.session_id);
@@ -190,7 +203,6 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
         next = type === 'load' ? await controller.load() : await controller.retry();
       } else {
         const prompt = before?.battle?.prompt;
-        if (!prompt || (type === 'submit' && !choice)) return;
         const fields = type === 'hint' ? {action:'hint', prompt_id:prompt.prompt_id} :
           {action:'answer', prompt_id:prompt.prompt_id, option_id:choice,
             skill:before.phase === 'sidequest' ? 'strike' : skill};
@@ -199,7 +211,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
       if (destroyed) return;
       const turn = next.battle?.last_event;
       if (type === 'submit' && !controller.resynced && before.phase === 'combat' && turn) {
-        tell(eventText(turn,next), '', 'receipt');
+        tell(() => eventText(turn,next), {kind:'receipt', duration:GUIDANCE_MS});
         // Progress is already saved. A rendering failure must never repeat this answer.
         try { await playTurn(before, next, previousSkill); }
         catch (error) { console.warn('Battle animation skipped', error); }
@@ -209,11 +221,16 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
       const attempt = type === 'submit' && !controller.resynced && prompt ?
         {prompt:prompt.text, selected:prompt.options.find(option => option.id === choice)?.text} : undefined;
       accept(next, attempt);
-      const progress = next.phase === 'sidequest' ? msg(' 可在营火旁查阅修习笔记。',' Camp notes are available by the fire.') : '';
-      tell(controller.resynced ? msg('已同步最新战况。','Battle synchronized.') :
-        type === 'submit' ? displayText(eventText(turn,next) || msg('回合已结算。','Turn resolved.')) + progress :
-        type === 'hint' ? msg('讲义提示已展开。','The field note is open.') : '', '',
-        type === 'submit' && !controller.resynced ? 'receipt' : '');
+      if (controller.resynced) {
+        tell(() => msg('已同步最新战况。','Battle synchronized.'), {duration:CONFIRMATION_MS});
+      } else if (type === 'submit') {
+        tell(() => {
+          const summary = eventText(turn,next) || msg('回合已结算。','Turn resolved.');
+          return summary + (next.phase === 'sidequest' ? msg(' 可在营火旁查阅修习笔记。',' Camp notes are available by the fire.') : '');
+        }, {kind:'receipt', duration:GUIDANCE_MS});
+      } else if (type === 'hint') {
+        tell(() => msg('讲义提示已展开。','The field note is open.'), {duration:CONFIRMATION_MS});
+      } else tell();
       if (fromKeyboard && type === 'submit') {
         lock(false);
         find('[data-prompt-title]')?.focus({preventScroll:true});
@@ -224,10 +241,12 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
         forgetSavedSession(sessionId);
         controller = null;
         render();
-        tell(msg('上次的课程存档已清理，可重新进入渡口。','The old course save has expired. You can begin a new crossing.'));
+        tell(() => msg('上次的课程存档已清理，可重新进入渡口。','The old course save has expired. You can begin a new crossing.'));
       } else {
-        const errorMessage = displayText(error.message, msg('连接遇到问题，请再试一次。','Connection interrupted. Try again.'));
-        tell(errorMessage, type === 'start' ? 'start' : controller?.hasPending ? 'restore' : !view ? 'load' : '');
+        const locale = getLocale();
+        const action = type === 'start' ? 'start' : controller?.hasPending ? 'restore' : !view ? 'load' : '';
+        tell(() => locale === getLocale() && error.message ? error.message :
+          msg('操作未完成，请重试。','The action could not be completed. Try again.'), {action});
         if (!view && controller) {
           board.innerHTML = `<section class="bf-paper bf-loading"><h2>${msg('等待连接存档','Waiting for your save')}</h2><p>${msg('检查课程服务和远征编号后可重新连接。','Check the server and expedition ID, then reconnect.')}</p>
             ${standalone ? '<a class="bf-linkbtn" href="/rpg/battle/">'+msg('前往独立试玩','Open the demo')+'</a>' : ''}</section>`;
@@ -361,10 +380,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   window.addEventListener('learning2game:locale', () => {
     preferences();
     render();
-    if (!lastStatus) return;
-    if (retryAction) tell(msg('连接遇到问题，请再试一次。','Connection interrupted. Try again.'),retryAction);
-    else if (busy) tell(msg('正在确认当前操作。','Resolving your action…'));
-    else tell(eventText(view?.battle?.last_event,view), '', status.dataset.kind);
+    if (statusText) paintStatus();
   }, {signal:lifetime.signal});
   media.addEventListener('change', preferences, {signal:lifetime.signal});
   preferences();
@@ -373,6 +389,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   return {ready, getView:() => view, destroy() {
     if (destroyed) return;
     destroyed = true;
+    expireStatusAfter();
     dockSize?.disconnect();
     lifetime.abort();
     stage.destroy();
