@@ -276,8 +276,16 @@ test('steady the terrace winch and read the archive dispatch before meeting the 
   await winch.getByRole('button', {name:'绞紧迎风索'}).click();
   await pawl.click();
   await expect(winch).toBeHidden();
+  const windNotice = page.locator('#notice');
+  await expect(windNotice).toContainText('风旗已记入手记。');
+  await expect(windNotice).toBeVisible();
+  // The confirmation should expire while the player stays at the winch.
+  await expect(windNotice).toBeHidden({timeout:8000});
   await page.locator('[data-do=walk]').click();
   await expect(marker).toHaveAttribute('data-target','keeper');
+  await page.locator('#game-menu-toggle').click();
+  await page.locator('#top [data-do="journal"]').click();
+  await expect(page.locator('.lr-route-list article').filter({hasText:'悬帆梯田'})).toContainText('风旗');
   view = await (await page.request.get(endpoint)).json();
   expect(view.field_signals).toContain('sail_terraces');
   await issue('story_choice', {choice: orders[view.region_index]});

@@ -68,11 +68,18 @@ const controlNames = [
   ['选缆桩', 'Choose a post'], ['换链环', 'Move the chain'], ['扳道岔', 'Throw the switch'], ['调帆向', 'Trim the sail'],
   ['移灯', 'Move the lamp'], ['试铃绳', 'Test a bell line'], ['拨音簧', 'Select a reed'], ['转日环', 'Turn the meridian'],
 ];
-function tell(text = '') {
+let noticeTimer;
+function tell(text = '', durationMs = 0) {
+  clearTimeout(noticeTimer);
   notice.textContent = text;
   notice.hidden = !text;
   const supplyStatus = main.querySelector('.lr-field-supplies [role="status"]');
   if (supplyStatus) supplyStatus.textContent = text;
+  if (durationMs > 0) {
+    noticeTimer = setTimeout(() => {
+      if (notice.textContent === text) tell();
+    }, durationMs);
+  }
 }
 function errorText(e) {
   if (e.message?.includes('旧版试卷题库')) return reuploadNotice();
@@ -128,6 +135,7 @@ function clearField() {
 }
 function release() {
   epoch++;
+  tell();
   closePackOnNavigation();
   clearField();
   mounted?.destroy?.();
@@ -436,7 +444,7 @@ async function recordSignal() {
   draw();
   const healed = view.player.hp - hp;
   tell(line(regionOf(view).signal) + msg('已记入手记。', ' recorded in your journal.') +
-    (healed > 0 ? '　HP +' + healed : ''));
+    (healed > 0 ? '　HP +' + healed : ''), 3000);
 }
 async function run(fn) {
   if (locked) return;
