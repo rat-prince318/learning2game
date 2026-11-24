@@ -46,65 +46,6 @@ export function renderPlan(plan, options, selected) {
   $('plan-warnings').textContent = displayText((plan.warnings || []).map(ui).join(' '));
   $('confirm-plan').checked = false;
 }
-function cardMarkup(card, index, side, s, busy) {
-  const matched = s.session[side === 'left' ? 'matched_left_ids' : 'matched_right_ids'].includes(
-    card.id,
-  );
-  const selected = (side === 'left' ? s.selectedLeft : s.selectedRight) === card.id;
-  const locked = matched || s.phase !== 'active' || busy || (side === 'right' && !s.selectedLeft);
-  const label = matched
-    ? ui('已配对')
-    : selected
-      ? ui('已选')
-      : side === 'left'
-        ? ui('概念')
-        : ui('释义');
-  return `<button type="button" class="match-card ${matched ? 'matched' : ''} ${selected ? 'selected' : ''}" data-card-id="${escapeHtml(card.id)}" data-side="${side}" aria-pressed="${selected}" ${locked ? 'disabled' : ''}><span class="visually-hidden">${label} </span><span class="card-badge" aria-hidden="true">${matched ? '✓' : selected ? '●' : side === 'left' ? index + 1 : String.fromCharCode(65 + index)}</span><span class="card-text">${studyMarkup(card.text)}</span></button>`;
-}
-export function renderPlay(s, busy) {
-  if (!s) return;
-  const active = document.activeElement?.dataset.cardId;
-  $('play-title').innerHTML = studyMarkup(s.game.title || ui('配对练习'));
-  $('play-progress').textContent = `${s.session.completed_pairs} / ${s.game.pair_count}`;
-  $('play-errors').textContent = s.session.error_count;
-  $('play-hints').textContent = s.session.hint_count;
-  $('play-progress-bar').max = s.game.pair_count;
-  $('play-progress-bar').value = s.session.completed_pairs;
-  for (const [side, cards] of [
-    ['left', s.leftCards],
-    ['right', s.rightCards],
-  ])
-    $(side + '-cards').innerHTML = cards.map((c, i) => cardMarkup(c, i, side, s, busy)).join('');
-  const selected = s.leftCards.find((c) => c.id === s.selectedLeft);
-  $('selection-status').innerHTML =
-    s.phase === 'submitting'
-      ? ui('正在核对这组配对…')
-      : s.phase === 'retry'
-        ? h(s.error?.message || ui('请重试上次配对或同步进度。'))
-        : s.phase === 'ended'
-          ? ui('本轮已结束。')
-          : selected
-            ? msg(
-                `已选「${studyMarkup(selected.text)}」，请选择右侧描述。`,
-                `Selected “${studyMarkup(selected.text)}”. Choose its description.`,
-              )
-            : ui('请选择左侧概念。');
-  $('attempt-retry').hidden = s.phase !== 'retry';
-  $('hint-button').disabled = busy || s.phase !== 'active' || !selected;
-  $('restart-button').disabled = busy || s.phase === 'submitting';
-  $('finish-button').disabled = busy || ['submitting', 'retry'].includes(s.phase);
-  if (s.feedback) {
-    const f = s.feedback;
-    $('attempt-feedback').innerHTML =
-      `<div class="feedback-result ${f.is_correct ? 'correct' : 'incorrect'}">${f.is_correct ? ui('✓ 配对正确') : ui('请再选一次')}</div><p>${studyMarkup(f.explanation || ui('比较几个描述的关键特征，然后再试一次。'))}</p>${sourceMarkup(f.source_ref)}`;
-  }
-  if (active) {
-    const buttons = [...document.querySelectorAll('.match-card:not(:disabled)')];
-    (buttons.find((btn) => btn.dataset.cardId === active) || buttons[0])?.focus({
-      preventScroll: true,
-    });
-  }
-}
 export function renderReport(r, title, feedback = '') {
   $('report-subtitle').innerHTML =
     `${studyMarkup(title || ui('配对练习'))} / ${msg(`已配对 ${r.matched_pairs} 组`, `${r.matched_pairs} matched`)}`;

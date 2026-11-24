@@ -813,185 +813,6 @@
   .error-banner strong {
     font-size: 13px;
   }
-  .game-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 17px;
-    padding: 20px 26px 16px;
-    background: white;
-    border: 1px solid var(--line);
-    border-radius: 13px;
-    margin-bottom: 22px;
-  }
-  .game-stats small {
-    display: block;
-    color: var(--muted);
-    font-size: 11px;
-  }
-  .game-stats strong {
-    font:
-      500 24px/1.7 'Cascadia Code',
-      Consolas,
-      monospace;
-    font-variant-numeric: tabular-nums;
-  }
-  .game-stats progress {
-    grid-column: 1/-1;
-  }
-  .play-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 2.4fr) minmax(250px, 1fr);
-    gap: 22px;
-    align-items: start;
-  }
-  .play-sidebar {
-    display: grid;
-    gap: 17px;
-  }
-  .matching-board {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1.25fr);
-    gap: 12px;
-    align-items: start;
-  }
-  .card-column h2 {
-    color: var(--muted);
-    font-size: 11px;
-    margin-bottom: 13px;
-  }
-  .card-column > div {
-    display: grid;
-    gap: 11px;
-  }
-  .board-link {
-    padding-top: 70px;
-    color: #a3c9cb;
-    text-align: center;
-    font-size: 26px;
-  }
-  .match-card {
-    width: 100%;
-    min-height: 82px;
-    padding: 16px;
-    border: 1px solid #cbd7e5;
-    background: #fbfcff;
-    border-radius: 11px;
-    color: var(--ink);
-    text-align: left;
-    font-size: 12px;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    opacity: 1 !important;
-  }
-  .match-card .card-text {
-    flex: 1;
-    min-width: 0;
-  }
-  .match-card .card-badge {
-    flex: none;
-    width: 22px;
-    height: 22px;
-    border: 1px solid #dbe3ef;
-    color: var(--muted);
-    border-radius: 6px;
-    display: grid;
-    place-items: center;
-    font-size: 10px;
-  }
-  .match-card:hover:not(:disabled) {
-    border-color: var(--teal);
-    background: #f0faf9;
-  }
-  .match-card.selected {
-    border: 2px solid var(--teal);
-    padding: 15px;
-    background: var(--teal-soft);
-    box-shadow: 0 0 0 3px #ddf3f180;
-  }
-  .match-card.selected .card-badge {
-    border-color: var(--teal);
-    color: var(--teal);
-  }
-  .match-card.matched {
-    background: #ecf6f4;
-    border-color: #b8d9cf;
-    color: #377164;
-  }
-  .match-card.matched .card-badge {
-    background: #d2eae2;
-    color: #377164;
-    border-color: transparent;
-  }
-  .match-card.pending {
-    border-style: dashed;
-  }
-  .match-card img {
-    width: 100%;
-    height: 100px;
-    object-fit: contain;
-  }
-  .selection-status {
-    color: var(--teal);
-    font-size: 12px;
-    background: #eef8f8;
-    padding: 11px 14px;
-    border-radius: 8px;
-    margin-bottom: 21px;
-    min-height: 42px;
-  }
-  .feedback-panel h2 {
-    font-size: 17px;
-    margin-bottom: 18px;
-  }
-  .feedback-content {
-    font-size: 12px;
-  }
-  .feedback-result {
-    padding: 10px 12px;
-    border-radius: 8px;
-    margin-bottom: 11px;
-    font-weight: bold;
-  }
-  .feedback-result.correct {
-    color: #286f5d;
-    background: #e7f5ec;
-  }
-  .feedback-result.incorrect {
-    color: #985217;
-    background: #fff3df;
-  }
-  .feedback-content .source-image {
-    max-height: 140px;
-  }
-  .hint-panel h2 {
-    font-size: 15px;
-  }
-  .hint-panel p {
-    color: var(--muted);
-    font-size: 11px;
-    margin: 9px 0 15px;
-  }
-  .hint-content {
-    font-size: 12px;
-    background: #fff7e8;
-    border: 1px solid #e8d7b7;
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 12px;
-  }
-  .warning-text {
-    color: #985217;
-    font-size: 11px;
-    margin: 13px 0 9px;
-  }
-  .sidebar-note {
-    text-align: center;
-    font-size: 10px;
-  }
   .report-metrics {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1236,23 +1057,6 @@
     .site-footer {
       margin: 0 32px;
     }
-    .play-grid {
-      grid-template-columns: minmax(0, 2fr) minmax(235px, 1fr);
-    }
-    .matching-board {
-      grid-template-columns: minmax(0, 1fr) 15px minmax(0, 1.15fr);
-      gap: 8px;
-    }
-    .board-panel {
-      padding: 20px;
-    }
-    .match-card {
-      padding: 13px;
-      min-height: 90px;
-    }
-    .match-card.selected {
-      padding: 12px;
-    }
   }
   @media (max-width: 760px) {
     .site-header {
@@ -1283,7 +1087,6 @@
       display: none;
     }
     .create-grid,
-    .play-grid,
     .report-grid {
       grid-template-columns: 1fr;
     }
@@ -1295,32 +1098,6 @@
     }
     .create-inputs {
       gap: 18px;
-    }
-    .game-stats {
-      padding: 17px 20px;
-      gap: 8px;
-    }
-    .game-stats strong {
-      font-size: 22px;
-    }
-    .game-stats small {
-      font-size: 10px;
-    }
-    .play-sidebar {
-      grid-template-columns: 1fr 1fr;
-    }
-    .play-sidebar > .feedback-panel {
-      grid-column: 1;
-    }
-    .play-sidebar > .hint-panel {
-      grid-column: 2;
-    }
-    .play-sidebar > button,
-    .play-sidebar > .sidebar-note {
-      grid-column: 1/-1;
-    }
-    .matching-board {
-      grid-template-columns: minmax(0, 1fr) 15px minmax(0, 1.25fr);
     }
     .report-metrics {
       grid-template-columns: 1fr 1fr;
@@ -1368,37 +1145,6 @@
     .field-grid {
       grid-template-columns: 1fr;
       gap: 0;
-    }
-    .play-sidebar {
-      grid-template-columns: 1fr;
-    }
-    .play-sidebar > .hint-panel {
-      grid-column: 1;
-    }
-    .matching-board {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
-      gap: 10px;
-    }
-    .board-link {
-      display: none;
-    }
-    .match-card {
-      padding: 11px;
-      font-size: 11px;
-      min-height: 94px;
-      gap: 6px;
-    }
-    .match-card.selected {
-      padding: 10px;
-    }
-    .match-card .card-badge {
-      width: 18px;
-      height: 18px;
-      font-size: 9px;
-    }
-    .selection-status {
-      font-size: 11px;
-      padding: 10px;
     }
     .report-knowledge summary {
       align-items: flex-start;
@@ -1714,26 +1460,10 @@
   .saved-materials button {
     flex-shrink: 0;
   }
-  .match-card {
-    background: #f6f8f1;
-    border-color: #cbd9c7;
-  }
-  #right-cards .match-card {
-    background: #f7f9f6;
-  }
-  .match-card.selected,
-  #right-cards .match-card.selected {
-    background: #e2efdb;
-  }
-  .match-card.matched,
-  #right-cards .match-card.matched {
-    background: #e5f2e5;
-  }
+
 }
 
 @layer components {
-  .card-column > div { grid-template-columns: minmax(0, 1fr); }
-  .match-card { min-width: 0; }
   .studio-shortcuts { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
   .language-button, .expedition-link { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 5px 10px; font: inherit; font-size: 13px; line-height: 1.2; border-radius: 5px; }
   .expedition-link { color: var(--teal); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }

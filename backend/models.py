@@ -139,11 +139,17 @@ class PublicCard(StrictModel):
     text: CardText
 
 
+class CourtGroup(StrictModel):
+    left_ids: list[Identifier] = Field(min_length=2, max_length=4)
+    right_ids: list[Identifier] = Field(min_length=2, max_length=4)
+
+
 class GameConfigPublic(StrictModel):
     game_id: Identifier
     title: Title
     left_cards: list[PublicCard] = Field(min_length=2, max_length=12)
     right_cards: list[PublicCard] = Field(min_length=2, max_length=12)
+    court_groups: list[CourtGroup] = Field(default_factory=list)
 
 
 class AttemptInput(StrictModel):

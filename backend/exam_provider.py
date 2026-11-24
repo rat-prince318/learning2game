@@ -67,7 +67,9 @@ def grounded_question(provider, problem, part):
         "Use only the supplied conditions, subtask and instructor's worked solution. Retain quantities and units. "
         'If an essential diagram, premise or answer is missing, return {"points":[]}. '
         "Produce equivalent natural Chinese and English versions with the same choice order. Use TeX delimiters "
-        "for mathematical notation. The Chinese question and choices must be in Chinese except symbols/units. "
+        "for mathematical notation and escape every TeX backslash in JSON. The Chinese question and choices "
+        "must be in Chinese except symbols/units. Copy answer_quote verbatim from the supplied solution; "
+        "include enough surrounding prose for a quote of at least four characters. "
         "Do not copy grading directions, refer to an unseen figure, or test administrative material. "
         'Return {"points":[{"answer_quote":"a literal result-bearing span of the worked solution",'
         '"question":{"correct_index":0,"zh":{"term":"short topic","definition":"result in context",'

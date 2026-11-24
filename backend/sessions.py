@@ -4,12 +4,15 @@ import json
 from collections import Counter
 from datetime import datetime, timezone
 from sqlite3 import Connection, Row
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from .db import connection
+from .court_warmup import warmup_game
+from .games import court_groups
 from .models import (
     AttemptInput, ConceptPerformance, GameConfigInternal, GameConfigPublic, HintInput,
     LearningReport, MaterialResult,
@@ -68,15 +71,22 @@ def _session(conn: Connection, session_id: str) -> Row:
     return row
 
 
+@router.get("/court/warmup", response_model=GameConfigPublic)
+def public_warmup(request: Request, language: Literal["zh", "en"] = "zh"):
+    return public_game(warmup_game(request.app, language), request)
+
+
 @router.get("/games/{game_id}", response_model=GameConfigPublic)
 def public_game(game_id: str, request: Request):
     with connection(request.app) as conn:
-        row = conn.execute("SELECT game_type,public_json FROM games WHERE id = ?", (game_id,)).fetchone()
+        row = conn.execute("SELECT game_type,public_json,card_map_json FROM games WHERE id = ?", (game_id,)).fetchone()
     if row is None:
         raise HTTPException(404, "Game not found")
     if row["game_type"] != "matching":
         raise HTTPException(409, "请从 RPG 游戏入口打开这个关卡。")
-    return json.loads(row["public_json"])
+    public = json.loads(row["public_json"])
+    public["court_groups"] = court_groups(public, json.loads(row["card_map_json"]))
+    return public
 
 
 @router.post("/games/{game_id}/sessions", response_model=SessionStarted, status_code=201)

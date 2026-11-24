@@ -102,12 +102,15 @@ export class MatchingEngine {
       game.left_cards.some((c) => c.id === pending.left_card_id) &&
       game.right_cards.some((c) => c.id === pending.right_card_id) &&
       typeof pending.event_id === 'string';
+    const savedBall = recovery.heldBallId;
+    const canResumeBall = active && recovery.session_id === session.session_id &&
+      game.left_cards.some(card => card.id === savedBall) && !session.matched_left_ids.includes(savedBall);
     this.#state = {
       game: structuredClone(game),
       session: structuredClone(session),
       leftCards: ordered(game.left_cards, recovery.leftOrder),
       rightCards: ordered(game.right_cards, recovery.rightOrder),
-      selectedLeft: validPending ? pending.left_card_id : null,
+      selectedLeft: validPending ? pending.left_card_id : (canResumeBall ? savedBall : null),
       selectedRight: validPending ? pending.right_card_id : null,
       phase: active ? (validPending ? 'retry' : 'active') : 'ended',
       pendingEvent: validPending ? pending : null,
@@ -169,7 +172,7 @@ export class MatchingEngine {
         right_card_id: event.right_card_id,
       };
       s.pendingEvent = null;
-      s.selectedLeft = null;
+      s.selectedLeft = result.is_correct ? null : event.left_card_id;
       s.selectedRight = null;
       s.phase = result.session.status === 'active' ? 'active' : 'ended';
     } catch (error) {
@@ -202,6 +205,7 @@ export class MatchingEngine {
     return s
       ? {
           session_id: s.session.session_id,
+          heldBallId: s.selectedLeft,
           leftOrder: s.leftCards.map((c) => c.id),
           rightOrder: s.rightCards.map((c) => c.id),
           pendingEvent: s.pendingEvent,

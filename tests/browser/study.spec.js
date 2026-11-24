@@ -8,7 +8,7 @@ test('a bilingual lesson keeps the chosen file, mathematics, draft, and active m
   const language = page.locator('#studio-language');
   await language.click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.locator('h1').first()).toContainText('matching practice');
+  await expect(page.locator('h1').first()).toContainText(/court|basketball|shoot|hoop/i);
   await expect(page.locator('a[href="/rpg/"]')).toHaveText('Play expedition RPG');
   const data = String.raw`Mean: The average is given by \(\bar{x}=\frac{1}{n}\sum_{i=1}^n x_i\).
 Square: The transformation \(g(x)=x^2\) squares its input.
@@ -28,14 +28,15 @@ Root: The expression \(\sqrt{x}\) gives the positive square root.`;
   await page.locator('#generate-button').click();
   await page.locator('#start-button').click();
   await expect(page.locator('#page-play')).toBeVisible();
-  await expect(page.locator('#right-cards .katex math').first()).toBeAttached();
-  const left = page.locator('#left-cards button').first();
-  await left.click();
-  await language.click();
-  await expect(left).toHaveAttribute('aria-pressed', 'true');
-  await language.click();
-  await expect(page.locator('#selection-status')).toContainText('Selected');
-  await expect(page.locator('#time-label')).toHaveText('Elapsed');
+  await expect(page.locator('.mc-placard .katex math').first()).toBeAttached();
+  await page.locator('#court-targets').click();
+  await expect(page.locator('[data-hoop-id] .katex math').first()).toBeAttached();
+  await page.locator('[data-hoop-id]').first().click();
+  const held = await page.locator('#court-ball-text').innerText();
+  await page.locator('#court-language').click();
+  await expect(page.locator('#court-ball-text')).toHaveText(held);
+  await page.locator('#court-language').click();
+  await expect(page.locator('#court-assist')).toContainText(/assist/i);
   await page.locator('#finish-button').click();
   await expect(page.locator('#dialog-title')).toHaveText('Finish this round?');
   await page.locator('#confirm-dialog-action').click();

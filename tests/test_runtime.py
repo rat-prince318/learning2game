@@ -10,6 +10,44 @@ from backend.main import create_app
 from backend.services import DEMO_MATERIAL_TEXT
 
 
+def test_example_supports_one_key_live_and_explicit_offline(tmp_path, monkeypatch):
+    from dotenv import dotenv_values
+
+    for name in ("EDUGAME_MODE", "EDUGAME_DEMO", "EDUGAME_SERVICE_FACTORY", "DASHSCOPE_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    example = Path(__file__).resolve().parents[1] / ".env.example"
+    for name, value in dotenv_values(example).items():
+        if value is not None:
+            monkeypatch.setenv(name, value)
+    assert create_app(data_dir=tmp_path).state.mode == "offline"
+    monkeypatch.setenv("DASHSCOPE_API_KEY", "test-placeholder")
+    assert create_app(data_dir=tmp_path).state.mode == "live"
+    monkeypatch.setenv("EDUGAME_MODE", "offline")
+    assert create_app(data_dir=tmp_path).state.mode == "offline"
+
+
+def test_launcher_reuses_its_own_checkout_and_skips_another(monkeypatch):
+    import run
+
+    occupied = {8000, 8001}
+    class Probe:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def bind(self, address):
+            if address[1] in occupied:
+                raise OSError("occupied")
+    monkeypatch.setattr(run.socket, "socket", Probe)
+    monkeypatch.setattr(run, "ready", lambda url, launch_id: ":8001/" in url and launch_id == "this-checkout")
+    assert run.choose_port(None, "this-checkout") == (8001, True)
+    assert run.choose_port(None, "other-checkout") == (8002, False)
+    with pytest.raises(OSError):
+        run.choose_port(8000, "this-checkout")
+    occupied.remove(8000)
+    assert run.choose_port(None, "this-checkout") == (8001, True)
+
+
 def test_windows_file_lock_keeps_cleanup_pending_across_restart(tmp_path, monkeypatch):
     app = create_app(data_dir=tmp_path, demo=True)
     with TestClient(app) as client:

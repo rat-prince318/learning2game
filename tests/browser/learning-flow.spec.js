@@ -17,6 +17,15 @@ const play = async (page) => {
   await page.locator('#start-button').click();
   await expect(page.locator('#page-play')).toBeVisible();
 };
+const shootAtFirstHoop = async (page) => {
+  await page.locator('#court-targets').click();
+  await page.locator('[data-hoop-id]').first().click();
+  await page.locator('#court-assist').click();
+};
+const leaveCourt = async (page) => {
+  await page.locator('#court-menu').click();
+  await page.locator('#court-exit').click();
+};
 test('actual course sample: edit, play, hint, resume, report, targeted practice and cleanup', async ({
   page,
 }) => {
@@ -28,13 +37,15 @@ test('actual course sample: edit, play, hint, resume, report, targeted practice 
   while ((await choices.count()) > 4) await choices.last().uncheck();
   await page.locator('#plan-difficulty').selectOption('easy');
   await play(page);
-  const left = page.locator('#left-cards button');
-  await expect(left).toHaveCount(4);
-  await left.first().click();
+  const rack = page.locator('[data-ball-id]');
+  await page.locator('#court-balls').click();
+  await expect(rack).toHaveCount(4);
+  await rack.first().click();
   await page.locator('#hint-button').click();
   await expect(page.locator('#play-hints')).toHaveText('1');
-  await page.locator('#right-cards button').first().click();
-  await expect(page.locator('.feedback-result')).toBeVisible();
+  await page.locator('#court-log [data-court-close]').click();
+  await shootAtFirstHoop(page);
+  await expect(page.locator('.feedback-result')).toBeAttached({timeout:15000});
   const progress = await page.locator('#play-progress').innerText(),
     errorsCount = await page.locator('#play-errors').innerText();
   await page.reload();
@@ -52,7 +63,10 @@ test('actual course sample: edit, play, hint, resume, report, targeted practice 
   await page.locator('#practice-button').click();
   await expect(page.locator('#plan-panel')).toBeVisible();
   await play(page);
-  await expect(left).toHaveCount(4);
+  await page.locator('#court-balls').click();
+  await expect(rack).toHaveCount(4);
+  await rack.first().click();
+  await leaveCourt(page);
   await page.locator('#clear-data-button').click();
   await page.locator('#confirm-dialog-action').click();
   await expect(page.locator('#selected-file')).toBeHidden();
@@ -117,18 +131,17 @@ test('replay after a lost acknowledgement counts the action once and keeps uploa
     if (sent.length === 1) await route.abort('failed');
     else await route.fulfill({ response: accepted });
   });
-  await page.locator('#left-cards button').first().click();
-  await page.locator('#right-cards button').first().click();
+  await shootAtFirstHoop(page);
   await expect(page.locator('#attempt-retry')).toBeVisible();
   await page.reload();
   await expect(page.locator('#attempt-retry')).toBeVisible();
   await page.locator('#retry-attempt-button').click();
-  await expect(page.locator('.feedback-result')).toBeVisible();
+  await expect(page.locator('.feedback-result')).toBeAttached();
   expect(sent).toHaveLength(2);
   expect(sent[0]).toEqual(sent[1]);
   const matched = Number((await page.locator('#play-progress').innerText()).split('/')[0].trim());
   expect(matched + Number(await page.locator('#play-errors').innerText())).toEqual(1);
-  await page.locator('[data-route="create"]').click();
+  await leaveCourt(page);
   await page.locator('#remove-file').click();
   await page.locator('#privacy-button').click();
   await expect(page.locator('#saved-materials')).toContainText('细胞结构讲义.txt');

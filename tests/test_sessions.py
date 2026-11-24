@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.db import connection
+from backend.games import court_groups
 from backend.main import create_app
 
 
@@ -43,6 +44,24 @@ def hint(client, session, event_id, left):
     return client.post(f"{session}/hints", json={"event_id": event_id, "left_id": left})
 
 
+@pytest.mark.parametrize("demo", [False, True])
+def test_warmup_is_localized_reusable_and_keeps_its_source(tmp_path, monkeypatch, demo):
+    monkeypatch.setenv("EDUGAME_MODE", "offline")
+    app = create_app(data_dir=tmp_path, demo=demo)
+    with TestClient(app) as client:
+        english = client.get("/court/warmup?language=en").json()
+        chinese = client.get("/court/warmup").json()
+        assert english["game_id"] != chinese["game_id"]
+        assert client.get("/court/warmup?language=en").json() == english
+        assert len(english["left_cards"]) == len(chinese["right_cards"]) == 4
+        assert "energy" in english["title"].lower() or "machine learning" in english["title"].lower()
+        session = new_session(client, english)
+        assert hint(client, session, "warm-hint", english["left_cards"][0]["id"]).status_code == 200
+        assert client.post(f"{session}/finish").status_code == 200
+        job = client.post(f"{session}/practice").json()["job_id"]
+        assert client.get(f"/jobs/{job}").json()["status"] == "awaiting_confirmation"
+
+
 def test_public_game_and_unknown_resources(board):
     client, game, _ = board
     public = client.get(f"/games/{game['game_id']}").json()
@@ -50,9 +69,26 @@ def test_public_game_and_unknown_resources(board):
     assert {c["id"] for c in left_cards}.isdisjoint(c["id"] for c in right_cards)
     assert all(set(c) == {"id", "text"} for c in left_cards + right_cards)
     assert not ({"pairs", "card_map_json", "internal_json"} & public.keys())
+    assert public["court_groups"] == game["court_groups"]
     assert client.get("/games/missing").status_code == 404
     assert client.post("/games/missing/sessions").status_code == 404
     assert client.get("/sessions/missing/report").status_code == 404
+
+
+@pytest.mark.parametrize("count", range(2, 13))
+def test_courts_keep_every_solution_in_reach_without_ordering_answers(count):
+    left = [f"L{i}" for i in range(count)]
+    right = [f"R{i}" for i in reversed(range(count))]
+    public = {"left_cards": [{"id": card} for card in left],
+              "right_cards": [{"id": card} for card in right]}
+    key = {"left": {card: card[1:] for card in left}, "right": {card: card[1:] for card in right}}
+    groups = court_groups(public, key)
+    assert [card for group in groups for card in group["left_ids"]] == left
+    assert sorted(card for group in groups for card in group["right_ids"]) == sorted(right)
+    for group in groups:
+        assert 2 <= len(group["left_ids"]) == len(group["right_ids"]) <= 4
+        expected = {key["left"][card] for card in group["left_ids"]}
+        assert group["right_ids"] == [card for card in right if key["right"][card] in expected]
 
 
 def test_scoring_replay_and_report(board):

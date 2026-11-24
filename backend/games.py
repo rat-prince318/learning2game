@@ -8,6 +8,25 @@ from uuid import uuid4
 from .models import GameConfigInternal, GameConfigPublic, PublicCard
 
 
+def court_groups(public, card_map):
+    """Keep complete pairs on one court without publishing a position-wise answer key."""
+    left_ids = [card["id"] for card in public["left_cards"]]
+    court_count = (len(left_ids) + 3) // 4
+    size, larger = divmod(len(left_ids), court_count)
+    groups = []
+    start = 0
+    for index in range(court_count):
+        end = start + size + (index < larger)
+        balls = left_ids[start:end]
+        concepts = {card_map["left"][ball] for ball in balls}
+        # The stored backboard order was shuffled independently of the balls.
+        hoops = [card["id"] for card in public["right_cards"]
+                 if card_map["right"][card["id"]] in concepts]
+        groups.append({"left_ids": balls, "right_ids": hoops})
+        start = end
+    return groups
+
+
 def store_game(
     conn: sqlite3.Connection,
     internal: GameConfigInternal,
@@ -41,7 +60,7 @@ def store_game(
         (
             game_id,
             internal.model_dump_json(),
-            public.model_dump_json(),
+            public.model_dump_json(exclude_unset=True),
             json.dumps(card_map),
             plan_id,
         ),
