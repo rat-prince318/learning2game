@@ -1,5 +1,26 @@
 import { test, expect } from '@playwright/test';
 
+test('the one-click warm-up keeps a separately edited course draft', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#sample-button').click();
+  const choice = page.locator('#plan-choices input').last();
+  await choice.uncheck();
+  const draft = await page.locator('#plan-choices input:checked').count();
+  await page.locator('#warmup-button').click();
+  await expect(page.locator('#court-ball-text')).not.toBeEmpty();
+  await expect(page.locator('#play-progress')).toHaveText('0 / 4');
+  const held = await page.locator('#court-ball-text').innerText();
+  await page.locator('#court-language').click();
+  await page.reload();
+  await expect(page.locator('#court-ball-text')).toHaveText(held);
+  await expect(page.locator('#court-menu')).toHaveText('Menu');
+  await page.locator('#court-menu').click();
+  await page.locator('#court-exit').click();
+  await expect(page.locator('#plan-panel')).toBeVisible();
+  await expect(page.locator('#plan-choices input:checked')).toHaveCount(draft);
+  await expect(choice).not.toBeChecked();
+});
+
 test('walking, a missed throw and two different baskets update the learning record correctly', async ({ page }) => {
   await page.goto('/');
   await page.locator('#material-file').setInputFiles({
