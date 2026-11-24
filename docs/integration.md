@@ -10,8 +10,8 @@
 | 看提取结果 | `GET /materials/{id}/knowledge` | 展示术语、定义、证据、页码或段落，以及材料处理提示。提取失败可 `POST /materials/{id}/retry`。 |
 | 推荐方案 | `POST /matching-plans`，传 `material_id`、`preferences` | 任务停在 `awaiting_confirmation` 时展示 `result.plan` 与 `result.plan_id`。 |
 | 修改和确认 | `POST /games`，传 `plan_id`、`confirmed: true`；有修改则附完整 `plan` | 生成完成后读取 `result.game_id`。不同资料的知识点不能混入同一方案。 |
-| 建局 | `GET /games/{id}`、`POST /games/{id}/sessions` | 返回分别打乱的左右卡片与新的匿名会话。重玩使用新的会话 ID。 |
-| 配对与提示 | `POST /sessions/{id}/attempts`、`POST /sessions/{id}/hints` | 依据服务端结果锁定卡片、记录用过的提示并展示配对成功后的出处。 |
+| 建局 | `GET /games/{id}`、`POST /games/{id}/sessions` | `left_cards` 是题目球，`right_cards` 是本局篮板字典。按 `court_options[球ID]` 取出这一题的全部篮板。重玩使用新的会话 ID。 |
+| 配对与提示 | `POST /sessions/{id}/attempts`、`POST /sessions/{id}/hints` | 提交该球和实际命中的篮板 ID。答对后标记该球完成，其他球各自保留整组选项。跨题提交返回 422。 |
 | 恢复进度 | `GET /sessions/{id}` | 取得已配对的公开 ID、错误数与提示计数。浏览器持有的未确认事件可按原事件 ID 重试。 |
 | 交卷与建议 | `POST /sessions/{id}/finish`、`GET /sessions/{id}/report`、`POST /sessions/{id}/feedback` | 前两者返回逐项统计，反馈任务返回来源关联的复习建议。 |
 | 重点再练 | `POST /sessions/{id}/practice` | 从薄弱或尚未完成的知识点开始，等待新的方案确认。只剩一个目标时加入一个已学知识点作对照。 |

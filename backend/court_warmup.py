@@ -39,7 +39,7 @@ def warmup_game(app, language):
                 knowledge.append(KnowledgeItem(knowledge_id=concept_id, term=item["term"],
                                                definition=item["evidence"], evidence=item["evidence"], source_ref=ref))
                 pairs.append(MatchingPair(pair_id=f"shot-{index}", knowledge_id=concept_id, study_term=item["term"],
-                                          left=item["ball"], right=item["hoop"], hint=item["hint"],
+                                          left=item["ball"], right=item["hoop"], distractors=item["distractors"], hint=item["hint"],
                                           explanation=item["explanation"], source_ref=ref))
             path.write_text("\n\n".join(paragraphs), encoding="utf-8")
             conn.execute("INSERT INTO materials(id,original_name,path,media_type,result_json) VALUES (?,?,?,?,?)",

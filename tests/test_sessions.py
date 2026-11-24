@@ -5,7 +5,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.db import connection
-from backend.games import court_groups
 from backend.main import create_app
 
 
@@ -53,7 +52,9 @@ def test_warmup_is_localized_reusable_and_keeps_its_source(tmp_path, monkeypatch
         chinese = client.get("/court/warmup").json()
         assert english["game_id"] != chinese["game_id"]
         assert client.get("/court/warmup?language=en").json() == english
-        assert len(english["left_cards"]) == len(chinese["right_cards"]) == 4
+        assert len(english["left_cards"]) == len(chinese["left_cards"]) == 4
+        for game in (english, chinese):
+            assert all(3 <= len(options) <= 4 for options in game["court_options"].values())
         assert "energy" in english["title"].lower() or "machine learning" in english["title"].lower()
         session = new_session(client, english)
         assert hint(client, session, "warm-hint", english["left_cards"][0]["id"]).status_code == 200
@@ -69,26 +70,10 @@ def test_public_game_and_unknown_resources(board):
     assert {c["id"] for c in left_cards}.isdisjoint(c["id"] for c in right_cards)
     assert all(set(c) == {"id", "text"} for c in left_cards + right_cards)
     assert not ({"pairs", "card_map_json", "internal_json"} & public.keys())
-    assert public["court_groups"] == game["court_groups"]
+    assert public["court_options"] == game["court_options"]
     assert client.get("/games/missing").status_code == 404
     assert client.post("/games/missing/sessions").status_code == 404
     assert client.get("/sessions/missing/report").status_code == 404
-
-
-@pytest.mark.parametrize("count", range(2, 13))
-def test_courts_keep_every_solution_in_reach_without_ordering_answers(count):
-    left = [f"L{i}" for i in range(count)]
-    right = [f"R{i}" for i in reversed(range(count))]
-    public = {"left_cards": [{"id": card} for card in left],
-              "right_cards": [{"id": card} for card in right]}
-    key = {"left": {card: card[1:] for card in left}, "right": {card: card[1:] for card in right}}
-    groups = court_groups(public, key)
-    assert [card for group in groups for card in group["left_ids"]] == left
-    assert sorted(card for group in groups for card in group["right_ids"]) == sorted(right)
-    for group in groups:
-        assert 2 <= len(group["left_ids"]) == len(group["right_ids"]) <= 4
-        expected = {key["left"][card] for card in group["left_ids"]}
-        assert group["right_ids"] == [card for card in right if key["right"][card] in expected]
 
 
 def test_scoring_replay_and_report(board):
@@ -98,11 +83,12 @@ def test_scoring_replay_and_report(board):
     assert client.get(f"{session}/report").status_code == 409
     assert attempt(client, session, "invalid", left_a, "foreign-card").status_code == 422
 
-    wrong = attempt(client, session, "mistake", left_a, right_b)
+    distractor = next(i for i in game["court_options"][left_a] if i != right_a)
+    wrong = attempt(client, session, "mistake", left_a, distractor)
     assert wrong.status_code == 200, wrong.text
     assert wrong.json()["correct"] is False
     assert "explanation" not in wrong.json() and "source_ref" not in wrong.json()
-    assert attempt(client, session, "mistake", left_a, right_b).json() == wrong.json()
+    assert attempt(client, session, "mistake", left_a, distractor).json() == wrong.json()
     assert attempt(client, session, "mistake", left_a, right_a).status_code == 409
 
     help_result = hint(client, session, "help", left_b)
@@ -112,8 +98,8 @@ def test_scoring_replay_and_report(board):
 
     match = attempt(client, session, "match", left_a, right_a)
     assert match.json()["correct"] and match.json()["explanation"]
-    assert attempt(client, session, "locked-left", left_a, right_b).status_code == 409
-    assert attempt(client, session, "locked-right", left_b, right_a).status_code == 409
+    assert attempt(client, session, "locked-left", left_a, distractor).status_code == 409
+    assert attempt(client, session, "foreign-board", left_b, right_a).status_code == 422
     assert hint(client, session, "locked-hint", left_a).status_code == 409
     progress = client.get(session).json()
     assert progress["status"] == "active" and progress["mistakes"] == 1

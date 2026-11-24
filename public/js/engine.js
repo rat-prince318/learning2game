@@ -1,5 +1,8 @@
+import { msg } from './locale.js';
 import { ui } from './studio-copy.js';
 import { displayText, newId } from './utils.js';
+
+const validId = value => typeof value === 'string' && /^[^\s\x00-\x1f\x7f]{1,128}$/u.test(value);
 /** Gameplay state is independent of DOM. No answer map exists in this module. */
 export function shuffle(cards, random = Math.random) {
   const result = [...cards];
@@ -14,7 +17,8 @@ export function validatePublicGame(game) {
   const count = game?.left_cards?.length;
   if (
     !game ||
-    typeof game.game_id !== 'string' ||
+    !validId(game.game_id) ||
+    !Array.isArray(game.left_cards) ||
     !Number.isInteger(count) ||
     count < 2 ||
     count > 12 ||
@@ -22,7 +26,7 @@ export function validatePublicGame(game) {
   )
     throw new Error(ui('游戏配置无效：配对数量必须为 2–12。'));
   const forbidden =
-    /^(answers?|answer_map|pairs|pair_id|correct_.*|knowledge_id|explanation|hint)$/i;
+    /^(answers?|answer_map|pairs|pair_id|correct(?:_.*)?|is_correct|solution|knowledge_id|explanation|hint)$/i;
   const inspect = (value) => {
     if (Array.isArray(value)) {
       value.forEach(inspect);
@@ -32,31 +36,48 @@ export function validatePublicGame(game) {
       for (const [key, item] of Object.entries(value)) {
         if (forbidden.test(key))
           throw new Error(ui('公开游戏配置包含答案字段，请让后端返回 GameConfigPublic。'));
-        inspect(item);
+        // The map keys here are opaque card IDs. Their options are checked below.
+        if (value !== game || key !== 'court_options') inspect(item);
       }
   };
   inspect(game);
-  const ids = new Set();
-  for (const cards of [game.left_cards, game.right_cards]) {
-    if (!Array.isArray(cards) || cards.length !== count)
-      throw new Error(ui('卡片数量与配对数量不一致。'));
-    const visible = new Set();
-    for (const card of cards) {
-      const printed = displayText(card.text, '');
-      if (!printed || visible.has(printed))
-        throw new Error(ui('请调整课件表述后重新生成可区分的卡片。'));
-      visible.add(printed);
-      if (
-        typeof card.id !== 'string' ||
-        !card.id ||
-        ids.has(card.id) ||
-        typeof card.text !== 'string' ||
-        !card.text.trim()
-      )
-        throw new Error(ui('卡片 ID 或内容无效。'));
-      ids.add(card.id);
-    }
+  const groups = game.court_options;
+  if (!groups || typeof groups !== 'object' || Array.isArray(groups)) {
+    throw new Error(msg(
+      '当前球场使用旧版篮板。请更新服务并重新打开球场，既有成绩保存在学习报告中。',
+      'This court uses an older set of backboards. Update the service and reopen the court. Saved results are available in the learning report.',
+    ));
   }
+  const invalidOptions = () => new Error(msg(
+    '这组题目的篮板数据有误。请重新生成球场。',
+    'The backboards for this lesson are incomplete. Generate the court again.',
+  ));
+  if (!Array.isArray(game.right_cards) || game.right_cards.length < 3 || game.right_cards.length > count * 4)
+    throw invalidOptions();
+
+  const labels = new Map();
+  for (const card of [...game.left_cards, ...game.right_cards]) {
+    if (!validId(card?.id) || labels.has(card.id) || typeof card.text !== 'string')
+      throw new Error(ui('卡片 ID 或内容无效。'));
+    const printed = displayText(card.text, '').trim().replace(/\s+/gu, ' ');
+    if (!printed) throw new Error(ui('请调整课件表述后重新生成可区分的卡片。'));
+    labels.set(card.id, printed);
+  }
+  if (new Set(game.left_cards.map(card => labels.get(card.id))).size !== count)
+    throw new Error(ui('请调整课件表述后重新生成可区分的卡片。'));
+
+  const boardIds = new Set(game.right_cards.map(card => card.id));
+  const used = new Set();
+  if (Object.keys(groups).length !== count) throw invalidOptions();
+  for (const ball of game.left_cards) {
+    const options = Object.hasOwn(groups, ball.id) ? groups[ball.id] : null;
+    if (!Array.isArray(options) || ![3, 4].includes(options.length) ||
+        options.some(id => !boardIds.has(id)) ||
+        new Set(options.map(id => labels.get(id))).size !== options.length)
+      throw invalidOptions();
+    for (const id of options) used.add(id);
+  }
+  if (used.size !== boardIds.size) throw invalidOptions();
   return { ...game, pair_count: count };
 }
 
@@ -99,17 +120,18 @@ export class MatchingEngine {
       active && recovery.session_id === session.session_id ? recovery.pendingEvent : null;
     const validPending =
       pending &&
-      game.left_cards.some((c) => c.id === pending.left_card_id) &&
-      game.right_cards.some((c) => c.id === pending.right_card_id) &&
-      typeof pending.event_id === 'string';
-    const savedBall = recovery.heldBallId;
+      Object.hasOwn(game.court_options, pending.left_card_id) &&
+      game.court_options[pending.left_card_id].includes(pending.right_card_id) &&
+      validId(pending.event_id);
+    // A migrated court may replace an old cross-question distractor. The server
+    // snapshot already counts any accepted attempt. Keep the ball for a new shot.
+    const savedBall = pending?.left_card_id || recovery.heldBallId;
     const canResumeBall = active && recovery.session_id === session.session_id &&
       game.left_cards.some(card => card.id === savedBall) && !session.matched_left_ids.includes(savedBall);
     this.#state = {
       game: structuredClone(game),
       session: structuredClone(session),
       leftCards: ordered(game.left_cards, recovery.leftOrder),
-      rightCards: ordered(game.right_cards, recovery.rightOrder),
       selectedLeft: validPending ? pending.left_card_id : (canResumeBall ? savedBall : null),
       selectedRight: validPending ? pending.right_card_id : null,
       phase: active ? (validPending ? 'retry' : 'active') : 'ended',
@@ -139,8 +161,8 @@ export class MatchingEngine {
       !s ||
       s.phase !== 'active' ||
       !s.selectedLeft ||
-      !s.rightCards.some((c) => c.id === id) ||
-      s.session.matched_right_ids.includes(id)
+      s.session.matched_left_ids.includes(s.selectedLeft) ||
+      !s.game.court_options[s.selectedLeft].includes(id)
     )
       return;
     s.selectedRight = id;
@@ -207,7 +229,6 @@ export class MatchingEngine {
           session_id: s.session.session_id,
           heldBallId: s.selectedLeft,
           leftOrder: s.leftCards.map((c) => c.id),
-          rightOrder: s.rightCards.map((c) => c.id),
           pendingEvent: s.pendingEvent,
         }
       : null;

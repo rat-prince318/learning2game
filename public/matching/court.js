@@ -98,6 +98,8 @@ export function mountCourt(host, callbacks = {}) {
     pz = 3.25,
     width = 1,
     height = 1;
+  let framedBall = null,
+    frameAngle = 0;
   let hoops = [],
     physics,
     selected = null,
@@ -283,6 +285,25 @@ export function mountCourt(host, callbacks = {}) {
       'aria-label',
       locale === 'en' ? 'First-person basketball court' : '第一人称篮球场',
     );
+    if (round.ball && framedBall !== round.ball.id) {
+      framedBall = round.ball.id;
+      frameAngle = 0;
+      if (hoops.length === 4 && width >= 640) {
+        // Frame both outside backboards once at the handover. Walking and manual aim
+        // keep their own camera until the next ball, including after a wrong answer.
+        const dz = pz - COURT.rimZ;
+        const left = Math.atan2(px - hoops[0].x + 0.98, dz);
+        const right = Math.atan2(px - hoops.at(-1).x - 0.98, dz);
+        yaw = (left + right) / 2;
+        pitch = clamp(
+          Math.atan2(COURT.height + 0.25 - eyeHeight, Math.hypot(px, dz)) * 0.72,
+          0.09,
+          0.48,
+        );
+        frameAngle = (left - right) / 2;
+      }
+      updateFov();
+    }
     resetBall();
     autoTarget = null;
     aimed(null);
@@ -498,12 +519,16 @@ export function mountCourt(host, callbacks = {}) {
     },
     opts,
   );
+  function updateFov() {
+    const fit = (2 * Math.atan(Math.tan(frameAngle) / (0.9 * camera.aspect)) * 180) / Math.PI;
+    camera.fov = width < 640 ? 64 : clamp(fit, 49, 80);
+    camera.updateProjectionMatrix();
+  }
   function resize() {
     width = Math.max(1, root.clientWidth);
     height = Math.max(1, root.clientHeight);
     camera.aspect = width / height;
-    camera.fov = width < 640 ? 64 : 49;
-    camera.updateProjectionMatrix();
+    updateFov();
     renderer?.setSize(width, height, false);
     software?.resize(width, height);
   }

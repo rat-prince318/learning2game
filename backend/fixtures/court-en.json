@@ -6,6 +6,7 @@
       "evidence": "Momentum is mass times velocity, $p=mv$. A 2 kg ball moving at 5 m/s has a momentum magnitude of 10 kg m/s.",
       "ball": "A 2 kg ball moves at 5 m/s. What is the magnitude of its momentum?",
       "hoop": "$10\\ \\text{kg m/s}$",
+      "distractors": ["$5\\ \\text{kg m/s}$", "$7\\ \\text{kg m/s}$", "$25\\ \\text{kg m/s}$"],
       "hint": "Momentum is the product of mass and velocity, so multiply the mass by the speed.",
       "explanation": "The formula is $p=mv$. Substituting gives $p = 2\\ \\text{kg} \\times 5\\ \\text{m/s} = 10\\ \\text{kg m/s}$. The unit kilogram metre per second comes from multiplying kilograms by metres per second."
     },
@@ -14,6 +15,7 @@
       "evidence": "Kinetic energy is the energy of motion, $E_k=\\frac{1}{2}mv^2$. A 2 kg ball travelling at 3 m/s has 9 J of kinetic energy.",
       "ball": "A 2 kg ball moves at 3 m/s. What is its kinetic energy?",
       "hoop": "$9\\ \\text{J}$",
+      "distractors": ["$3\\ \\text{J}$", "$6\\ \\text{J}$", "$18\\ \\text{J}$"],
       "hint": "Kinetic energy equals one half times the mass times the square of the speed.",
       "explanation": "The formula is $E_k=\\frac{1}{2}mv^2$. Substituting gives $E_k = \\frac{1}{2} \\times 2\\ \\text{kg} \\times (3\\ \\text{m/s})^2 = 9\\ \\text{J}$, because the squared speed is $9\\ \\text{m}^2/\\text{s}^2$."
     },
@@ -22,6 +24,7 @@
       "evidence": "Average velocity is displacement divided by elapsed time, $v=\\frac{\\Delta x}{\\Delta t}$. Travelling 12 m east in 4 s gives an average velocity of 3 m/s east.",
       "ball": "A cart travels 12 m east in 4 s along a straight line. What is its average velocity?",
       "hoop": "$3\\ \\text{m/s}$ east",
+      "distractors": ["$3\\ \\text{m/s}$ west", "$48\\ \\text{m/s}$ east", "$48\\ \\text{m/s}$ west"],
       "hint": "Average velocity is displacement divided by the elapsed time.",
       "explanation": "The formula is $v=\\frac{\\Delta x}{\\Delta t}$. Substituting gives $v = \\frac{12\\ \\text{m}}{4\\ \\text{s}} = 3\\ \\text{m/s}$ directed east, the same direction as the displacement."
     },
@@ -30,6 +33,7 @@
       "evidence": "The change in gravitational potential energy is $\\Delta E_p=mg\\Delta h$. Raising a 2 kg mass by 3 m with $g=10\\,\\mathrm{m/s^2}$ increases its potential energy by 60 J.",
       "ball": "A 2 kg object rises 3 m, with $g = 10\\ \\text{m/s}^2$. How much does its gravitational potential energy change?",
       "hoop": "Increases by $60\\ \\text{J}$",
+      "distractors": ["Increases by $6\\ \\text{J}$", "Increases by $20\\ \\text{J}$", "Increases by $30\\ \\text{J}$"],
       "hint": "Compute the mass times gravitational acceleration times the height change.",
       "explanation": "The change in gravitational potential energy is $\\Delta E_p = mgh$. Substituting gives $\\Delta E_p = 2\\ \\text{kg} \\times 10\\ \\text{m/s}^2 \\times 3\\ \\text{m} = 60\\ \\text{J}$, and it is an increase because the object rises."
     }

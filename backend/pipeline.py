@@ -18,6 +18,7 @@ from .basketball_questions import eligible_item, text_problem
 
 from .db import connection
 from .games import store_game
+from .court_choices import CourtChoicesUnavailable
 from .legacy_exam import REUPLOAD_GUIDANCE, has_legacy_exam_cover
 from .models import (
     GameConfigInternal, Identifier, KnowledgeItem, LearningReport, MatchingPlan,
@@ -139,6 +140,8 @@ def _execute(app, job_id, operation, *args):
         return
     except (OutputError, LanguageError) as exc:
         message = str(exc)
+    except CourtChoicesUnavailable:
+        message = "当前材料缺少足够的同类干扰项。请补充相关概念或完整习题，或使用云端出题。"
     except AgentError as exc:
         # A may attach internal validation details. Publish only known static guidance.
         explanations = {
@@ -302,11 +305,12 @@ def _generate(job, plan_id: str, knowledge: list[KnowledgeItem], plan: MatchingP
         if {pair.knowledge_id for pair in game.pairs} != set(plan.knowledge_ids):
             raise OutputError("The generated cards do not cover exactly the confirmed concepts.")
         if plan.question_language and any(not accepts(s, plan.question_language) for p in game.pairs
-                for s in (p.left, p.right, p.hint, p.explanation) if s):
+                for s in (p.left, p.right, p.hint, p.explanation, *p.distractors) if s):
             raise LanguageError("配对内容与选择的语言有出入，请重新生成。")
         if any(pair.source_ref != sources[pair.knowledge_id] for pair in game.pairs):
             raise OutputError("A generated card does not reference its extracted source.")
-        if any(text_problem(text) for p in game.pairs for text in (p.left, p.right, p.hint, p.explanation) if text):
+        if any(text_problem(text) for p in game.pairs
+               for text in (p.left, p.right, p.hint, p.explanation, *p.distractors) if text):
             raise OutputError("题面含外部图示、原文接句或残缺公式。请重新生成。")
     with connection(job.app, write=True) as conn:
         game_id = store_game(conn, game, plan_id)

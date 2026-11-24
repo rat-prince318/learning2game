@@ -4,7 +4,7 @@
 
 **第一人称篮球场**把每个知识点变成一次投篮。球上印着题目，篮板上写着候选答案。首页点 **直接上场** 就能打四球热身赛，也可以上传自己的资料，让 DeepSeek Flash 为这节课出题。[观看实机投篮](docs/media/matching-basketball.mp4) | [操作和出题说明](docs/matching-basketball.md)
 
-![手持篮球面对三座篮筐，篮板分别显示牛顿第二定律、动量和功的公式](public/matching/court-preview.webp)
+![平均速度热身题的四个篮板，每个答案都列出速度大小和方向](public/matching/court-preview.webp)
 
 ## 在自己的电脑上打开
 

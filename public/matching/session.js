@@ -7,11 +7,12 @@ const words = {
   soundOn: ['球场音效：开', 'Court sound on'],
   soundOff: ['球场音效：关', 'Court sound off'],
   arena: ['投篮训练场', 'Shooting court'],
+  view: ['第一人称篮球场', 'First-person basketball court'],
   made: ['命中配对', 'Pairs scored'],
   menu: ['菜单', 'Menu'],
   held: ['手中篮球', 'In your hands'],
   changeBall: ['换球 ⇄', 'Ball rack ⇄'],
-  boards: ['看篮板 ↗', 'Boards ↗'],
+  boards: ['全部篮板', 'All boards'],
   throw: ['按住蓄力', 'Hold to shoot'],
   assist: ['辅助投篮', 'Assisted shot'],
   hint: ['看提示', 'Hint'],
@@ -26,7 +27,7 @@ const words = {
   close: ['关闭', 'Close'],
   balls: ['选一颗篮球', 'Choose your ball'],
   targets: ['选择要瞄准的篮筐', 'Aim at a hoop'],
-  none: ['瞄准一个篮筐，或点「看篮板」。', 'Aim at a hoop or open Boards.'],
+  none: ['瞄准一个篮筐，或打开全部篮板。', 'Aim at a hoop or open All boards.'],
   hintLoading: ['正在读这颗球的提示…', 'Finding a hint for this ball…'],
   loading: ['球场准备中…', 'Opening the court…'],
   missed: ['球弹开了，再投一次。', 'Off the rim. Try again.'],
@@ -52,7 +53,6 @@ const words = {
     '简化场地：选篮板，然后辅助投篮。',
     'Simplified court: choose a board and use Assisted shot.',
   ],
-  nextBank: ['下一排篮筐', 'Next hoop bank'],
 };
 const tr = (key) => words[key][getLocale() === 'en' ? 1 : 0];
 const $ = (id) => document.getElementById(id);
@@ -74,8 +74,7 @@ export function createCourtSession({ engine, requestHint, isBusy }) {
     ball = null,
     hoops = [],
     activeHoop = null;
-  let bank = 0,
-    lastBall = '',
+  let lastBall = '',
     pickerKind = '',
     feedback = null,
     sessionId = '',
@@ -99,6 +98,8 @@ export function createCourtSession({ engine, requestHint, isBusy }) {
       close.setAttribute('aria-label', tr('close'));
     $('court-language').textContent = getLocale() === 'en' ? '中文' : 'English';
     $('court-help').textContent = tr('help');
+    host.querySelector('canvas')?.setAttribute('aria-label', tr('view'));
+    aim(activeHoop?.id);
     $('court-menu').parentElement.setAttribute('aria-label', tr('menu'));
     $('court-ball-text').closest('section').setAttribute('aria-label', tr('arena'));
   }
@@ -178,33 +179,10 @@ export function createCourtSession({ engine, requestHint, isBusy }) {
           '</span></button>',
       )
       .join('');
-    if (!balls && needsBank()) {
-      const more = document.createElement('button');
-      more.type = 'button';
-      more.dataset.nextBank = '';
-      more.textContent = tr('nextBank');
-      $('court-choices').append(more);
-    }
-  }
-  function needsBank() {
-    return (
-      ball &&
-      !latest.game.court_groups?.some((group) => group.left_ids.includes(ball.id)) &&
-      latest.rightCards.filter((c) => !latest.session.matched_right_ids.includes(c.id)).length > 4
-    );
   }
   function pickerClick(event) {
     const button = event.target.closest('button');
     if (!button || !latest || latest.phase !== 'active') return;
-    if (button.hasAttribute('data-next-bank')) {
-      const count = latest.rightCards.filter(
-        (c) => !latest.session.matched_right_ids.includes(c.id),
-      ).length;
-      bank = (bank + 1) % Math.ceil(count / 4);
-      update(latest);
-      list('targets');
-      return;
-    }
     if (button.dataset.ballId) {
       picker.close();
       if (latest.selectedLeft !== button.dataset.ballId) {
@@ -328,7 +306,6 @@ export function createCourtSession({ engine, requestHint, isBusy }) {
     if (localeChanged) {
       lastLocale = getLocale();
       localize();
-      roundKey = '';
       if (picker.open) list(pickerKind);
     }
     if (sessionId !== s.session.session_id) {
@@ -352,7 +329,7 @@ export function createCourtSession({ engine, requestHint, isBusy }) {
     if (s.feedback && (s.feedback.event_id !== feedback || localeChanged)) {
       const fresh = feedback !== s.feedback.event_id;
       feedback = s.feedback.event_id;
-      roundKey = '';
+      if (fresh) roundKey = '';
       const f = s.feedback;
       if (fresh) signal(f.is_correct ? 'right' : 'wrongShot', f.is_correct ? 'made' : 'wrong');
       $('attempt-feedback').innerHTML =
@@ -373,24 +350,18 @@ export function createCourtSession({ engine, requestHint, isBusy }) {
         (c) => c.id === s.selectedLeft && !s.session.matched_left_ids.includes(c.id),
       ) || null;
     if (lastBall !== ball?.id) {
-      bank = 0;
       lastBall = ball?.id;
       $('hint-content').hidden = true;
     }
-    const group = s.game.court_groups?.find((g) => g.left_ids.includes(ball?.id));
-    const candidates = s.rightCards.filter(
-      (c) =>
-        (!group || group.right_ids.includes(c.id)) && !s.session.matched_right_ids.includes(c.id),
-    );
-    hoops = candidates.slice(bank * 4, bank * 4 + 4);
-    const key = JSON.stringify([sessionId, ball?.id, hoops.map((c) => c.id), getLocale()]);
+    const boards = new Map(s.game.right_cards.map(card => [card.id, card]));
+    hoops = ball ? s.game.court_options[ball.id].map(id => boards.get(id)) : [];
+    if (activeHoop && !hoops.some(card => card.id === activeHoop.id)) aim(null);
+    $('court-targets').textContent = hoops.length ? tr('boards') + ' (' + hoops.length + ') ↗' : tr('boards');
+    const key = JSON.stringify([sessionId, ball?.id, hoops.map((c) => c.id)]);
     if (key !== roundKey && ball && hoops.length) {
       roundKey = key;
       shot = null;
       arena.setRound({ ball, hoops, locale: getLocale(), enabled: true });
-      // The camera starts facing the middle hoop. Keep this wide view until the player aims.
-      const candidate = activeHoop || hoops[Math.floor((hoops.length - 1) / 2)];
-      if (arena.aimAt(candidate.id)) aim(candidate.id);
     }
     $('court-ball-text').innerHTML = ball ? studyMarkup(ball.text) : tr('completed');
     pause();

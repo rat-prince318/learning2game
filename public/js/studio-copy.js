@@ -272,6 +272,10 @@ const servicePhrases = {
     'This file is an exam. Upload a paper with complete questions and worked answers, or select pages containing all the conditions needed to solve a problem.',
   '每份资料至少需要三个可区分且有出处的知识点。':
     'Each course needs at least three distinct, source-backed exercises or concepts.',
+  '当前材料缺少足够的同类干扰项。请补充相关概念或完整习题，或使用云端出题。':
+    'This material needs more comparable choices. Add related concepts or complete exercises, or use cloud question generation.',
+  '这局旧题需要补充同类选项。请用原资料重新生成球场，历史学习报告已保留。':
+    'This older round needs comparable choices. Generate a new court from the original material. Your previous learning reports are available.',
   '资料达到单次文字处理上限，可按章节拆分后继续。':
     'The text limit was reached. Upload the remaining material by chapter.',
   '本轮提取文字内容。图示关系可在启用视觉模型后提取。':

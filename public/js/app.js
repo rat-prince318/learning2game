@@ -471,6 +471,7 @@ function ready() {
 }
 async function start(fresh = false) {
   if (!game) game = validatePublicGame(await api.getGame(state.gameId));
+  state.gameTitle = game.title;
   if (fresh || !state.sessionId) {
     const session = await api.createSession(game.game_id);
     state.sessionId = session.session_id;
@@ -505,7 +506,7 @@ async function finish() {
 }
 function showReport() {
   if (!report) return;
-  renderReport(report, game?.title);
+  renderReport(report, game?.title || state.gameTitle);
   go('report');
   controls();
   persist();
@@ -591,17 +592,18 @@ async function restore() {
     await resolvePending();
     return;
   }
+  const session = state.sessionId && state.gameId ? await api.getSession(state.sessionId) : null;
+  if (session?.status === 'finished') {
+    report = await api.report(state.sessionId);
+    showReport();
+    return;
+  }
   if (state.gameId) game = validatePublicGame(await api.getGame(state.gameId));
-  if (state.sessionId && game) {
-    const s = await api.getSession(state.sessionId);
-    engine.start(game, s, state.recovery || {});
-    if (s.status === 'finished') {
-      report = await api.report(state.sessionId);
-      showReport();
-    } else {
-      ready();
-      go('play');
-    }
+  if (session && game) {
+    state.gameTitle = game.title;
+    engine.start(game, session, state.recovery || {});
+    ready();
+    go('play');
   } else if (game) {
     if (sharedCourt && location.hash === '#play') await start();
     else ready();
@@ -853,7 +855,7 @@ function changeLanguage() {
   if (report) {
     const advice = $('report-advice'),
       retry = $('retry-feedback');
-    renderReport(report, game?.title);
+    renderReport(report, game?.title || state.gameTitle);
     if (advice?.querySelector('.study-content') || (retry && !retry.hidden)) {
       $('report-advice').replaceWith(advice);
       $('retry-feedback').hidden = retry.hidden;

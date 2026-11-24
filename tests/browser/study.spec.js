@@ -34,7 +34,7 @@ Root: The expression \(\sqrt{x}\) gives the positive square root.`;
   await page.locator('[data-hoop-id]').first().click();
   const held = await page.locator('#court-ball-text').innerText();
   await page.locator('#court-language').click();
-  await expect(page.locator('#court-ball-text')).toHaveText(held);
+  await expect(page.locator('#court-ball-text')).toHaveText(held, { useInnerText: true });
   await page.locator('#court-language').click();
   await expect(page.locator('#court-assist')).toContainText(/assist/i);
   await page.locator('#finish-button').click();

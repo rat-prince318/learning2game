@@ -4,7 +4,6 @@ import asyncio
 import hashlib
 import os
 import re
-from collections import Counter
 
 from matching_agent import MatchingAgent
 from matching_agent import models as a
@@ -15,6 +14,7 @@ from matching_agent.validation import prepare_candidates
 
 from . import models as d
 from .basketball_questions import generate_shots
+from .court_choices import prepare_choices
 from .provider import trace_tool
 from .question_language import accepts, localized_items, LanguageError
 
@@ -162,14 +162,6 @@ class AgentAdapter:
         if result.status != "completed" or result.game is None:
             raise AgentError("game_quality", "卡片校验需要更清楚的证据，请调整知识点或改用另一段资料。")
         by_id = {k.knowledge_id: k for k in knowledge}
-        exam_cards = {}
-        for kid in plan.knowledge_ids:
-            item = by_id[kid]
-            if item.exam_question:
-                wording = getattr(item.exam_question, bundle.language)
-                answer = wording.options[item.exam_question.correct_index]
-                exam_cards[kid] = (wording, answer)
-        answer_counts = Counter(answer for _, answer in exam_cards.values())
         pairs = []
         for p in result.game.pairs:
             k = by_id[p.knowledge_id]
@@ -183,18 +175,18 @@ class AgentAdapter:
             hint = (f"回想课程中关于“{k.term}”的描述。"
                     if bundle.language == "zh" else f"Recall how this course describes {k.term}.")
             left, right = p.left, p.right
-            if p.knowledge_id in exam_cards:
-                wording, answer = exam_cards[p.knowledge_id]
-                left, right, hint, explanation = wording.prompt, answer, wording.hint, wording.explanation
-                # Equal numerical answers on separate cards must be distinguishable by reasoning.
-                if answer_counts[answer] > 1:
-                    right = f"{answer}\n{wording.explanation}"
+            distractors = []
+            if k.exam_question:
+                wording = getattr(k.exam_question, bundle.language)
+                index = k.exam_question.correct_index
+                left, right, hint, explanation = wording.prompt, wording.options[index], wording.hint, wording.explanation
+                left, right, distractors = prepare_choices({"left": left, "right": right}, k, bundle.language)
             if plan.question_language and not all(accepts(value, plan.question_language)
                                                    for value in (left, right, hint, explanation)):
                 raise LanguageError("生成的卡片混入了其他语言的说明，请重新生成。")
             pairs.append(d.MatchingPair(
                 pair_id="p_" + hashlib.sha256(k.knowledge_id.encode()).hexdigest()[:24], knowledge_id=k.knowledge_id,
-                left=left, right=right, explanation=explanation, source_ref=k.source_ref, hint=hint,
+                left=left, right=right, distractors=distractors, explanation=explanation, source_ref=k.source_ref, hint=hint,
                 study_term=k.term if plan.question_language else None,
             ))
         return d.GameConfigInternal(title=plan.title, pairs=pairs)
