@@ -1,6 +1,56 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "LessonExercise": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "maxLength": 800,
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "correct_index": {
+          "description": "Zero-based answer index",
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Correct Index",
+          "type": "integer"
+        },
+        "hint": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Hint",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt",
+        "options",
+        "correct_index",
+        "hint",
+        "explanation"
+      ],
+      "title": "LessonExercise",
+      "type": "object"
+    },
     "RPGChallengeInternal": {
       "additionalProperties": false,
       "properties": {
@@ -31,6 +81,47 @@
           "minItems": 3,
           "title": "Options",
           "type": "array"
+        },
+        "lesson_authored": {
+          "default": false,
+          "title": "Lesson Authored",
+          "type": "boolean"
+        },
+        "practice_exercises": {
+          "items": {
+            "$ref": "#/$defs/LessonExercise"
+          },
+          "maxItems": 4,
+          "title": "Practice Exercises",
+          "type": "array"
+        },
+        "study_term": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Study Term"
+        },
+        "study_definition": {
+          "anyOf": [
+            {
+              "maxLength": 1200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Study Definition"
         },
         "knowledge_id": {
           "maxLength": 128,
@@ -113,6 +204,22 @@
           "default": "1.0",
           "title": "Schema Version",
           "type": "string"
+        },
+        "question_language": {
+          "anyOf": [
+            {
+              "enum": [
+                "zh",
+                "en"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question Language"
         },
         "title": {
           "maxLength": 120,

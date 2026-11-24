@@ -273,6 +273,22 @@
       "title": "Schema Version",
       "type": "string"
     },
+    "question_language": {
+      "anyOf": [
+        {
+          "enum": [
+            "zh",
+            "en"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Question Language"
+    },
     "title": {
       "maxLength": 120,
       "minLength": 1,

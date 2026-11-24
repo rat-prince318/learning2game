@@ -13,8 +13,11 @@ from fastapi import APIRouter, BackgroundTasks, FastAPI, HTTPException, Request
 from matching_agent.errors import AgentError
 from pydantic import Field, StrictBool, ValidationError
 
+from .question_language import LanguageError, accepts
+
 from .db import connection
 from .games import store_game
+from .legacy_exam import REUPLOAD_GUIDANCE, has_legacy_exam_cover
 from .models import (
     GameConfigInternal, Identifier, KnowledgeItem, LearningReport, MatchingPlan,
     MaterialResult, StrictModel, UserPreferences,
@@ -133,7 +136,7 @@ def _execute(app, job_id, operation, *args):
     try:
         operation(progress, *args)
         return
-    except OutputError as exc:
+    except (OutputError, LanguageError) as exc:
         message = str(exc)
     except AgentError as exc:
         # A may attach internal validation details. Publish only known static guidance.
@@ -166,11 +169,16 @@ def _material(conn, material_id):
     return row
 
 
-def _knowledge(conn, material_id) -> MaterialResult:
+def _knowledge(conn, material_id, *, for_generation=True) -> MaterialResult:
     row = _material(conn, material_id)
     if row["result_json"] is None:
         raise HTTPException(409, "Knowledge is unavailable. Check the extraction job.")
-    return MaterialResult.model_validate_json(row["result_json"])
+    material = MaterialResult.model_validate_json(row["result_json"])
+    if has_legacy_exam_cover(material.knowledge, row["original_name"]):
+        if for_generation:
+            raise HTTPException(409, REUPLOAD_GUIDANCE)
+        material = material.model_copy(update={"warnings": [REUPLOAD_GUIDANCE, *material.warnings[:23]]})
+    return material
 
 
 def _extract(job: _Progress, material_id: str):
@@ -219,7 +227,7 @@ def get_job(job_id: str, request: Request):
 @router.get("/materials/{material_id}/knowledge", response_model=MaterialResult)
 def material_knowledge(material_id: str, request: Request):
     with connection(request.app) as conn:
-        return _knowledge(conn, material_id)
+        return _knowledge(conn, material_id, for_generation=False)
 
 
 @router.post("/materials/{material_id}/retry", status_code=202, response_model=MaterialJob)
@@ -251,7 +259,8 @@ def _make_plan(job, material_id: str, knowledge: list[KnowledgeItem], prefs: Use
             notices.append(f"本轮可选知识点只有 {len(knowledge)} 个，已相应减少卡片数量。")
         if single_weak:
             notices.append("本轮包含一个待复习知识点，并从上一轮加入一个已完成的知识点作对照。")
-        plan = plan.model_copy(update={"warnings": list(dict.fromkeys([*notices, *plan.warnings]))[:12]})
+        plan = plan.model_copy(update={"question_language": prefs.question_language,
+                                      "warnings": list(dict.fromkeys([*notices, *plan.warnings]))[:12]})
     plan_id = uuid4().hex
     with connection(job.app, write=True) as conn:
         conn.execute("INSERT INTO plans(id,material_id,config_json,preferences_json,scope_json,practice_session_id) "
@@ -289,6 +298,9 @@ def _generate(job, plan_id: str, knowledge: list[KnowledgeItem], plan: MatchingP
         sources = {item.knowledge_id: item.source_ref for item in knowledge}
         if {pair.knowledge_id for pair in game.pairs} != set(plan.knowledge_ids):
             raise OutputError("The generated cards do not cover exactly the confirmed concepts.")
+        if plan.question_language and any(not accepts(s, plan.question_language) for p in game.pairs
+                for s in (p.left, p.right, p.hint, p.explanation) if s):
+            raise LanguageError("配对内容与选择的语言有出入，请重新生成。")
         if any(pair.source_ref != sources[pair.knowledge_id] for pair in game.pairs):
             raise OutputError("A generated card does not reference its extracted source.")
     with connection(job.app, write=True) as conn:
@@ -333,7 +345,7 @@ def confirm_plan(body: ConfirmRequest, request: Request, tasks: BackgroundTasks)
     return {"plan_id": body.plan_id, "job_id": job_id}
 
 
-def _finished_round(conn, session_id):
+def _finished_round(conn, session_id, *, for_generation=True):
     row = conn.execute(
         "SELECT s.status,r.stats_json,g.game_type,g.internal_json,p.material_id,p.config_json FROM sessions s "
         "JOIN games g ON g.id=s.game_id LEFT JOIN plans p ON p.id=g.plan_id "
@@ -349,7 +361,7 @@ def _finished_round(conn, session_id):
         raise HTTPException(409, "This game has no linked source material")
     report = LearningReport.model_validate_json(row["stats_json"])
     game = GameConfigInternal.model_validate_json(row["internal_json"])
-    by_id = {item.knowledge_id: item for item in _knowledge(conn, row["material_id"]).knowledge}
+    by_id = {item.knowledge_id: item for item in _knowledge(conn, row["material_id"], for_generation=for_generation).knowledge}
     return row, report, [by_id[pair.knowledge_id] for pair in game.pairs]
 
 
@@ -366,7 +378,7 @@ def request_practice(session_id: str, request: Request, tasks: BackgroundTasks, 
             knowledge.append(next(item for item in round_knowledge if item.knowledge_id not in weak))
         last_plan = MatchingPlan.model_validate_json(row["config_json"])
         prefs = body.preferences if body and body.preferences else UserPreferences(
-            goal=last_plan.goal, learner_level=last_plan.learner_level,
+            question_language=last_plan.question_language, goal=last_plan.goal, learner_level=last_plan.learner_level,
             difficulty=last_plan.difficulty, pair_count=len(last_plan.knowledge_ids))
         return _queue_plan(request.app, tasks, conn, "practice", session_id, row["material_id"], knowledge, prefs,
                            single_weak=len(weak) == 1)
@@ -385,7 +397,7 @@ def _write_feedback(job, session_id: str, report: LearningReport, knowledge: lis
 @router.post("/sessions/{session_id}/feedback", status_code=202, response_model=FeedbackJob)
 def request_feedback(session_id: str, request: Request, tasks: BackgroundTasks):
     with connection(request.app, write=True) as conn:
-        _, report, knowledge = _finished_round(conn, session_id)
+        _, report, knowledge = _finished_round(conn, session_id, for_generation=False)
         latest = conn.execute("SELECT id,status FROM jobs WHERE kind='feedback' AND resource_id=? "
                               "ORDER BY rowid DESC LIMIT 1", (session_id,)).fetchone()
         if latest and latest["status"] != "failed":

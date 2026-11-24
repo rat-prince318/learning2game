@@ -5,11 +5,24 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from ..models import Count, Identifier, StrictModel
+from .companions import PartnerAssist
 from .expedition_combat import EncounterState, Skill, TacticsView, TurnResult
 from .hero_catalog import ClassId, Gear, HeroStats, KitId, Loadout, class_info, stats_for
-from .models import Description, ReferenceText, ShortText, StudyFeedback
+from .models import Description, ReferenceText, RPGChallengeInternal, ShortText, StudyFeedback
 
 Phase = Literal["combat", "sidequest", "stage_clear", "victory", "retreated"]
+RoundKind = Literal["source", "application", "tactics"]
+
+
+class EncounterDrill(StrictModel):
+    kind: Literal["application", "tactics"]
+    card: RPGChallengeInternal
+
+
+class RoundProgress(StrictModel):
+    completed: Count
+    total: Count
+    kind: RoundKind | None
 
 
 class _Command(StrictModel):
@@ -60,6 +73,7 @@ class BattleTally(StrictModel):
 
 
 class BattleEvent(StrictModel):
+    round_kind: RoundKind | None = None
     kind: Literal["hit", "miss", "defeat", "stage_clear", "victory", "review_correct", "review_wrong",
                   "recovered", "hint", "equip", "next_stage", "retreat"]
     message: Description
@@ -75,6 +89,7 @@ class BattleEvent(StrictModel):
     loot_items: list[Gear] = Field(default_factory=list)
     equipped_item: Gear | None = None
     hero_class: ClassId = "arcanist"
+    partner_assist: PartnerAssist | None = None
     damage_blocked: Count = 0
     explanation: StudyFeedback | None = None
     source_ref: ReferenceText | None = None
@@ -112,6 +127,10 @@ class BattleState(StrictModel):
     hinted: bool = False
     # Pending concept checks must each be solved before a stage can be cleared.
     pending: list[Identifier]
+    # None identifies an encounter started before multi-round fights, or a tower/demo.
+    encounter_drills: list[EncounterDrill] | None = None
+    # Optional for saves written before question-specific retries were recorded.
+    retry_ids: list[Identifier] | None = None
     finishing_turn: Count = 0
     missed_this_fight: list[Identifier] = Field(default_factory=list)
     review_queue: list[Identifier] = Field(default_factory=list)
@@ -120,6 +139,7 @@ class BattleState(StrictModel):
     sidequests_completed: Count = 0
     concepts: dict[Identifier, BattleTally]
     last_event: BattleEvent | None = None
+    prior_answer: BattleEvent | None = None
     expedition: EncounterState | None = None
 
     @model_validator(mode="before")
@@ -148,6 +168,7 @@ class BattlePrompt(StrictModel):
     text: StudyFeedback
     options: list[BattleOption] = Field(min_length=3, max_length=4)
     hint: StudyFeedback | None = None
+    purpose: Literal["retry", "tower_practice", "finisher"] | None = None
 
 
 class StageView(StrictModel):
@@ -211,6 +232,7 @@ class SideQuestView(StrictModel):
 
 
 class BattleView(StrictModel):
+    rounds: RoundProgress | None = None
     schema_version: Literal["1.0"] = "1.0"
     session_id: Identifier
     game_id: Identifier
@@ -226,4 +248,5 @@ class BattleView(StrictModel):
     defeats: Count
     sidequests_completed: Count
     last_event: BattleEvent | None
+    prior_answer: BattleEvent | None = None
     tactics: TacticsView | None = None

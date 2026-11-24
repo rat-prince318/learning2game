@@ -15,15 +15,17 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
+from matching_agent.llm import BAILIAN_URL, BAILIAN_FLASH
 from matching_agent.wording import has_unwanted_wording
 
+from .course_metadata import is_course_metadata
 from .material_processing import MaterialError, TextBlock, read_material, validate_office_archive
-from .models import KnowledgeItem, MaterialResult
+from .exam_material import parse_exam, knowledge_from_exam
+from .models import MAX_MATERIAL_POINTS, KnowledgeItem, MaterialResult
 from .provider import trace_tool
 
 __all__ = ["MaterialError", "extract_material", "validate_office_archive"]
 
-MAX_POINTS = 64
 MAX_CHUNKS = 8
 _CHUNK_SIZE = 3500
 _BULLET = re.compile(r"^\s*(?:[-*+]\s+|\d+[.、)]\s*)")
@@ -63,6 +65,7 @@ class Point:
 
 
 def _rules(block: TextBlock) -> list[Point]:
+    patterns = (_COLON, _DASH, _IS, _CHINESE)
     candidates = []
     lines = block.text.splitlines()
     if block.source_id.startswith("pdf:"):
@@ -85,7 +88,7 @@ def _rules(block: TextBlock) -> list[Point]:
                 continue
             term, definition = cells
         else:
-            match = next((m for p in (_COLON, _DASH, _IS, _CHINESE) if (m := p.fullmatch(line))), None)
+            match = next((m for p in patterns if (m := p.fullmatch(line))), None)
             if not match:
                 continue
             term, definition = match.groups()
@@ -107,13 +110,18 @@ _SYSTEM = (
     "只输出要求的 JSON 对象；缺乏证据时返回空的 points 数组。"
 )
 _TEXT = (
-    "从这些带 id 的原文块中提取至多 12 对可唯一配对的术语和简洁定义。"
+    "从带 id 的原文块中选至多 12 个可以真正教给初学者的知识点。可以是规律、步骤、适用条件、"
+    "定量关系、证据如何支持观点或两种解释的区别。术语、简洁解释和原文证据必须对应。"
+    "题目和例题可以提取题中已经给出的原理和条件，不猜测未提供的答案。"
+    "跳过课程号、讲次、目录、教学目标、考试须知、孤立的标题与口号。"
+    "保留公式、符号和单位。引用足够完整的一句话或分句，足以说明这个知识点。"
     "给出 source_id 和可在该块逐字找到的证据 evidence。example 可选，需逐字来自同一块。"
     '格式 {"points":[{"term":"...", "definition":"...", "source_id":"...", "evidence":"...", "confidence":0.9}]}。'
 )
 _VISION = (
     "观察这幅图中的标签、箭头、结构和连接，提取能从图中观察到的关系。"
     "term 是部件或标签，definition 描述它与另一元素的关系或图中明确标示的功能。"
+    "选择学生能使用的知识（原理、测量方法、可计算的关系）。避免把图名、坐标刻度或单独字母凑成知识点。"
     "每个标签只返回一条记录。有明示功能时选该功能；仅有连线时选一个有方向的关系。"
     "evidence 要说明支持该关系的具体视觉线索。对清晰可读的术语表，也可提取表内的明确对应关系。"
     "关系类型使用 part_function、diagram_relation 或 concept_definition。仅使用画面支持的关系。"
@@ -128,37 +136,61 @@ class MaterialProvider:
 
     def __init__(self):
         self.key = os.getenv("LLM_API_KEY", "")
+        use_bailian = not self.key and bool(os.getenv("DASHSCOPE_API_KEY"))
         self.base_url = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         self.text_model = os.getenv("LLM_TEXT_MODEL", "gpt-4o-mini")
         self.vision_model = os.getenv("LLM_VISION_MODEL", "gpt-4o")
+        if use_bailian:
+            self.key = os.environ["DASHSCOPE_API_KEY"]
+            self.base_url, self.text_model, self.vision_model = BAILIAN_URL, BAILIAN_FLASH, "qwen3-vl-plus"
         self.timeout = max(1.0, min(float(os.getenv("LLM_TIMEOUT", "75")), 120))
         self.deadline = time.monotonic() + float(os.getenv("EDUGAME_SERVICE_TIMEOUT", "400"))
         if not self.key:
-            raise MaterialError("视觉与文字提取需要配置 LLM_API_KEY。离线模式可读取文字讲义。")
+            raise MaterialError("请在服务端配置 DASHSCOPE_API_KEY，或填写资料读取服务的 LLM_API_KEY。")
 
-    def complete(self, content, *, vision: bool) -> list[dict]:
+    def complete(self, content, *, vision: bool, system: str = _SYSTEM, json_mode=False) -> list[dict]:
         remaining = self.deadline - time.monotonic()
         if remaining <= .1:
             raise MaterialError("资料分析已达时间上限，请缩小选页范围后重试。")
         payload = {"model": self.vision_model if vision else self.text_model,
-                   "messages": [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": content}],
-                   "max_tokens": 2200}
-        req = urllib.request.Request(f"{self.base_url}/chat/completions",
-                                     data=json.dumps(payload).encode(),
-                                     headers={"Authorization": "Bearer " + self.key, "Content-Type": "application/json"})
-        try:
-            with urllib.request.urlopen(req, timeout=min(self.timeout, remaining)) as response:
-                raw = response.read(1_000_001)
-            if len(raw) > 1_000_000:
-                raise ValueError("Response too long")
-            text = json.loads(raw)["choices"][0]["message"]["content"].strip()
-            text = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", text, flags=re.I)
-            items = json.loads(text)["points"]
-            if not isinstance(items, list):
-                raise ValueError("Invalid points array")
-            return [item for item in items[:16] if isinstance(item, dict)]
-        except (OSError, urllib.error.URLError, ValueError, KeyError, IndexError, TypeError, AttributeError):
-            raise MaterialError("模型服务未完成资料提取，请检查模型配置或稍后重试。") from None
+                   "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}],
+                   "max_tokens": 4096}
+        if self.base_url == BAILIAN_URL and not vision:
+            payload["enable_thinking"] = False
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+        for attempt in range(3):
+            remaining = self.deadline - time.monotonic()
+            if remaining <= .1:
+                raise MaterialError("资料分析已达时间上限，请缩小本次选页范围。")
+            req = urllib.request.Request(f"{self.base_url}/chat/completions",
+                                         data=json.dumps(payload).encode(),
+                                         headers={"Authorization": "Bearer " + self.key, "Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(req, timeout=min(self.timeout, remaining)) as response:
+                    raw = response.read(1_000_001)
+                if len(raw) > 1_000_000:
+                    raise ValueError("Response too long")
+                choice = json.loads(raw)["choices"][0]
+                if choice.get("finish_reason") == "length":
+                    payload["max_tokens"] = min(8192, 2 * payload["max_tokens"])
+                    raise ValueError("Truncated answer")
+                text = choice["message"]["content"].strip()
+                text = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", text, flags=re.I)
+                items = json.loads(text)["points"]
+                if not isinstance(items, list):
+                    raise ValueError("Invalid points array")
+                return [item for item in items[:16] if isinstance(item, dict)]
+            except urllib.error.HTTPError as exc:
+                if exc.code != 429 and exc.code < 500:
+                    raise MaterialError("资料读取请求被拒绝，请检查模型名称、服务地区和密钥。") from None
+            except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+                pass
+            delay = 2 ** attempt
+            if attempt < 2 and self.deadline - time.monotonic() > delay:
+                time.sleep(delay)
+        raise MaterialError("模型服务未完成资料提取，请稍后重试或缩小选页范围。")
+
 
 
 def _chunks(blocks: list[TextBlock]):
@@ -186,7 +218,16 @@ def _confident(value) -> bool:
 
 
 def _from_text(provider, blocks) -> list[Point]:
-    payload = [{"id": b.source_id, "text": b.text} for b in blocks]
+    # Keep evidence offsets stable while withholding title/administration rows from authors.
+    source = {}
+    for b in blocks:
+        lines = [line for line in b.text.splitlines()
+                 if not is_course_metadata(re.split(r"[:：]|\s+[-–—]\s+", line, maxsplit=1)[0])]
+        if lines:
+            source[b.source_id] = "\n".join(lines)
+    if not source:
+        return []
+    payload = [{"id": sid, "text": content} for sid, content in source.items()]
     items = provider.complete(_TEXT + "\n" + json.dumps(payload, ensure_ascii=False), vision=False)
     by_id = {b.source_id: b for b in blocks}
     candidates = []
@@ -195,7 +236,7 @@ def _from_text(provider, blocks) -> list[Point]:
             continue
         block = by_id.get(_quoted(item, "source_id"))
         quote = _quoted(item, "evidence")
-        if not block or len(quote) < 4 or quote not in _squash(block.text):
+        if not block or len(quote) < 4 or quote not in _squash(source.get(block.source_id, "")):
             continue
         example = _quoted(item, "example")
         candidates.append(Point(_quoted(item, "term"), _quoted(item, "definition"), quote, [block.source_id],
@@ -204,10 +245,38 @@ def _from_text(provider, blocks) -> list[Point]:
     return candidates
 
 
-def _from_image(provider, asset) -> list[Point]:
+def _image_input(asset, instruction):
     uri = "data:image/jpeg;base64," + base64.b64encode(asset.jpeg).decode("ascii")
-    content = [{"type": "text", "text": _VISION},
-               {"type": "image_url", "image_url": {"url": uri, "detail": "high"}}]
+    return [{"type": "text", "text": instruction},
+            {"type": "image_url", "image_url": {"url": uri, "detail": "high"}}]
+
+
+def _read_scanned_text(material, provider):
+    """Keep page order and provenance for photo/scanned exams and prose handouts."""
+    text_pages = {b.page for b in material.blocks if b.page and len(b.text) > 90}
+    remaining = []
+    for asset in material.images:
+        if asset.page in text_pages or (material.blocks and asset.page is None):
+            remaining.append(asset)
+            continue
+        instruction = (
+            'Transcribe only clearly legible printed prose or complete exercises from this page. '
+            'Use the original language, exact quantities, units and question numbers; keep line breaks. '
+            'For a diagram, decoration, or unreadable page return {"points":[]}. Never solve or fill gaps. '
+            'Return {"points":[{"text":"verbatim text"}]} containing one record.'
+        )
+        rows = provider.complete(_image_input(asset, instruction), vision=True)
+        raw = rows[0].get("text") if len(rows) == 1 else None
+        if isinstance(raw, str) and 20 <= len(raw.strip()) <= 10000:
+            material.add_text(asset.source_id + ":ocr", asset.label, raw, asset.page)
+        else:
+            remaining.append(asset)
+    material.images[:] = remaining
+    material.blocks.sort(key=lambda block: block.page or 0)
+
+
+def _from_image(provider, asset) -> list[Point]:
+    content = _image_input(asset, _VISION)
     candidates = []
     for item in provider.complete(content, vision=True):
         if not _confident(item.get("confidence")):
@@ -238,11 +307,13 @@ def _qualifies(point: Point) -> bool:
             point.example = None
     if not 1 <= len(point.term) <= 120 or not 4 <= len(point.definition) <= 600:
         return False
-    if point.term.casefold() in _NONTERMS or not _key(point.term) or not _key(point.definition):
+    if is_course_metadata(point.term) or point.term.casefold() in _NONTERMS or not _key(point.term) or not _key(point.definition):
         return False
     if _key(point.term) == _key(point.definition):
         return False
-    return all(not has_unwanted_wording(text) for text in (point.term, point.definition, point.evidence))
+    # Quotes can legitimately contain negation (e.g. a counterexample). They stay
+    # evidence, while the student-facing paraphrase follows the copy conventions.
+    return all(not has_unwanted_wording(text) for text in (point.term, point.definition))
 
 
 def _dedupe(candidates: list[Point]) -> tuple[list[Point], int]:
@@ -256,7 +327,12 @@ def _dedupe(candidates: list[Point]) -> tuple[list[Point], int]:
     for group in groups.values():
         head = group[0]
         definition = _key(head.definition)
-        if any(difflib.SequenceMatcher(None, definition, _key(other.definition)).ratio() < .75
+        # A model often paraphrases an explicit definition from exactly the same sentence.
+        # Prefer the literal definition (parsed first) when it is supported by that shared quote.
+        literal = definition in _key(head.evidence) and head.source_type == "text"
+        if any(not (literal and other.source_type == "text" and set(head.sources).intersection(other.sources)
+                    and definition in _key(other.evidence))
+               and difflib.SequenceMatcher(None, definition, _key(other.definition)).ratio() < .75
                for other in group[1:]):
             rejected += len(group)
             continue
@@ -276,39 +352,47 @@ def extract_material(path: Path, *, live=False, pages=None, include_images=True,
     path = Path(path)
     with trace_tool("read_course_material"):
         material = read_material(path, pages=pages, figures=live and include_images)
-    candidates = []
+    filename = _display(Path(original_name or path.name).name)[:180]
+    if has_unwanted_wording(filename):
+        filename = "上传资料"
     provider = MaterialProvider() if live else None
+    if provider and os.getenv("DASHSCOPE_API_KEY") and material.images:
+        with trace_tool("transcribe_scanned_pages"):
+            _read_scanned_text(material, provider)
+    exam = parse_exam(material, filename)
+    if exam is not None:
+        with trace_tool("extract_verified_exam_problems"):
+            return knowledge_from_exam(material, exam, filename,
+                                       live_provider=provider)
+    candidates = []
     if material.blocks:
         with trace_tool("extract_knowledge_points" if live else "extract_glossary_pairs"):
-            if live:
-                for i, blocks in enumerate(_chunks(material.blocks)):
-                    if i >= MAX_CHUNKS or len(candidates) >= MAX_POINTS * 2:
-                        material.warn("本轮模型文字调用已达上限，可缩小选页范围后继续。")
-                        break
-                    candidates.extend(_from_text(provider, blocks))
-            else:
+            if not live:
                 for block in material.blocks:
                     candidates.extend(_rules(block))
-                    if len(candidates) >= MAX_POINTS * 4:
-                        material.warn("本轮已收集足够候选，可按章节上传其余内容。")
-                        break
+            else:
+                # Punctuation alone cannot establish a learning objective. In live mode
+                # every prose candidate must have a model-selected, literal source span.
+                chunks = list(_chunks(material.blocks))
+                if len(chunks) > MAX_CHUNKS:
+                    material.warn("已从全文均匀选取八段正文进行模型分析。可分章上传以增加覆盖范围。")
+                    chunks = [chunks[round(i * (len(chunks) - 1) / (MAX_CHUNKS - 1))] for i in range(MAX_CHUNKS)]
+                for blocks in chunks:
+                    candidates.extend(_from_text(provider, blocks))
     for image in material.images:
         with trace_tool("analyze_diagram"):
             candidates.extend(_from_image(provider, image))
     with trace_tool("verify_sources_and_deduplicate"):
         playable, conflicts = _dedupe(candidates)
-        if len(playable) > MAX_POINTS:
-            playable = playable[:MAX_POINTS]
-            material.warn(f"本次已收录前 {MAX_POINTS} 个知识点，其余内容可分章上传。")
+        if len(playable) > MAX_MATERIAL_POINTS:
+            playable = playable[:MAX_MATERIAL_POINTS]
+            material.warn(f"本次已收录前 {MAX_MATERIAL_POINTS} 个知识点，其余内容可分章上传。")
         if conflicts:
             material.warn("部分候选包含重复或冲突的配对关系，已留待资料修订。")
         if not playable:
             if live:
-                raise MaterialError("所选资料暂未提取到有来源的配对关系，请选择标注更清晰的图示或包含定义的段落。")
+                raise MaterialError("这份资料缺少可核对的学科内容。请选取含原理、例题、论证或清晰图注的正文页。")
             raise MaterialError("请上传包含「术语：定义」的讲义，或启用模型分析叙述性资料与图示。")
-        filename = _display(Path(original_name or path.name).name)[:180]
-        if has_unwanted_wording(filename):
-            filename = "上传资料"
         knowledge = []
         for point in playable:
             # The ID is stable across runs and independent of upload paths and display order.

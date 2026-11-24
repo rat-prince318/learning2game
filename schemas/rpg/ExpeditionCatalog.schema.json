@@ -376,6 +376,17 @@
   },
   "additionalProperties": false,
   "properties": {
+    "story_finale": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EncounterSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "regions": {
       "items": {
         "$ref": "#/$defs/RegionSpec"

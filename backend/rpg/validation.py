@@ -7,7 +7,12 @@ from math import ceil
 
 from matching_agent.wording import has_unwanted_wording
 
+from ..course_metadata import is_course_metadata
 from ..models import KnowledgeItem
+from ..question_identity import exercise_key
+from ..question_language import accepts
+from .lesson_text import reusable_exam
+from .lesson_provider import lesson_enabled
 from .models import RPGGameInternal, RPGIssue, RPGPlan, RPGPreferences, RPGValidationReport
 
 
@@ -32,19 +37,47 @@ def _deictic_subject(item):
             and re.match(rf"^\s*{re.escape(term)}\s+(?:is|are|was|were|am)\b", item.evidence or "", re.I))
 
 
+def challenge_key(question):
+    answer = next(option.text for option in question.options if option.id == question.correct_option_id)
+    return exercise_key(question.prompt, answer)
+
+
+def coverage_key(item, language):
+    if item.exam_question:
+        wording = getattr(item.exam_question, language or "en")
+        return ("exam", *exercise_key(wording.prompt, wording.options[item.exam_question.correct_index]))
+    return ("glossary", *exercise_key(item.term, item.definition))
+
+
 def eligible(knowledge: list[KnowledgeItem]) -> list[KnowledgeItem]:
     # B owns source verification and deduplication. Recheck the stored roster
     # because older/custom factories can return missing or conflicting evidence.
     terms = Counter(key(k.term) for k in knowledge)
     definitions = Counter(key(k.definition) for k in knowledge)
     ids = Counter(k.knowledge_id for k in knowledge)
-    return [k for k in knowledge if k.evidence and key(k.evidence)
+    candidates = [k for k in knowledge if k.evidence and key(k.evidence)
             and key(k.source_ref) not in {"unknown", "n/a", "未知", "无"}
-            and key(k.definition) != key(k.term) and not _deictic_subject(k)
-            and ids[k.knowledge_id] == terms[key(k.term)] == definitions[key(k.definition)] == 1
+            and key(k.definition) != key(k.term) and not _deictic_subject(k) and not is_course_metadata(k.term)
+            and ids[k.knowledge_id] == 1
+            and (k.exam_question or terms[key(k.term)] == definitions[key(k.definition)] == 1)
             and not any(has_unwanted_wording(s) for s in (k.term, k.definition, k.source_ref))
             and not any(re.search(r"<\s*/?\s*[a-zA-Z]|(?:javascript|data):|https?://", s, re.I)
                         for s in (k.term, k.definition, k.source_ref))]
+    # Verified exercises bring their own complete options. Independent numerical
+    # problems can legitimately share both the topic label and the final value.
+    distinct = {}
+    for item in candidates:
+        distinct.setdefault(coverage_key(item, "en"), item)
+    return list(distinct.values())
+
+
+def minimum_challenges(preferences, pool, review=False):
+    # A short, explicitly scoped volume can draw distractors from its full source.
+    exact_scope = getattr(preferences, "selected_knowledge_ids", None)
+    independent_choices = len(pool) >= 3 or all(item.exam_question for item in pool)
+    if review or lesson_enabled() or (independent_choices and exact_scope and len(exact_scope) == preferences.challenge_count):
+        return 1
+    return 3
 
 
 def select(knowledge, preferences: RPGPreferences, previous_report=None):
@@ -62,7 +95,7 @@ def select(knowledge, preferences: RPGPreferences, previous_report=None):
         selected = [by_id[kid] for kid in requested]
     else:
         selected = [k for k in pool if k.knowledge_id in allowed][:preferences.challenge_count]
-    minimum = 1 if previous_report is not None else 3
+    minimum = minimum_challenges(preferences, pool, previous_report is not None)
     if len(selected) < minimum:
         raise RPGContentError("普通冒险需要三个有出处的知识点。请扩展范围、补充资料，或尝试配对练习。"
                               if minimum == 3 else "本轮复习范围缺少带证据的知识点，请重新选择资料。")
@@ -71,7 +104,7 @@ def select(knowledge, preferences: RPGPreferences, previous_report=None):
         warnings.append(f"本轮按可用范围生成 {len(selected)} 道挑战。")
     if preferences.scene_count > len(selected):
         warnings.append(f"场景数已随题量调整为 {len(selected)}。")
-    if not any(k.example or (k.source_type in {"image", "mixed", "diagram", "visual"}) for k in selected):
+    if not any(k.example or k.exam_question or (k.source_type in {"image", "mixed", "diagram", "visual"}) for k in selected):
         warnings.append("资料主要提供定义，本轮以辨认和比较资料中的描述为主。")
     if len(pool) < len(knowledge):
         warnings.append("部分条目缺少清楚、可区分的来源，本轮已采用其余条目。")
@@ -142,6 +175,7 @@ def _gives_mapping(paragraph, prompt, item, answer, alternatives):
 
 def check_game(game: RPGGameInternal, plan: RPGPlan, knowledge) -> RPGValidationReport:
     issues = []
+    seen_questions = set()
 
     def issue(code, message, challenge=None):
         issues.append(RPGIssue(code=code, message=message, challenge_id=challenge))
@@ -162,6 +196,19 @@ def check_game(game: RPGGameInternal, plan: RPGPlan, knowledge) -> RPGValidation
             if any(_COMBINATION.search(o.text) for o in q.options):
                 issue("combined_choice", "请使用各自独立的选项。", q.challenge_id)
             answer = next(o.text for o in q.options if o.id == q.correct_option_id)
+            identity = exercise_key(q.prompt, answer)
+            if identity in seen_questions:
+                issue("repeated_exercise", "两道挑战考查同一题面与答案，请替换为独立练习。", q.challenge_id)
+            seen_questions.add(identity)
+            language = plan.question_language
+            if language and (game.question_language != language or not all(accepts(t, language)
+                    for t in [q.prompt, q.hint, q.explanation, *[o.text for o in q.options]])):
+                issue("question_language", "请用所选语言撰写完整题目、选项、线索和解析。", q.challenge_id)
+            if item and item.exam_question and (not q.lesson_authored or reusable_exam(item, language or "zh")):
+                spec = getattr(item.exam_question, language or ("zh" if q.lesson_authored else "en"))
+                if (q.prompt != spec.prompt or {o.text for o in q.options} != set(spec.options)
+                        or answer != spec.options[item.exam_question.correct_index] or q.explanation != spec.explanation):
+                    issue("exam_binding", "试题的已知条件、答案或推导与提取记录有出入。", q.challenge_id)
             options = {key(o.text) for o in q.options}
             if item is not None:
                 # The rule generator uses verbatim descriptions or terms. When

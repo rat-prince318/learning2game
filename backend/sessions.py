@@ -213,18 +213,20 @@ def evaluate_learning(conn: Connection, session_id: str) -> LearningReport:
     total_attempts = sum(attempts.values())
     # A scenario can be the left card. Use the extracted concept name for material-based games.
     terms = {}
+    language = None
     if session["plan_id"]:
         material = conn.execute(
-            """SELECT m.result_json FROM plans p JOIN materials m ON m.id = p.material_id
+            """SELECT m.result_json,p.config_json FROM plans p JOIN materials m ON m.id = p.material_id
                WHERE p.id = ?""", (session["plan_id"],),
         ).fetchone()
         if material and material["result_json"]:
+            language = json.loads(material["config_json"]).get("question_language")
             knowledge = MaterialResult.model_validate_json(material["result_json"]).knowledge
             terms = {item.knowledge_id: item.term for item in knowledge}
     concepts = [
         ConceptPerformance(
             knowledge_id=pair.knowledge_id,
-            term=terms.get(pair.knowledge_id, pair.left),
+            term=pair.study_term or terms.get(pair.knowledge_id, pair.left),
             source_ref=pair.source_ref, explanation=pair.explanation,
             attempts=attempts[pair.knowledge_id],
             mistakes=attempts[pair.knowledge_id] - int(pair.knowledge_id in matched),
@@ -234,7 +236,7 @@ def evaluate_learning(conn: Connection, session_id: str) -> LearningReport:
         for pair in game.pairs
     ]
     return LearningReport(
-        session_id=session_id, game_id=session["game_id"], total_pairs=len(concept_ids),
+        session_id=session_id, game_id=session["game_id"], question_language=language, total_pairs=len(concept_ids),
         matched_pairs=len(matched), attempted_concepts=len(attempts),
         untouched_concepts=[c for c in concept_ids if c not in attempts],
         valid_attempts=total_attempts, correct_attempts=len(matched),

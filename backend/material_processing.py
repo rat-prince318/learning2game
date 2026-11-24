@@ -13,6 +13,8 @@ from xml.etree import ElementTree
 
 from PIL import Image, ImageOps
 
+from .office_math import paragraph_text
+
 MAX_PAGE_COUNT = 80
 MAX_FIGURES = 5
 MAX_IMAGE_PIXELS = 16_000_000
@@ -128,8 +130,8 @@ def validate_office_archive(file: BinaryIO, suffix: str):
 
 
 def _selected_pages(total: int, pages: list[int] | None) -> list[int]:
-    if not 1 <= total <= MAX_PAGE_COUNT:
-        raise MaterialError(f"每份课件支持 1 至 {MAX_PAGE_COUNT} 页，请按章节拆分。")
+    if total < 1 or (len(pages) if pages else total) > MAX_PAGE_COUNT:
+        raise MaterialError(f"每次可读取 {MAX_PAGE_COUNT} 页，请选择本次要学习的章节页码。")
     if not pages:
         return list(range(1, total + 1))
     if any(type(n) is not int or not 1 <= n <= total for n in pages):
@@ -195,8 +197,13 @@ _HEADERS = {"概念", "名称", "术语", "词条", "定义", "含义", "说明"
             "term", "concept", "name", "definition", "description", "function"}
 
 
-def _table_row(cells) -> str:
-    values = [" ".join(cell.text.split()) for cell in cells if cell.text.strip()]
+def _table_row(cells, warn) -> str:
+    values = []
+    for cell in cells:
+        paragraphs = cell.paragraphs if hasattr(cell, "paragraphs") else cell.text_frame.paragraphs
+        text = " ".join(paragraph_text(p, warn) for p in paragraphs).strip()
+        if text:
+            values.append(" ".join(text.split()))
     if len(values) == 2 and all(value.casefold() in _HEADERS for value in values):
         return ""
     return "：".join(values) if len(values) == 2 else " | ".join(values)
@@ -213,9 +220,9 @@ def _read_slides(path: Path, material: Material, pages, figures: bool):
             label = f"第 {number} 张幻灯片"
             if shape.has_table:
                 for ri, row in enumerate(shape.table.rows, 1):
-                    material.add_text(f"{sid}:r{ri}", f"{label}，表格第 {ri} 行", _table_row(row.cells), number)
+                    material.add_text(f"{sid}:r{ri}", f"{label}，表格第 {ri} 行", _table_row(row.cells, material.warn), number)
             elif shape.has_text_frame:
-                material.add_text(sid, label, shape.text_frame.text.replace("\v", "\n"), number)
+                material.add_text(sid, label, "\n".join(paragraph_text(p, material.warn) for p in shape.text_frame.paragraphs).replace("\v", "\n"), number)
             elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE and material.wants_figure(figures):
                 material.add_figure(shape.image.blob, sid, f"{label}，图 {index + 1}", number)
 
@@ -232,11 +239,11 @@ def _read_docx(path: Path, material: Material, figures: bool):
         tag = child.tag.rsplit("}", 1)[-1]
         if tag == "p":
             para += 1
-            material.add_text(f"docx:p{para}", f"第 {para} 段", Paragraph(child, doc).text)
+            material.add_text(f"docx:p{para}", f"第 {para} 段", paragraph_text(Paragraph(child, doc), material.warn))
         elif tag == "tbl":
             table += 1
             for ri, row in enumerate(Table(child, doc).rows, 1):
-                material.add_text(f"docx:t{table}:r{ri}", f"表 {table} 第 {ri} 行", _table_row(row.cells))
+                material.add_text(f"docx:t{table}:r{ri}", f"表 {table} 第 {ri} 行", _table_row(row.cells, material.warn))
     img = 0
     for rel in doc.part.rels.values():
         if not rel.is_external and rel.reltype.endswith("/image"):

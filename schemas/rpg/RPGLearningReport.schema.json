@@ -111,6 +111,22 @@
   },
   "additionalProperties": false,
   "properties": {
+    "question_language": {
+      "anyOf": [
+        {
+          "enum": [
+            "zh",
+            "en"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Question Language"
+    },
     "game_type": {
       "const": "rpg_quest",
       "default": "rpg_quest",

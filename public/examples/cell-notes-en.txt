@@ -1,0 +1,8 @@
+Nucleus: Stores genetic information and regulates cell growth and activity.
+Mitochondrion: Releases energy through aerobic respiration to power cell activity.
+Cell membrane: Selectively controls substances entering and leaving the cell.
+Ribosome: Reads messenger RNA to build proteins.
+Chloroplast: Uses photosynthesis to convert light energy into chemical energy.
+Cell wall: Supports and protects the plant cell outside the membrane.
+Vacuole: Stores water and solutes and helps maintain turgor pressure.
+Cytoplasm: Surrounds organelles and provides a site for many chemical reactions.

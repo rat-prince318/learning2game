@@ -1,3 +1,4 @@
+import { ui } from './studio-copy.js';
 import { displayText, newId } from './utils.js';
 /** Gameplay state is independent of DOM. No answer map exists in this module. */
 export function shuffle(cards, random = Math.random) {
@@ -19,7 +20,7 @@ export function validatePublicGame(game) {
     count > 12 ||
     (game.pair_count != null && game.pair_count !== count)
   )
-    throw new Error('游戏配置无效：配对数量必须为 2–12。');
+    throw new Error(ui('游戏配置无效：配对数量必须为 2–12。'));
   const forbidden =
     /^(answers?|answer_map|pairs|pair_id|correct_.*|knowledge_id|explanation|hint)$/i;
   const inspect = (value) => {
@@ -30,7 +31,7 @@ export function validatePublicGame(game) {
     if (value && typeof value === 'object')
       for (const [key, item] of Object.entries(value)) {
         if (forbidden.test(key))
-          throw new Error('公开游戏配置包含答案字段，请让后端返回 GameConfigPublic。');
+          throw new Error(ui('公开游戏配置包含答案字段，请让后端返回 GameConfigPublic。'));
         inspect(item);
       }
   };
@@ -38,12 +39,12 @@ export function validatePublicGame(game) {
   const ids = new Set();
   for (const cards of [game.left_cards, game.right_cards]) {
     if (!Array.isArray(cards) || cards.length !== count)
-      throw new Error('卡片数量与配对数量不一致。');
+      throw new Error(ui('卡片数量与配对数量不一致。'));
     const visible = new Set();
     for (const card of cards) {
       const printed = displayText(card.text, '');
       if (!printed || visible.has(printed))
-        throw new Error('请调整课件表述后重新生成可区分的卡片。');
+        throw new Error(ui('请调整课件表述后重新生成可区分的卡片。'));
       visible.add(printed);
       if (
         typeof card.id !== 'string' ||
@@ -52,7 +53,7 @@ export function validatePublicGame(game) {
         typeof card.text !== 'string' ||
         !card.text.trim()
       )
-        throw new Error('卡片 ID 或内容无效。');
+        throw new Error(ui('卡片 ID 或内容无效。'));
       ids.add(card.id);
     }
   }
@@ -91,7 +92,7 @@ export class MatchingEngine {
       !session.session_id ||
       !['active', 'completed', 'finished'].includes(session.status)
     )
-      throw new Error('会话与游戏不一致或会话状态无效。');
+      throw new Error(ui('会话与游戏不一致或会话状态无效。'));
     this.#version++;
     const active = session.status === 'active';
     const pending =
@@ -160,7 +161,7 @@ export class MatchingEngine {
         result.session?.session_id !== s.session.session_id ||
         typeof result.is_correct !== 'boolean'
       )
-        throw new Error('判分返回格式无效，请联系后端负责人。');
+        throw new Error(ui('判分返回格式无效，请联系后端负责人。'));
       s.session = structuredClone(result.session);
       s.feedback = {
         ...result,

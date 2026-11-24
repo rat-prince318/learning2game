@@ -53,6 +53,7 @@ def _distinct(values: list[str], label: str) -> None:
 
 
 class RPGPreferences(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     goal: LearningGoal = "review"
     learner_level: LearnerLevel = "beginner"
     difficulty: Difficulty = "medium"
@@ -94,6 +95,7 @@ class _Versioned(StrictModel):
 
 
 class RPGPlan(_Versioned):
+    question_language: Literal["zh", "en"] | None = None
     title: ShortText
     goal: LearningGoal
     learner_level: LearnerLevel
@@ -159,7 +161,26 @@ class RPGChallengePublic(StrictModel):
         return self
 
 
+class LessonExercise(StrictModel):
+    prompt: QuestionText
+    options: list[OptionText] = Field(min_length=3, max_length=4)
+    correct_index: int = Field(strict=True, ge=0, le=3, description="Zero-based answer index")
+    hint: HintText
+    explanation: Explanation
+
+    @model_validator(mode="after")
+    def valid_choices(self) -> Self:
+        _distinct([unicodedata.normalize("NFKC", s).strip().casefold() for s in self.options], "Choices")
+        if self.correct_index >= len(self.options):
+            raise ValueError("Answer index must point to a choice.")
+        return self
+
+
 class RPGChallengeInternal(RPGChallengePublic):
+    lesson_authored: bool = False
+    practice_exercises: list[LessonExercise] = Field(default_factory=list, max_length=4)
+    study_term: TermText | None = None
+    study_definition: Explanation | None = None
     knowledge_id: Identifier
     correct_option_id: Identifier
     hint: HintText
@@ -171,6 +192,8 @@ class RPGChallengeInternal(RPGChallengePublic):
 
     @model_validator(mode="after")
     def valid_answer(self) -> Self:
+        if self.lesson_authored and not (self.study_term and self.study_definition):
+            raise ValueError("A course lesson needs a title and teaching note.")
         if self.correct_option_id not in {o.id for o in self.options}:
             raise ValueError("The answer must point to an option of this challenge.")
         return self
@@ -208,6 +231,7 @@ _SceneType = TypeVar("_SceneType", RPGScenePublic, RPGSceneInternal)
 
 
 class _Game(_Versioned, Generic[_SceneType]):
+    question_language: Literal["zh", "en"] | None = None
     title: ShortText
     rules: Explanation
     theme: Theme
@@ -374,6 +398,7 @@ class RPGConceptPerformance(StrictModel):
 
 
 class RPGLearningReport(StrictModel):
+    question_language: Literal["zh", "en"] | None = None
     game_type: Literal["rpg_quest"] = "rpg_quest"
     session_id: Identifier
     game_id: Identifier

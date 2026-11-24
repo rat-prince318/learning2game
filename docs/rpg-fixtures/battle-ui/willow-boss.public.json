@@ -1,0 +1,283 @@
+{
+  "session_id": "29ee6731fb024eb7b7ce25272ea4feb6",
+  "veteran": false,
+  "inherited_relic_id": null,
+  "bounty_seals": [],
+  "revision": 1,
+  "phase": "combat",
+  "region_index": 0,
+  "scene_index": 0,
+  "game_id": "g_01c6896326104196abb6c53e1c094979",
+  "chapter_count": 1,
+  "cleared_chapters": 0,
+  "narrative": "在临战据点整队，恢复生命上限的三成并补充 1 格蓄力。",
+  "map": [
+    {
+      "region_id": "willow_ferry",
+      "name": "烟柳渡",
+      "game_id": "g_01c6896326104196abb6c53e1c094979",
+      "course_title": "雾林失落的图鉴",
+      "chapters": [
+        {
+          "scene_id": "sc_0f6784755cdc43be971514102226bb1f",
+          "name": "林口驿站",
+          "objective": "为驿站收到的残页归类，将核对结果记入旅行图鉴。",
+          "status": "active",
+          "boss": true,
+          "route_id": "boss_steady"
+        }
+      ]
+    }
+  ],
+  "routes": [],
+  "rewards": [],
+  "player": {
+    "hp": 51,
+    "max_hp": 51,
+    "level": 1,
+    "xp": 0,
+    "xp_to_next_level": 30,
+    "attack": 20,
+    "equipped_id": "camp_blade",
+    "inventory": [
+      {
+        "id": "camp_blade",
+        "name": "营地短剑",
+        "tier": 0,
+        "attack_bonus": 6,
+        "slot": "weapon",
+        "class_id": "vanguard",
+        "hp_bonus": 0,
+        "defense_bonus": 0,
+        "critical_interval_reduction": 0
+      },
+      {
+        "id": "ward_vest",
+        "name": "苔纹护甲",
+        "tier": 0,
+        "attack_bonus": 0,
+        "slot": "armor",
+        "class_id": null,
+        "hp_bonus": 4,
+        "defense_bonus": 3,
+        "critical_interval_reduction": 0
+      },
+      {
+        "id": "hearth_charm",
+        "name": "炉心护符",
+        "tier": 0,
+        "attack_bonus": 0,
+        "slot": "accessory",
+        "class_id": null,
+        "hp_bonus": 5,
+        "defense_bonus": 1,
+        "critical_interval_reduction": 0
+      },
+      {
+        "id": "trail_coat",
+        "name": "巡途短衣",
+        "tier": 0,
+        "attack_bonus": 1,
+        "slot": "armor",
+        "class_id": null,
+        "hp_bonus": 0,
+        "defense_bonus": 0,
+        "critical_interval_reduction": 0
+      },
+      {
+        "id": "echo_charm",
+        "name": "回声节拍坠",
+        "tier": 0,
+        "attack_bonus": 0,
+        "slot": "accessory",
+        "class_id": null,
+        "hp_bonus": 0,
+        "defense_bonus": 0,
+        "critical_interval_reduction": 1
+      }
+    ],
+    "combo": 0,
+    "focus": 1,
+    "focus_max": 3,
+    "burst_ready": false,
+    "hero_class": "vanguard",
+    "kit": "ward",
+    "loadout": {
+      "weapon": "camp_blade",
+      "armor": "ward_vest",
+      "accessory": "hearth_charm"
+    },
+    "stats": {
+      "max_hp": 51,
+      "attack": 20,
+      "defense": 8,
+      "crit_every": 5,
+      "focus_max": 3,
+      "burst_percent": 185
+    }
+  },
+  "battle": {
+    "schema_version": "1.0",
+    "session_id": "29ee6731fb024eb7b7ce25272ea4feb6",
+    "game_id": "g_01c6896326104196abb6c53e1c094979",
+    "title": "雾林失落的图鉴",
+    "phase": "combat",
+    "revision": 0,
+    "stage": {
+      "index": 0,
+      "number": 1,
+      "total": 1,
+      "scene_id": "sc_0f6784755cdc43be971514102226bb1f",
+      "name": "林口驿站",
+      "objective": "为驿站收到的残页归类，将核对结果记入旅行图鉴。",
+      "boss": true
+    },
+    "enemy": {
+      "name": "柳根闸主",
+      "hp": 96,
+      "max_hp": 96,
+      "boss": true,
+      "sprite": "warden",
+      "enraged": false
+    },
+    "player": {
+      "hp": 51,
+      "max_hp": 51,
+      "level": 1,
+      "xp": 0,
+      "xp_to_next_level": 30,
+      "attack": 20,
+      "equipped_id": "camp_blade",
+      "inventory": [
+        {
+          "id": "camp_blade",
+          "name": "营地短剑",
+          "tier": 0,
+          "attack_bonus": 6,
+          "slot": "weapon",
+          "class_id": "vanguard",
+          "hp_bonus": 0,
+          "defense_bonus": 0,
+          "critical_interval_reduction": 0
+        },
+        {
+          "id": "ward_vest",
+          "name": "苔纹护甲",
+          "tier": 0,
+          "attack_bonus": 0,
+          "slot": "armor",
+          "class_id": null,
+          "hp_bonus": 4,
+          "defense_bonus": 3,
+          "critical_interval_reduction": 0
+        },
+        {
+          "id": "hearth_charm",
+          "name": "炉心护符",
+          "tier": 0,
+          "attack_bonus": 0,
+          "slot": "accessory",
+          "class_id": null,
+          "hp_bonus": 5,
+          "defense_bonus": 1,
+          "critical_interval_reduction": 0
+        },
+        {
+          "id": "trail_coat",
+          "name": "巡途短衣",
+          "tier": 0,
+          "attack_bonus": 1,
+          "slot": "armor",
+          "class_id": null,
+          "hp_bonus": 0,
+          "defense_bonus": 0,
+          "critical_interval_reduction": 0
+        },
+        {
+          "id": "echo_charm",
+          "name": "回声节拍坠",
+          "tier": 0,
+          "attack_bonus": 0,
+          "slot": "accessory",
+          "class_id": null,
+          "hp_bonus": 0,
+          "defense_bonus": 0,
+          "critical_interval_reduction": 1
+        }
+      ],
+      "combo": 0,
+      "focus": 1,
+      "focus_max": 3,
+      "burst_ready": false,
+      "hero_class": "vanguard",
+      "kit": "ward",
+      "loadout": {
+        "weapon": "camp_blade",
+        "armor": "ward_vest",
+        "accessory": "hearth_charm"
+      },
+      "stats": {
+        "max_hp": 51,
+        "attack": 20,
+        "defense": 8,
+        "crit_every": 5,
+        "focus_max": 3,
+        "burst_percent": 185
+      }
+    },
+    "prompt": {
+      "prompt_id": "turn_f0454d3f8ef077e800e5e093e403",
+      "text": "你领到了「细胞核」标签。请选择与讲义相符的说明，补全旅行图鉴。",
+      "options": [
+        {
+          "id": "op_c2d50bfb1be547f088597712ba68a8ad",
+          "text": "进行有氧呼吸，为细胞活动提供 ATP"
+        },
+        {
+          "id": "op_b586d1d38c294b10af73f94d00e1447c",
+          "text": "选择性地控制物质进入和离开细胞"
+        },
+        {
+          "id": "op_e771413709ff45379fbf8428581725b2",
+          "text": "储存遗传信息，参与调控细胞的生长与活动"
+        }
+      ],
+      "hint": null
+    },
+    "sidequest": null,
+    "cleared_stages": 0,
+    "defeats": 0,
+    "sidequests_completed": 0,
+    "last_event": null,
+    "tactics": {
+      "encounter_id": "willow_lock",
+      "tier": "boss",
+      "veteran": false,
+      "edge_ranks": 0,
+      "plating_ranks": 0,
+      "trait_name": "根须借力",
+      "trait_description": "树心蓄势时，正确格挡额外削减 2 点架势。",
+      "turn": 1,
+      "phase": 1,
+      "shield": 4,
+      "shield_max": 4,
+      "broken": false,
+      "charged": false,
+      "intent": {
+        "id": "charge",
+        "name": "蓄势",
+        "telegraph": "敌人收拢能量，正在准备接下来的攻势。",
+        "advice": "格挡作答干扰蓄势，也可抓紧这一拍进攻。"
+      },
+      "strike_exposure": 0,
+      "guard_exposure": 0
+    }
+  },
+  "coins": 0,
+  "edge_ranks": 0,
+  "plating_ranks": 0,
+  "forge_rank_limit": 8,
+  "relics": [],
+  "relic_slot_limit": 4,
+  "journal": []
+}

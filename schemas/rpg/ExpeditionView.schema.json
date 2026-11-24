@@ -4,6 +4,23 @@
     "BattleEvent": {
       "additionalProperties": false,
       "properties": {
+        "round_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "application",
+                "tactics"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Round Kind"
+        },
         "kind": {
           "enum": [
             "hit",
@@ -136,6 +153,17 @@
           "title": "Hero Class",
           "type": "string"
         },
+        "partner_assist": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartnerAssist"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "damage_blocked": {
           "default": 0,
           "minimum": 0,
@@ -240,6 +268,23 @@
           ],
           "default": null,
           "title": "Hint"
+        },
+        "purpose": {
+          "anyOf": [
+            {
+              "enum": [
+                "retry",
+                "tower_practice",
+                "finisher"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purpose"
         }
       },
       "required": [
@@ -253,6 +298,17 @@
     "BattleView": {
       "additionalProperties": false,
       "properties": {
+        "rounds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RoundProgress"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
@@ -349,6 +405,17 @@
             }
           ]
         },
+        "prior_answer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BattleEvent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "tactics": {
           "anyOf": [
             {
@@ -415,6 +482,30 @@
     "ChapterMap": {
       "additionalProperties": false,
       "properties": {
+        "kind": {
+          "default": "battle",
+          "enum": [
+            "battle",
+            "exploration"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "game_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Game Id"
+        },
         "scene_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -473,6 +564,71 @@
         "boss"
       ],
       "title": "ChapterMap",
+      "type": "object"
+    },
+    "CompanionView": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "available": {
+          "title": "Available",
+          "type": "boolean"
+        },
+        "wins_required": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Wins Required",
+          "type": "integer"
+        },
+        "joined": {
+          "title": "Joined",
+          "type": "boolean"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        },
+        "bond": {
+          "minimum": 0,
+          "title": "Bond",
+          "type": "integer"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "next_level_bond": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Level Bond"
+        }
+      },
+      "required": [
+        "id",
+        "available",
+        "joined",
+        "active",
+        "bond",
+        "level",
+        "next_level_bond"
+      ],
+      "title": "CompanionView",
       "type": "object"
     },
     "EnemyView": {
@@ -624,6 +780,42 @@
       "title": "HeldRelic",
       "type": "object"
     },
+    "HeldSupply": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "field_bandage",
+            "focus_tea"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "quantity": {
+          "minimum": 0,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "heal": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Heal",
+          "type": "integer"
+        },
+        "focus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Focus",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "quantity"
+      ],
+      "title": "HeldSupply",
+      "type": "object"
+    },
     "HeroStats": {
       "additionalProperties": false,
       "properties": {
@@ -758,6 +950,47 @@
       "title": "Loadout",
       "type": "object"
     },
+    "PartnerAssist": {
+      "additionalProperties": false,
+      "properties": {
+        "companion_id": {
+          "enum": [
+            "reed",
+            "flint",
+            "lumen"
+          ],
+          "title": "Companion Id",
+          "type": "string"
+        },
+        "effect": {
+          "enum": [
+            "guard",
+            "strike",
+            "focus"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "level": {
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "amount": {
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "companion_id",
+        "effect",
+        "level",
+        "amount"
+      ],
+      "title": "PartnerAssist",
+      "type": "object"
+    },
     "PlayerView": {
       "additionalProperties": false,
       "properties": {
@@ -886,6 +1119,12 @@
     "RegionMap": {
       "additionalProperties": false,
       "properties": {
+        "knowledge_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Knowledge Count",
+          "type": "integer"
+        },
         "region_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1100,6 +1339,44 @@
       "title": "RewardChoice",
       "type": "object"
     },
+    "RoundProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "completed": {
+          "minimum": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "application",
+                "tactics"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "completed",
+        "total",
+        "kind"
+      ],
+      "title": "RoundProgress",
+      "type": "object"
+    },
     "RouteSpec": {
       "additionalProperties": false,
       "properties": {
@@ -1282,6 +1559,29 @@
     "TacticsView": {
       "additionalProperties": false,
       "properties": {
+        "companion_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "reed",
+                "flint",
+                "lumen"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Companion Id"
+        },
+        "companion_level": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Companion Level",
+          "type": "integer"
+        },
         "encounter_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1397,6 +1697,81 @@
         "guard_exposure"
       ],
       "title": "TacticsView",
+      "type": "object"
+    },
+    "TowerView": {
+      "additionalProperties": false,
+      "properties": {
+        "floor": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Floor",
+          "type": "integer"
+        },
+        "best_floor": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Best Floor",
+          "type": "integer"
+        },
+        "phase": {
+          "default": "idle",
+          "enum": [
+            "idle",
+            "combat",
+            "sidequest",
+            "cleared"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "region_id": {
+          "default": "",
+          "title": "Region Id",
+          "type": "string"
+        },
+        "next_guardian_hp": {
+          "default": 61,
+          "minimum": 0,
+          "title": "Next Guardian Hp",
+          "type": "integer"
+        },
+        "chain_target": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Chain Target",
+          "type": "integer"
+        },
+        "question_mode": {
+          "default": "recognition",
+          "enum": [
+            "recognition",
+            "recall",
+            "paired",
+            "synthesis"
+          ],
+          "title": "Question Mode",
+          "type": "string"
+        },
+        "difficulty": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "battle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BattleView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "TowerView",
       "type": "object"
     },
     "TurnResult": {
@@ -1530,6 +1905,104 @@
   },
   "additionalProperties": false,
   "properties": {
+    "course_notes_enabled": {
+      "default": false,
+      "title": "Course Notes Enabled",
+      "type": "boolean"
+    },
+    "supplies": {
+      "items": {
+        "$ref": "#/$defs/HeldSupply"
+      },
+      "title": "Supplies",
+      "type": "array"
+    },
+    "eight_chapters": {
+      "default": false,
+      "title": "Eight Chapters",
+      "type": "boolean"
+    },
+    "cleared_regions": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Cleared Regions",
+      "type": "integer"
+    },
+    "knowledge_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Knowledge Count",
+      "type": "integer"
+    },
+    "covered_knowledge_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Covered Knowledge Count",
+      "type": "integer"
+    },
+    "legacy_exam_cover": {
+      "default": false,
+      "title": "Legacy Exam Cover",
+      "type": "boolean"
+    },
+    "campaign_story": {
+      "default": false,
+      "title": "Campaign Story",
+      "type": "boolean"
+    },
+    "story_marks": {
+      "patternProperties": {
+        "^[^\\s\\x00-\\x1f\\x7f]+$": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "type": "string"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Story Marks",
+      "type": "object"
+    },
+    "story_ending": {
+      "anyOf": [
+        {
+          "enum": [
+            "shatter_crown",
+            "keep_watch",
+            "wake_towns"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Story Ending"
+    },
+    "field_signals": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+        "type": "string"
+      },
+      "title": "Field Signals",
+      "type": "array"
+    },
+    "companions": {
+      "items": {
+        "$ref": "#/$defs/CompanionView"
+      },
+      "title": "Companions",
+      "type": "array"
+    },
+    "tower": {
+      "$ref": "#/$defs/TowerView"
+    },
     "session_id": {
       "maxLength": 128,
       "minLength": 1,

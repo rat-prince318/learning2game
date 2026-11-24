@@ -1,0 +1,73 @@
+/* The journal shares the battle ribbon's measured bounds, including after a rotation. */
+.bf-immersive:has(.bf-field-notes[open]) .bf-board > :is(.bf-quiz, .bf-result) { visibility: hidden; }
+.bf-immersive .bf-field-notes {
+  position: fixed;
+  inset: auto 0 0;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  height: var(--bf-note-depth, 30dvh);
+  max-height: none;
+  overflow: hidden;
+  color: #fff1ce;
+  border: 0;
+  border-top: 1px solid #ddbd81b0;
+  background: linear-gradient(100deg, #10282ced, #132f30e6 54%, #182c2edb);
+  box-shadow: inset 0 2px #f8daa21c, 0 -8px 28px #0c272541;
+  font: 400 1rem/1.48 var(--body, system-ui);
+}
+.bf-immersive .bf-field-notes::backdrop { background: transparent; }
+.bf-note-sheet { position: relative; height: 100%; }
+.bf-note-sheet::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; pointer-events: none;
+  background: linear-gradient(90deg, transparent 2%, #d6b97875 13%, transparent 39%, #f8d39b6b 74%, transparent 98%);
+}
+.bf-note-scroll {
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a69365 #1c302f;
+  display: grid;
+  grid-template-columns: minmax(0,.73fr) minmax(0,1.27fr);
+  align-content: start;
+  gap: clamp(20px, 4vw, 76px);
+  padding: clamp(10px, 1.7dvh, 22px) calc(var(--edge, 18px) + 48px) max(13px, 2dvh, env(safe-area-inset-bottom)) var(--edge, 18px);
+}
+.bf-note-scroll:focus-visible { outline: 1px dashed #d6bd85; outline-offset: -4px; }
+.bf-note-header, .bf-note-body, .bf-note-body > * { min-width: 0; }
+.bf-note-header > div > span, .bf-note-source, .bf-note-stats dt { color: #dcc99e; font-size: .82rem; }
+.l2g-battle .bf-note-header h2 {
+  color: #ffe3a0; font: 700 clamp(24px, 2.3vw, 36px)/1.17 var(--serif);
+  text-shadow: 0 2px 3px #15302b;
+}
+.bf-note-sheet[data-tone="ember"] .bf-note-header h2 { color: #ffc1a2; }
+.l2g-battle .bf-note-close {
+  position: absolute; z-index: 1; top: clamp(6px, 1.3dvh, 16px); right: var(--edge, 12px);
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: 1px solid #bda36d99; border-radius: 3px;
+  background: #213a36; color: #fff3d5; font: 400 1.55rem/1 var(--body);
+}
+.bf-note-header .bf-aid { margin-top: 5px; color: #eee1b7; }
+.bf-note-body { display: grid; align-content: start; gap: 8px; }
+.bf-note-body h3 { margin: 0 0 4px; color: #f4cf88; font: 600 1rem/1.4 var(--body); }
+.bf-note-stats { display: flex; flex-wrap: wrap; gap: 7px 22px; margin: 8px 0 0; }
+.bf-note-stats dd { margin: 0; font: 700 1.3rem/1.3 var(--serif); }
+.bf-note-source { border-inline-start: 2px solid #a78d5b; padding-inline-start: 8px; overflow-wrap: anywhere; }
+.bf-note-source strong { margin-inline-end: .35em; }
+.bf-note-attempt { border-top: 1px solid #c0aa774a; }
+.bf-note-attempt summary { min-height: 44px; padding-block: 8px; cursor: pointer; color: #efd6a1; }
+.bf-note-attempt > div { margin-block-end: 8px; }
+.bf-immersive .bf-status[data-kind="receipt"]:not([hidden]) {
+  position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0;
+  clip-path: inset(50%); overflow: hidden;
+}
+@media (max-width: 760px) {
+  .bf-note-scroll { display: block; padding-inline: var(--edge, 14px); }
+  .bf-note-header { padding-inline-end: 48px; margin-bottom: 8px; }
+  .bf-note-header > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 9px; }
+  .bf-note-stats { margin-top: 4px; }
+  .bf-note-stats > div { display: flex; align-items: baseline; gap: 5px; }
+  .bf-note-body { gap: 6px; }
+}

@@ -1,3 +1,7 @@
+import { savedMaterials, rememberMaterial, forgetMaterial } from './material-library.js';
+import { studyMarkup } from './study.js';
+import { msg, getLocale, setLocale } from './locale.js';
+import { ui, bindStudioChrome, currentCopy } from './studio-copy.js';
 import { ApiClient, JOB_LABELS } from './api.js';
 import { MatchingEngine, validatePublicGame } from './engine.js';
 import {
@@ -13,8 +17,8 @@ import {
 import { renderKnowledge, renderPlan, renderPlay, renderReport } from './views.js';
 
 const $ = (id) => document.getElementById(id);
+const renderChrome = bindStudioChrome();
 const STORAGE = 'learning2game-workspace-v2';
-const LIBRARY = 'learning2game-upload-library-v1';
 const api = new ApiClient();
 const engine = new MatchingEngine(api);
 const initial = () => ({
@@ -53,6 +57,7 @@ const persist = () => {
 };
 function preferences() {
   return {
+    question_language: getLocale(),
     learner_level: $('learner-level').value,
     goal: $('learning-goal').value,
     difficulty: $('difficulty').value,
@@ -74,7 +79,7 @@ function toast(message) {
   toastTimer = setTimeout(() => ($('toast').hidden = true), 3600);
 }
 function errorBanner(error, retry) {
-  $('error-message').textContent = displayText(error.message || '请重新尝试。');
+  $('error-message').textContent = displayText(error.message || ui('请重新尝试。'));
   $('global-error').hidden = false;
   retryAction = retry;
   $('retry-global').hidden = !retry;
@@ -84,35 +89,19 @@ function clearError() {
   $('global-error').hidden = true;
   retryAction = null;
 }
-function savedFiles() {
-  return readLocal(LIBRARY) || [];
-}
 function rememberUpload() {
-  if (!state.materialId || !state.deleteToken || !health) return;
-  const items = savedFiles().filter(
-    (item) => item.id !== state.materialId || item.mode !== health.mode,
-  );
-  items.push({
-    id: state.materialId,
-    token: state.deleteToken,
-    label: state.fileName,
-    mode: health.mode,
-  });
-  saveLocal(LIBRARY, items);
-}
-function forgetUpload(id) {
-  saveLocal(
-    LIBRARY,
-    savedFiles().filter((item) => item.id !== id || item.mode !== health?.mode),
+  rememberMaterial(
+    { material_id: state.materialId, mode: health?.mode, delete_token: state.deleteToken },
+    state.fileName,
   );
 }
 function refreshLibrary() {
-  const files = savedFiles().filter((item) => item.mode === health?.mode);
+  const files = savedMaterials().filter((item) => item.mode === health?.mode);
   const list = $('saved-materials');
   list.replaceChildren();
   if (!files.length) {
     const empty = document.createElement('li');
-    empty.textContent = '这个服务模式下的资料清单为空。';
+    empty.textContent = ui('这个服务模式下的资料清单为空。');
     list.append(empty);
     return;
   }
@@ -120,17 +109,20 @@ function refreshLibrary() {
     const row = document.createElement('li'),
       title = document.createElement('span'),
       button = document.createElement('button');
-    title.textContent = displayText(entry.label, '课程资料');
+    title.textContent = displayText(entry.label, ui('课程资料'));
     button.type = 'button';
     button.className = 'text-button';
-    button.textContent = '删除';
-    button.setAttribute('aria-label', '删除 ' + title.textContent);
+    button.textContent = ui('删除');
+    button.setAttribute('aria-label', msg('删除 ', 'Delete ') + title.textContent);
     button.onclick = () => {
       $('privacy-dialog').close();
       confirmDialog(
-        '删除这份资料？',
-        title.textContent + ' 及其关联的练习、报告将一并删除。',
-        '确认删除',
+        ui('删除这份资料？'),
+        msg(
+          title.textContent + ' 及其关联的练习、报告将一并删除。',
+          'This also deletes practice and reports linked to ' + title.textContent + '.',
+        ),
+        ui('确认删除'),
         () =>
           run(async () => {
             let result;
@@ -139,11 +131,11 @@ function refreshLibrary() {
             } catch (error) {
               if (error.status !== 404) throw error;
               confirmDialog(
-                '此服务中未找到该资料',
-                '可以保留记录，或仅清除这台浏览器保存的引用。',
-                '清除本机引用',
+                ui('此服务中未找到该资料'),
+                ui('可以保留记录，或仅清除这台浏览器保存的引用。'),
+                ui('清除本机引用'),
                 () => {
-                  forgetUpload(entry.id);
+                  forgetMaterial(entry.id, health?.mode);
                   if (state.materialId === entry.id) {
                     reset();
                     go('create');
@@ -153,13 +145,17 @@ function refreshLibrary() {
               );
               return;
             }
-            forgetUpload(entry.id);
+            forgetMaterial(entry.id, health?.mode);
             if (state.materialId === entry.id) {
               reset();
               go('create');
             }
             refreshLibrary();
-            toast(result.file_pending ? '关联记录已删除。文件正在使用，服务重启后会重试清理。' : '这份资料及关联练习已删除。');
+            toast(
+              result.file_pending
+                ? ui('关联记录已删除。文件正在使用，服务重启后会重试清理。')
+                : ui('这份资料及关联练习已删除。'),
+            );
           }),
       );
     };
@@ -222,25 +218,25 @@ function workflow(stage, label) {
     li.classList.toggle('active', li.dataset.step === stage);
     li.classList.toggle('done', order.indexOf(li.dataset.step) < order.indexOf(stage));
   }
-  $('state-tag').textContent = label || '等待选材';
+  $('state-tag').textContent = ui(label) || ui('等待选材');
   $('job-status').textContent =
     {
-      material: '正在读取资料并整理知识点。',
-      plan: '查看本轮方案，确认想练习的范围。',
-      generate: '正在制作和检查配对卡片。',
-      ready: '关卡已保存，可以开始配对。',
-    }[stage] || '请选择课件或试用示例。';
+      material: ui('正在读取资料并整理知识点。'),
+      plan: ui('查看本轮方案，确认想练习的范围。'),
+      generate: ui('正在制作和检查配对卡片。'),
+      ready: ui('关卡已保存，可以开始配对。'),
+    }[stage] || ui('请选择课件或试用示例。');
 }
 function traces(job) {
   if (job?.job_id) state.traces[job.job_id] = job.tool_calls || [];
   const all = Object.values(state.traces).flat();
   $('trace-note').textContent = all.length
-    ? `本次制作已记录 ${all.length} 次工具调用。`
-    : '工具执行后，这里会显示名称、状态与耗时。';
+    ? msg(`本次制作已记录 ${all.length} 次工具调用。`, `${all.length} tool calls recorded.`)
+    : ui('工具执行后，这里会显示名称、状态与耗时。');
   $('tool-log').innerHTML = all
     .map(
       (t) =>
-        `<li><strong>${h(t.name)}</strong><span>${t.status === 'ok' ? '成功' : '失败'} / ${Math.round(t.duration_ms)} ms</span></li>`,
+        `<li><strong>${h(t.name)}</strong><span>${t.status === 'ok' ? ui('成功') : ui('失败')} / ${Math.round(t.duration_ms)} ms</span></li>`,
     )
     .join('');
 }
@@ -283,10 +279,13 @@ function navigate(route, focus = true) {
   const missing = (route === 'play' && !engine.snapshot) || (route === 'report' && !report);
   $('empty-page').hidden = !missing;
   $('empty-message').textContent =
-    route === 'play' ? '先选择资料、确认方案并创建一轮练习。' : '结束一轮配对后即可查看学习记录。';
+    route === 'play'
+      ? ui('先选择资料、确认方案并创建一轮练习。')
+      : ui('结束一轮配对后即可查看学习记录。');
   if (missing) $('page-' + route).hidden = true;
   document.title =
-    { create: '创建练习', play: '配对练习', report: '学习报告' }[route] + ' | Learning2Game';
+    { create: ui('创建练习'), play: ui('配对练习'), report: ui('学习报告') }[route] +
+    ' | Learning2Game';
   if (focus) $(missing ? 'empty-title' : route + '-title').focus({ preventScroll: true });
 }
 function go(route) {
@@ -299,27 +298,34 @@ async function chooseFile(f) {
   reset();
   file = f;
   state.fileName = f.name;
-  $('file-name').textContent = displayText(f.name, '选中的课件');
+  $('file-name').textContent = displayText(f.name, ui('选中的课件'));
   $('file-size').textContent = `${Math.max(1, Math.round(f.size / 1024))} KB`;
   $('selected-file').hidden = false;
   $('pdf-options').hidden = !/\.pdf$/i.test(f.name);
   if (/\.(txt|md)$/i.test(f.name)) {
     const excerpt = await f.slice(0, 8000).text();
     if (file !== f) return;
-    $('preview-content').textContent = displayText(excerpt, '请在原文件中查看这段文字。');
+    $('preview-content').innerHTML = studyMarkup(excerpt);
     $('file-preview').hidden = false;
   }
-  workflow(null, '已选资料');
+  workflow(null, ui('已选资料'));
   persist();
 }
 async function sample() {
-  const path = health.mode === 'demo' ? '/demo/material' : '/examples/cell-notes.txt';
+  const path =
+    health.mode === 'demo'
+      ? '/demo/material'
+      : msg('/examples/cell-notes.txt', '/examples/cell-notes-en.txt');
   const res = await fetch(path);
-  if (!res.ok) throw new Error('示例讲义读取失败。');
+  if (!res.ok) throw new Error(ui('示例讲义读取失败。'));
   await chooseFile(
-    new File([await res.blob()], health.mode === 'demo' ? '机器学习示例.txt' : '细胞结构讲义.txt', {
-      type: 'text/plain',
-    }),
+    new File(
+      [await res.blob()],
+      health.mode === 'demo' ? ui('机器学习示例.txt') : ui('细胞结构讲义.txt'),
+      {
+        type: 'text/plain',
+      },
+    ),
   );
   await analyze();
 }
@@ -341,7 +347,7 @@ async function waitPending() {
     if (error.code === 'JOB_FAILED') {
       state.pending = null;
       if (task.kind === 'material') state.needsRetry = true;
-      workflow(stage, '请查看处理提示');
+      workflow(stage, ui('请查看处理提示'));
       persist();
     }
     throw error;
@@ -353,7 +359,7 @@ async function readKnowledge() {
 }
 function showPlan(result, kind, jobId, restoring = false) {
   plan = result.plan;
-  if (!plan || !result.plan_id) throw new Error('方案数据缺失，请重新推荐。');
+  if (!plan || !result.plan_id) throw new Error(ui('方案数据缺失，请重新推荐。'));
   if (!restoring) {
     state.planJob = jobId;
     state.draftIds = [...plan.knowledge_ids];
@@ -376,7 +382,7 @@ function showPlan(result, kind, jobId, restoring = false) {
     options,
     state.draftIds || plan.knowledge_ids,
   );
-  workflow('plan', '待确认');
+  workflow('plan', ui('待确认'));
   controls();
   persist();
 }
@@ -416,7 +422,7 @@ async function analyze() {
   if (!state.materialId) {
     validateFile(file, health);
     const pages = /\.pdf$/i.test(file.name) ? parsePages($('pdf-pages').value) : [];
-    workflow('material', '正在上传');
+    workflow('material', ui('正在上传'));
     const out = await api.upload(file, pages);
     state.materialId = out.material_id;
     state.deleteToken = out.delete_token;
@@ -434,7 +440,7 @@ async function analyze() {
 }
 async function generate() {
   if (!state.pending) {
-    if (!plan || !$('confirm-plan').checked) throw new Error('请先确认本轮练习范围。');
+    if (!plan || !$('confirm-plan').checked) throw new Error(ui('请先确认本轮练习范围。'));
     const draft = { ...plan, difficulty: $('plan-difficulty').value, knowledge_ids: selectedIds() };
     newJob('game', await api.generate(state.planId, draft));
   }
@@ -443,8 +449,9 @@ async function generate() {
 function ready() {
   $('plan-panel').hidden = true;
   $('ready-panel').hidden = false;
-  $('ready-description').textContent = `${displayText(game.title)} / ${game.pair_count} 对`;
-  workflow('ready', '已就绪');
+  $('ready-description').innerHTML =
+    `${studyMarkup(game.title)} / ${game.pair_count} ${msg('对', 'pairs')}`;
+  workflow('ready', ui('已就绪'));
 }
 async function start(fresh = false) {
   if (!game) game = validatePublicGame(await api.getGame(state.gameId));
@@ -460,7 +467,7 @@ async function start(fresh = false) {
   }
   const session = await api.getSession(state.sessionId);
   if (session.status === 'finished') {
-    if (fresh) throw new Error('请重新开始一轮练习。');
+    if (fresh) throw new Error(ui('请重新开始一轮练习。'));
     report = await api.report(state.sessionId);
     showReport();
     return;
@@ -469,7 +476,7 @@ async function start(fresh = false) {
   feedbackEpoch++;
   scheduledFinish = null;
   $('hint-content').hidden = true;
-  $('attempt-feedback').textContent = '完成一次配对即可查看反馈。';
+  $('attempt-feedback').textContent = ui('完成一次配对即可查看反馈。');
   engine.start(game, session, state.recovery || {});
   go('play');
   persist();
@@ -495,19 +502,21 @@ async function loadFeedback() {
   const note = $('report-advice'),
     btn = $('retry-feedback');
   btn.hidden = true;
-  note.textContent = '正在整理复习建议…';
+  note.textContent = ui('正在整理复习建议…');
   try {
     const handle = await api.feedback(sid);
     const job = await api.waitForJob(handle.job_id, (j) => {
       if (epoch === feedbackEpoch) traces(j);
     });
     if (epoch !== feedbackEpoch) return;
-    note.textContent = displayText(job.result.feedback, '可按报告里的出处回到资料复习。');
+    $('report-advice').innerHTML = studyMarkup(
+      job.result.feedback || ui('可按报告里的出处回到资料复习。'),
+    );
   } catch (e) {
     if (epoch !== feedbackEpoch) return;
-    note.textContent = displayText(e.message);
-    btn.hidden = false;
-    btn.onclick = loadFeedback;
+    $('report-advice').textContent = displayText(e.message);
+    $('retry-feedback').hidden = false;
+    $('retry-feedback').onclick = loadFeedback;
   }
 }
 async function practice() {
@@ -521,7 +530,7 @@ async function hint() {
   persist();
   const out = await api.hint(state.sessionId, left, state.hintEvent.id);
   engine.updateSession(out.session);
-  $('hint-content').textContent = displayText(out.hint);
+  $('hint-content').innerHTML = studyMarkup(out.hint);
   $('hint-content').hidden = false;
   state.hintEvent = null;
   persist();
@@ -536,7 +545,7 @@ async function synchronize() {
   }
   if (engine.snapshot?.error?.code === 'HTTP_ERROR') recovery.pendingEvent = null;
   engine.start(game, session, recovery);
-  toast('进度已同步。');
+  toast(ui('进度已同步。'));
 }
 async function restart() {
   if (engine.snapshot?.session.status === 'active') await api.finish(state.sessionId);
@@ -547,7 +556,7 @@ function tick() {
   if (!s || !state.startedAt) return;
   const elapsed = Math.floor(((state.finishedAt || Date.now()) - state.startedAt) / 1000);
   $('play-time').textContent = duration(state.limit ? state.limit - elapsed : elapsed);
-  $('time-label').textContent = state.limit ? '剩余时间' : '已用时间';
+  $('time-label').textContent = state.limit ? ui('剩余时间') : ui('已用时间');
   const done =
     s.session.completed_pairs === game?.pair_count || (state.limit && elapsed >= state.limit);
   if (done && !busy && !report && s.phase === 'active' && scheduledFinish !== state.sessionId) {
@@ -558,8 +567,8 @@ function tick() {
 async function restore() {
   applyPreferences(state.preferences);
   if (state.fileName) {
-    $('file-name').textContent = displayText(state.fileName, '已上传课件');
-    $('file-size').textContent = '已上传';
+    $('file-name').textContent = displayText(state.fileName, ui('已上传课件'));
+    $('file-size').textContent = ui('已上传');
     $('selected-file').hidden = false;
   }
   if (state.pending) {
@@ -593,6 +602,32 @@ function changeDraft() {
   controls();
   persist();
 }
+function renderService() {
+  if (!Array.isArray(health.supported_extensions))
+    health.supported_extensions = ['.pdf', '.txt', '.png', '.jpg', '.jpeg'];
+  $('material-file').accept = health.supported_extensions.join(',');
+  $('upload-types').textContent =
+    health.supported_extensions.map((s) => s.replace(/^\./, '').toUpperCase()).join(' / ') +
+    msg('，最大 ', ', max ') +
+    Math.ceil(health.max_upload_bytes / 1048576) +
+    ' MiB';
+  $('mode-button').textContent =
+    health.mode === 'demo'
+      ? ui('示例模式')
+      : health.external_models
+        ? ui('云端模型')
+        : ui('本地处理');
+  $('mode-button').classList.toggle('real', !health.external_models);
+  const privacy = health.external_models
+    ? ui('材料会发送给已配置的外部模型服务。请上传已获授权、适合共享的内容。')
+    : health.mode === 'demo'
+      ? ui('当前使用固定示例讲义，数据保存在本地。')
+      : ui('资料在本地处理。请使用已获授权的课件。');
+  $('privacy-note').textContent = privacy;
+  $('vision-example').hidden = !health.external_models;
+  $('privacy-detail').textContent = privacy;
+  if (health.mode === 'demo') $('sample-button').textContent = ui('试用机器学习讲义 →');
+}
 function events() {
   $('sample-button').onclick = () =>
     run(sample, () => (state.pending || state.materialId ? analyze() : sample()));
@@ -617,8 +652,8 @@ function events() {
     state.planJob = null;
     state.draftIds = null;
     plan = null;
-    workflow('plan', '设置已更新');
-    $('job-status').textContent = '请点击“分析资料并推荐方案”以应用新的练习设置。';
+    workflow('plan', ui('设置已更新'));
+    $('job-status').textContent = ui('请点击“分析资料并推荐方案”以应用新的练习设置。');
     controls();
     persist();
   };
@@ -695,15 +730,18 @@ function events() {
   $('retry-attempt-button').onclick = () => engine.retry();
   $('sync-session-button').onclick = () => run(synchronize);
   $('restart-button').onclick = () =>
-    confirmDialog('重新开始这组卡片？', '本轮成绩将保存，然后开启新的配对会话。', '重新开始', () =>
-      run(restart),
+    confirmDialog(
+      ui('重新开始这组卡片？'),
+      ui('本轮成绩将保存，然后开启新的配对会话。'),
+      ui('重新开始'),
+      () => run(restart),
     );
   $('report-restart').onclick = () => run(() => start(true));
   $('finish-button').onclick = () =>
     confirmDialog(
-      '结束本轮练习？',
-      '本轮记录会立即保存，随后可以查看学习报告。',
-      '结束并查看报告',
+      ui('结束本轮练习？'),
+      ui('本轮记录会立即保存，随后可以查看学习报告。'),
+      ui('结束并查看报告'),
       () => run(finish),
     );
   $('practice-button').onclick = () => run(practice);
@@ -736,47 +774,32 @@ function events() {
   };
   $('clear-data-button').onclick = () =>
     confirmDialog(
-      '清理本次记录？',
+      ui('清理本次记录？'),
       state.deleteToken
-        ? '将删除本次上传的资料、关联关卡和成绩。'
-        : '将清除这台浏览器中的练习引用。',
-      '确认清理',
+        ? ui('将删除本次上传的资料、关联关卡和成绩。')
+        : ui('将清除这台浏览器中的练习引用。'),
+      ui('确认清理'),
       () =>
         run(async () => {
           let result = {};
           if (state.materialId && state.deleteToken) {
             result = await api.deleteMaterial(state.materialId, state.deleteToken);
-            forgetUpload(state.materialId);
+            forgetMaterial(state.materialId, health?.mode);
           }
           reset();
           go('create');
-          toast(result.file_pending ? '记录已清理。文件将在服务重启后重试删除。' : '本次记录已清理。');
+          toast(
+            result.file_pending
+              ? ui('记录已清理。文件将在服务重启后重试删除。')
+              : ui('本次记录已清理。'),
+          );
         }),
     );
   window.addEventListener('hashchange', () => navigate(location.hash.slice(1)));
 }
 async function boot() {
   health = await api.health();
-  if (!Array.isArray(health.supported_extensions))
-    health.supported_extensions = ['.pdf', '.txt', '.png', '.jpg', '.jpeg'];
-  $('material-file').accept = health.supported_extensions.join(',');
-  $('upload-types').textContent =
-    health.supported_extensions.map((s) => s.replace(/^\./, '').toUpperCase()).join(' / ') +
-    '，最大 ' +
-    Math.ceil(health.max_upload_bytes / 1048576) +
-    ' MiB';
-  $('mode-button').textContent =
-    health.mode === 'demo' ? '示例模式' : health.external_models ? '云端模型' : '本地处理';
-  $('mode-button').classList.toggle('real', !health.external_models);
-  const privacy = health.external_models
-    ? '材料会发送给已配置的外部模型服务。请上传已获授权、适合共享的内容。'
-    : health.mode === 'demo'
-      ? '当前使用固定示例讲义，数据保存在本地。'
-      : '资料在本地处理。请使用已获授权的课件。';
-  $('privacy-note').textContent = privacy;
-  $('vision-example').hidden = !health.external_models;
-  $('privacy-detail').textContent = privacy;
-  if (health.mode === 'demo') $('sample-button').textContent = '试用机器学习讲义 →';
+  renderService();
   const saved = readLocal(STORAGE);
   if (saved?.mode === health.mode) {
     state = { ...initial(), ...saved };
@@ -787,6 +810,64 @@ async function boot() {
   controls();
   if (state.materialId || state.gameId || state.pending) await restore();
 }
+function changeLanguage() {
+  renderChrome();
+  const english = getLocale() === 'en';
+  const language = $('studio-language');
+  language.textContent = english ? '中文' : 'English';
+  language.lang = english ? 'zh-CN' : 'en';
+  language.setAttribute('aria-label', english ? 'Switch to Chinese' : '切换至英文');
+  document.querySelector('.hero-figure img').src = english
+    ? '/examples/cell-diagram-en.svg'
+    : '/examples/cell-diagram.svg';
+  for (const id of [
+    'state-tag',
+    'job-status',
+    'file-size',
+    'empty-message',
+    'error-message',
+    'toast',
+    'dialog-title',
+    'dialog-message',
+    'confirm-dialog-action',
+    'attempt-feedback',
+    'report-advice',
+  ]) {
+    const node = $(id);
+    if (node && !node.children.length) node.textContent = currentCopy(node.textContent);
+  }
+  if (health) renderService();
+  if (knowledge) renderKnowledge(knowledge);
+  if (plan && !$('plan-panel').hidden) {
+    const ids = selectedIds(),
+      checked = $('confirm-plan').checked,
+      difficulty = $('plan-difficulty').value;
+    renderPlan(
+      { ...plan, difficulty },
+      knowledge.knowledge.filter((k) => !state.scope || state.scope.includes(k.knowledge_id)),
+      ids,
+    );
+    $('confirm-plan').checked = checked;
+  }
+  if (game && !$('ready-panel').hidden) ready();
+  if (report) {
+    const advice = $('report-advice'),
+      retry = $('retry-feedback');
+    renderReport(report, game?.title);
+    if (advice?.querySelector('.study-content') || (retry && !retry.hidden)) {
+      $('report-advice').replaceWith(advice);
+      $('retry-feedback').hidden = retry.hidden;
+      $('retry-feedback').onclick = loadFeedback;
+    }
+  }
+  refreshLibrary();
+  traces();
+  navigate(location.hash.slice(1), false);
+  controls();
+}
+$('studio-language').onclick = () => setLocale(getLocale() === 'en' ? 'zh' : 'en');
+window.addEventListener('learning2game:locale', changeLanguage);
+changeLanguage();
 events();
 engine.subscribe((snapshot) => {
   if (snapshot) {

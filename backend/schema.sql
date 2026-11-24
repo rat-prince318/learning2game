@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS expedition_runs (
 );
 CREATE TABLE IF NOT EXISTS expedition_books (
     run_id TEXT NOT NULL REFERENCES expedition_runs(id) ON DELETE CASCADE,
-    book_index INTEGER NOT NULL CHECK(book_index BETWEEN 0 AND 7),
+    book_index INTEGER NOT NULL CHECK(book_index >= 0),
     game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
     PRIMARY KEY (run_id, book_index), UNIQUE(run_id, game_id)
 ) WITHOUT ROWID;

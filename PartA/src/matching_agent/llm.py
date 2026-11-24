@@ -13,6 +13,10 @@ from openai import AsyncOpenAI, APIConnectionError, APIStatusError, APITimeoutEr
 from .errors import AgentError
 
 
+BAILIAN_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+BAILIAN_FLASH = "deepseek-v4.1-flash-1017"
+
+
 @dataclass
 class ToolCall:
     id: str
@@ -52,12 +56,17 @@ class DeepSeekClient:
                  model: str | None = None, timeout: float | None = None,
                  sdk: Any = None, retry_delay: float = 1.0):
         key = api_key or os.getenv("DEEPSEEK_API_KEY")
+        if not key and os.getenv("DASHSCOPE_API_KEY") and not base_url:
+            key = os.environ["DASHSCOPE_API_KEY"]
+            base_url, model = BAILIAN_URL, model or BAILIAN_FLASH
         if not key and sdk is None:
             raise AgentError("missing_api_key", "请在本地 .env 中设置 DEEPSEEK_API_KEY。")
         self.model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
         self.base_url = base_url or os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
         self.deepseek_options = ({"extra_body": {"thinking": {"type": "disabled"}}}
                                  if urlsplit(self.base_url).hostname == "api.deepseek.com" else {})
+        if urlsplit(self.base_url).hostname == "dashscope.aliyuncs.com" and self.model.startswith("deepseek-"):
+            self.deepseek_options = {"extra_body": {"enable_thinking": False}}
         self.timeout = timeout or float(os.getenv("AGENT_TIMEOUT_SECONDS", "75"))
         self.sdk = sdk or AsyncOpenAI(api_key=key, base_url=self.base_url,
                                      timeout=self.timeout, max_retries=0)
