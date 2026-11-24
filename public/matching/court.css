@@ -1,0 +1,127 @@
+.mc-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #244443;
+  touch-action: none;
+  user-select: none;
+}
+.mc-canvas,
+.mc-projections {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mc-canvas {
+  touch-action: none;
+  outline-offset: -4px;
+  cursor: crosshair;
+}
+.mc-projections {
+  pointer-events: none;
+}
+.mc-placard,
+.mc-ballmark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  line-height: 1.22;
+  text-align: center;
+  color: #f7f2df;
+  font-family: system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+.mc-placard {
+  border: 1px solid #87aca0;
+  border-top: 3px solid var(--rim-color, #86d7a9);
+  border-radius: 3px;
+  box-shadow: 0 4px 8px #172a2a44;
+  background: linear-gradient(150deg, #234039, #182c2c);
+  transform: translate(-50%, -100%);
+  padding: 3px 6px 6px;
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.mc-placard[aria-pressed='true'] {
+  border-color: #ffe1aa;
+  box-shadow:
+    0 0 0 1px #e9b16e,
+    0 4px 8px #172a2a44;
+}
+.mc-index {
+  display: block;
+  font:
+    750 0.68em/1 Arial,
+    sans-serif;
+  color: var(--rim-color, #86d7a9);
+  margin: 1px 0 4px;
+  letter-spacing: 0.14em;
+}
+.mc-placard-body,
+.mc-balltext {
+  display: block;
+  overflow: hidden;
+}
+.mc-placard-body {
+  max-height: 4.9em;
+}
+.mc-ballmark {
+  transform: translate(-50%, -50%) rotate(-5deg);
+  width: 212px;
+  box-sizing: border-box;
+  padding: 3px 5px;
+  color: #fff3d7;
+  font-weight: 800;
+  letter-spacing: 0.012em;
+  -webkit-text-stroke: 0.75px #4c2b1d;
+  paint-order: stroke fill;
+  text-shadow: 0 1px 2px #442312;
+}
+.mc-balltext {
+  max-height: 122px;
+}
+.mc-balltext .study-math,
+.mc-balltext .study-scroll {
+  overflow: visible;
+}
+.mc-scene .katex-display {
+  margin: 0;
+}
+.mc-scene .katex {
+  color: inherit;
+  font-size: 1em;
+}
+.mc-scene .study-content {
+  font: inherit;
+  color: inherit;
+}
+.mc-movement {
+  display: none;
+}
+.mc-scene [hidden] {
+  display: none !important;
+}
+@media (pointer: coarse) {
+  .mc-movement {
+    position: absolute;
+    left: max(9px, env(safe-area-inset-left));
+    top: 57%;
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    border: 1px solid #f0e2c770;
+    border-radius: 50%;
+    background: #19312e38;
+    touch-action: none;
+  }
+  .mc-movement::before {
+    content: '✥';
+    font-size: 23px;
+    color: #fff0cf9f;
+  }
+}

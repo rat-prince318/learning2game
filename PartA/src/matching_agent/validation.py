@@ -15,7 +15,11 @@ from .models import (
 
 
 def normalized(text: str) -> str:
-    return re.sub(r"[\W_]+", "", unicodedata.normalize("NFKC", text).casefold())
+    # Keep symbols and case inside equations: x+y vs x-y, and P vs p, can be distinct answers.
+    fragments = re.split(r"(\$\$.*?\$\$|(?<!\\)\$[^$\n]+\$|\\\(.*?\\\)|\\\[.*?\\\])", text, flags=re.S)
+    return "".join(re.sub(r"\s+", "", s) if index % 2 else
+                   re.sub(r"[\W_]+", "", unicodedata.normalize("NFKC", s).casefold())
+                   for index, s in enumerate(fragments))
 
 
 def prepare_candidates(bundle: KnowledgeBundle, prefs: UserPreferences) -> dict:

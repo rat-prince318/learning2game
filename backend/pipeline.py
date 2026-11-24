@@ -14,9 +14,11 @@ from matching_agent.errors import AgentError
 from pydantic import Field, StrictBool, ValidationError
 
 from .question_language import LanguageError, accepts
+from .basketball_questions import eligible_item, text_problem
 
 from .db import connection
 from .games import store_game
+from .court_choices import CourtChoicesUnavailable
 from .legacy_exam import REUPLOAD_GUIDANCE, has_legacy_exam_cover
 from .models import (
     GameConfigInternal, Identifier, KnowledgeItem, LearningReport, MatchingPlan,
@@ -138,6 +140,8 @@ def _execute(app, job_id, operation, *args):
         return
     except (OutputError, LanguageError) as exc:
         message = str(exc)
+    except CourtChoicesUnavailable:
+        message = "当前材料缺少足够的同类干扰项。请补充相关概念或完整习题，或使用云端出题。"
     except AgentError as exc:
         # A may attach internal validation details. Publish only known static guidance.
         explanations = {
@@ -147,6 +151,7 @@ def _execute(app, job_id, operation, *args):
             "model_timeout": "模型响应超时，请稍后重试或减少本轮题量。",
             "insufficient_knowledge": "可用知识点较少，请调低题量或增加带定义与出处的资料。",
             "game_quality": "卡片校验需要更清楚的证据，请调整知识点或改用另一段资料。",
+            "math_renderer_unavailable": "公式校验服务需要 Node.js 22 或更高版本以及仓库内的 KaTeX 文件。",
         }
         message = explanations.get(exc.code, "模型返回的内容需要重新核验，请重试本步或调整方案。")
     except TimeoutError:
@@ -272,8 +277,9 @@ def _make_plan(job, material_id: str, knowledge: list[KnowledgeItem], prefs: Use
 
 def _queue_plan(app, tasks, conn, kind, resource_id, material_id, knowledge, prefs, *, single_weak=False):
     _services(app)
+    knowledge = [k for k in knowledge if eligible_item(k, prefs.question_language)]
     if len(knowledge) < 2:
-        raise HTTPException(422, "At least two extracted concepts are required to build a matching game")
+        raise HTTPException(422, "投篮配对需要至少两个可用文字或公式独立作答的知识点。请选取含完整条件的正文或题目。")
     job_id = insert_job(conn, kind, resource_id, app.state.mode, "matching")
     tasks.add_task(_execute, app, job_id, _make_plan, material_id, knowledge, prefs,
                    resource_id if kind == "practice" else None, single_weak)
@@ -299,10 +305,13 @@ def _generate(job, plan_id: str, knowledge: list[KnowledgeItem], plan: MatchingP
         if {pair.knowledge_id for pair in game.pairs} != set(plan.knowledge_ids):
             raise OutputError("The generated cards do not cover exactly the confirmed concepts.")
         if plan.question_language and any(not accepts(s, plan.question_language) for p in game.pairs
-                for s in (p.left, p.right, p.hint, p.explanation) if s):
+                for s in (p.left, p.right, p.hint, p.explanation, *p.distractors) if s):
             raise LanguageError("配对内容与选择的语言有出入，请重新生成。")
         if any(pair.source_ref != sources[pair.knowledge_id] for pair in game.pairs):
             raise OutputError("A generated card does not reference its extracted source.")
+        if any(text_problem(text) for p in game.pairs
+               for text in (p.left, p.right, p.hint, p.explanation, *p.distractors) if text):
+            raise OutputError("题面含外部图示、原文接句或残缺公式。请重新生成。")
     with connection(job.app, write=True) as conn:
         game_id = store_game(conn, game, plan_id)
         conn.execute("UPDATE plans SET game_id=? WHERE id=?", (game_id, plan_id))

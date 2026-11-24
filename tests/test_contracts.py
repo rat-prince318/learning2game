@@ -103,8 +103,14 @@ def test_adapter_boundary_revalidates_nested_model_instances():
         GameConfigInternal.model_validate(game)
 
 
-def test_public_projection_hides_answers_and_keeps_consistent_server_keys():
-    internal = demo_game()
+@pytest.mark.parametrize("count", [2, 3, 4, 5, 8, 12])
+def test_public_projection_hides_answers_and_keeps_consistent_server_keys(count):
+    # Different questions can have the same numeric key. All boards use the same unit.
+    sample = demo_game().pairs[0]
+    internal = GameConfigInternal(title="Mass", pairs=[sample.model_copy(update={
+        "pair_id": f"p{n}", "knowledge_id": f"k{n}", "left": f"A mass of {4*n} kg is divided into {n} equal parts. What is the mass of one part?",
+        "right": "4 kg", "distractors": ["2 kg", "6 kg", "8 kg"],
+    }) for n in range(1, count + 1)])
     by_pair = {pair.pair_id: pair for pair in internal.pairs}
     schema = Path(__file__).resolve().parents[1] / "backend" / "schema.sql"
     with closing(sqlite3.connect(":memory:")) as conn:
@@ -116,16 +122,23 @@ def test_public_projection_hides_answers_and_keeps_consistent_server_keys():
                 "SELECT public_json,card_map_json FROM games WHERE id=?", (game_id,)
             ).fetchone()
             public, card_map = json.loads(raw_public), json.loads(raw_map)
-            assert set(public) == {"game_id", "title", "left_cards", "right_cards"}
+            assert set(public) == {"game_id", "title", "left_cards", "right_cards", "court_options"}
             assert public["game_id"] == game_id
             for side in ("left", "right"):
                 cards = public[f"{side}_cards"]
-                assert len(cards) == len(internal.pairs)
+                assert len(cards) == len(internal.pairs) * (4 if side == "right" else 1)
                 assert set(card_map[side].values()) == set(by_pair)
                 for card in cards:
                     assert set(card) == {"id", "text"}
                     assert card["id"] not in issued_cards
-                    pair = by_pair[card_map[side][card["id"]]]
-                    assert card["id"] not in {pair.knowledge_id, pair.pair_id}
-                    assert card["text"] == getattr(pair, side)
+                    if card["id"] in card_map[side]:
+                        pair = by_pair[card_map[side][card["id"]]]
+                        assert card["id"] not in {pair.knowledge_id, pair.pair_id}
+                        assert card["text"] == getattr(pair, side)
                     issued_cards.add(card["id"])
+            right = {c["id"]: c["text"] for c in public["right_cards"]}
+            for left_id, options in public["court_options"].items():
+                pair = by_pair[card_map["left"][left_id]]
+                assert len(options) == 4
+                assert {right[i] for i in options} == {pair.right, *pair.distractors}
+                assert sum(card_map["right"].get(i) == pair.pair_id for i in options) == 1

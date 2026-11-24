@@ -9,9 +9,9 @@ async function files(dir) {
     )
   ).flat();
 }
-const scripts = (await Promise.all(['public/js', 'public/rpg', 'scripts', 'tests'].map(files)))
+const scripts = (await Promise.all(['public/js', 'public/matching', 'public/rpg', 'scripts', 'tests'].map(files)))
   .flat()
-  .filter((p) => p.endsWith('.js'));
+  .filter((p) => /\.(?:js|mjs)$/.test(p) && !p.split(/[\\/]/).includes('vendor'));
 for (const p of scripts) {
   const run = spawnSync(process.execPath, ['--check', p], { encoding: 'utf8' });
   if (run.status !== 0) {
@@ -24,7 +24,7 @@ const html = await readFile('public/index.html', 'utf8'),
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
 if (new Set(ids).size !== ids.length) throw new Error('HTML IDs must be unique.');
 const allIds = new Set([...ids, ...[...views.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1])]);
-for (const p of ['public/js/app.js', 'public/js/views.js']) {
+for (const p of ['public/js/app.js', 'public/js/views.js', 'public/matching/session.js']) {
   const src = await readFile(p, 'utf8');
   for (const m of src.matchAll(/\$\('([^']+)'\)/g))
     if (!allIds.has(m[1])) throw new Error('Unknown element ' + m[1]);

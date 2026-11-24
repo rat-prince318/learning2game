@@ -158,6 +158,7 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
             conn.execute("SELECT 1")
         available = rpg_workflow.supported_games(services)
         return {"service": "learning2game", "status": "ok", "mode": mode, "external_models": mode in {"live", "integrated"},
+                **({"launcher_id": os.environ["EDUGAME_LAUNCH_ID"]} if os.getenv("EDUGAME_LAUNCH_ID") else {}),
                 "supported_game_types": available, "rpg_course_authoring": mode == "live" and lesson_enabled(),
                 "rpg_play_modes": ["quest", "battle", "expedition"] if "rpg_quest" in available else [],
                 "max_upload_bytes": max_upload_bytes, "supported_extensions": list(materials.MEDIA)}

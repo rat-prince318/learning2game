@@ -7,6 +7,23 @@ const english = new Map(
     '把课件变成有来源的配对练习，再根据自己的学习记录复习。':
       'Build matching practice from course material, then review your own progress.',
     'Learning2Game 学习配对工作室': 'Learning2Game Matching Studio',
+    '第一人称视角下的篮球训练馆，篮板上显示着本轮可选的答案': 'A first-person view of the gym, with possible answers displayed on the backboards',
+    '打开独立球场 ↗': 'Open a separate court ↗',
+    '正在准备篮球题目和篮板答案。': 'Preparing the basketballs and the answers on the boards.',
+    '球场已就绪，可以开始投篮。': 'The court is ready for your first shot.',
+    '重新开始这场训练？': 'Start this training session over?',
+    '本轮成绩会保存，你可以回到球场再投一轮。': 'Your score will be saved before you start another round.',
+    直接上场: 'Play now',
+    回球场再投一轮: 'Play another round',
+    '投完看报告，回场再练薄弱点': 'Review your shots and practice weak spots',
+    '先试四球热身，或上传自己的课程资料。': 'Play the four-ball warm-up or bring your own course material.',
+    投篮训练: 'Shooting practice',
+    把课件带进: 'Take your course to',
+    '篮球场。': 'the court.',
+    '拿起写着题目的球，投向与你的答案相符的篮筐。': 'Pick up a question and shoot for the backboard that matches it.',
+    布置球场: 'Set up the court',
+    球场已就绪: 'Your court is ready',
+    '进入球场 →': 'Enter court →',
     跳到主要内容: 'Skip to content',
     'Learning2Game 创建练习': 'Learning2Game Create practice',
     学习配对工作室: 'Matching Studio',
@@ -255,6 +272,10 @@ const servicePhrases = {
     'This file is an exam. Upload a paper with complete questions and worked answers, or select pages containing all the conditions needed to solve a problem.',
   '每份资料至少需要三个可区分且有出处的知识点。':
     'Each course needs at least three distinct, source-backed exercises or concepts.',
+  '当前材料缺少足够的同类干扰项。请补充相关概念或完整习题，或使用云端出题。':
+    'This material needs more comparable choices. Add related concepts or complete exercises, or use cloud question generation.',
+  '这局旧题需要补充同类选项。请用原资料重新生成球场，历史学习报告已保留。':
+    'This older round needs comparable choices. Generate a new court from the original material. Your previous learning reports are available.',
   '资料达到单次文字处理上限，可按章节拆分后继续。':
     'The text limit was reached. Upload the remaining material by chapter.',
   '本轮提取文字内容。图示关系可在启用视觉模型后提取。':

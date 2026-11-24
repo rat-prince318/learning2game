@@ -90,13 +90,14 @@ def test_studio_selected_pages_game_and_owner_cleanup(tmp_path, monkeypatch):
             game_ticket, generation = _result(client, running.result(timeout=10), "completed")
         game_id = generation["result"]["game_id"]
         game = client.get("/games/" + game_id).json()
-        assert len(game["left_cards"]) == len(game["right_cards"]) == 2
+        assert len(game["left_cards"]) == 2
+        assert all(3 <= len(choices) <= 4 for choices in game["court_options"].values())
         assert all(set(c) == {"id", "text"} for c in game["left_cards"] + game["right_cards"])
         assert "validate_matching_config" in {t["name"] for t in generation["tool_calls"]}
         session = client.post(f"/games/{game_id}/sessions").json()["session_id"]
         attempt = client.post(f"/sessions/{session}/attempts", json={
             "event_id": "student-click", "left_id": game["left_cards"][0]["id"],
-            "right_id": game["right_cards"][0]["id"]})
+            "right_id": game["court_options"][game["left_cards"][0]["id"]][0]})
         assert attempt.status_code == 200
         assert client.post(f"/sessions/{session}/finish").json()["valid_attempts"] == 1
 

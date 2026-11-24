@@ -1,0 +1,3 @@
+# The readable sources and reproducible build for these bundled libraries live in npm and scripts/build-court.mjs.
+public/matching/vendor/* text eol=lf
+public/matching/vendor/*.mjs -diff linguist-generated=true

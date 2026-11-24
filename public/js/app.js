@@ -1,3 +1,4 @@
+import { createCourtSession } from '../matching/session.js';
 import { savedMaterials, rememberMaterial, forgetMaterial } from './material-library.js';
 import { studyMarkup } from './study.js';
 import { msg, getLocale, setLocale } from './locale.js';
@@ -14,13 +15,20 @@ import {
   newId,
   h,
 } from './utils.js';
-import { renderKnowledge, renderPlan, renderPlay, renderReport } from './views.js';
+import { renderKnowledge, renderPlan, renderReport } from './views.js';
 
 const $ = (id) => document.getElementById(id);
 const renderChrome = bindStudioChrome();
-const STORAGE = 'learning2game-workspace-v2';
+// Shared courts keep their own player and review history alongside studio drafts.
+const sharedCourt = new URLSearchParams(location.search).get('court');
+const STORAGE = sharedCourt ? 'learning2game-court-v1:' + sharedCourt : 'learning2game-workspace-v2';
 const api = new ApiClient();
 const engine = new MatchingEngine(api);
+const court = createCourtSession({
+  engine,
+  requestHint: () => run(hint),
+  isBusy: () => busy,
+});
 const initial = () => ({
   materialId: null,
   deleteToken: null,
@@ -176,6 +184,7 @@ function selectedIds() {
 function controls() {
   for (const id of [
     'sample-button',
+    'warmup-button',
     'remove-file',
     'start-button',
     'clear-data-button',
@@ -195,7 +204,7 @@ function controls() {
   $('generate-button').disabled = busy || !$('confirm-plan').checked || !plan || n < 2 || n > 12;
   $('practice-button').disabled = busy || !report?.weak_knowledge_ids.length;
   $('main').setAttribute('aria-busy', String(busy));
-  renderPlay(engine.snapshot, busy);
+  court.update(engine.snapshot, busy);
 }
 async function run(fn, retry = fn) {
   if (busy) return;
@@ -223,8 +232,8 @@ function workflow(stage, label) {
     {
       material: ui('正在读取资料并整理知识点。'),
       plan: ui('查看本轮方案，确认想练习的范围。'),
-      generate: ui('正在制作和检查配对卡片。'),
-      ready: ui('关卡已保存，可以开始配对。'),
+      generate: ui('正在准备篮球题目和篮板答案。'),
+      ready: ui('球场已就绪，可以开始投篮。'),
     }[stage] || ui('请选择课件或试用示例。');
 }
 function traces(job) {
@@ -249,6 +258,7 @@ function reset() {
   game = null;
   report = null;
   engine.clear();
+  court.setVisible(false);
   scheduledFinish = null;
   $('material-file').value = '';
   $('pdf-pages').value = '';
@@ -283,8 +293,9 @@ function navigate(route, focus = true) {
       ? ui('先选择资料、确认方案并创建一轮练习。')
       : ui('结束一轮配对后即可查看学习记录。');
   if (missing) $('page-' + route).hidden = true;
+  court.setVisible(route === 'play' && !missing);
   document.title =
-    { create: ui('创建练习'), play: ui('配对练习'), report: ui('学习报告') }[route] +
+    { create: ui('创建练习'), play: ui('投篮训练'), report: ui('学习报告') }[route] +
     ' | Learning2Game';
   if (focus) $(missing ? 'empty-title' : route + '-title').focus({ preventScroll: true });
 }
@@ -395,6 +406,7 @@ async function resolvePending() {
       state.pending = null;
       newJob('plan', await api.plan(state.materialId, state.preferences || preferences()));
     } else if (kind === 'plan' || kind === 'practice') {
+      state.materialId ||= job.result.material_id;
       if (!knowledge) await readKnowledge();
       showPlan(job.result, kind, id);
       state.pending = null;
@@ -449,12 +461,17 @@ async function generate() {
 function ready() {
   $('plan-panel').hidden = true;
   $('ready-panel').hidden = false;
+  const link = new URL(location.pathname, location.origin);
+  link.searchParams.set('court', game.game_id);
+  link.hash = 'play';
+  $('course-court-link').href = link.href;
   $('ready-description').innerHTML =
     `${studyMarkup(game.title)} / ${game.pair_count} ${msg('对', 'pairs')}`;
   workflow('ready', ui('已就绪'));
 }
 async function start(fresh = false) {
   if (!game) game = validatePublicGame(await api.getGame(state.gameId));
+  state.gameTitle = game.title;
   if (fresh || !state.sessionId) {
     const session = await api.createSession(game.game_id);
     state.sessionId = session.session_id;
@@ -489,7 +506,7 @@ async function finish() {
 }
 function showReport() {
   if (!report) return;
-  renderReport(report, game?.title);
+  renderReport(report, game?.title || state.gameTitle);
   go('report');
   controls();
   persist();
@@ -559,7 +576,7 @@ function tick() {
   $('time-label').textContent = state.limit ? ui('剩余时间') : ui('已用时间');
   const done =
     s.session.completed_pairs === game?.pair_count || (state.limit && elapsed >= state.limit);
-  if (done && !busy && !report && s.phase === 'active' && scheduledFinish !== state.sessionId) {
+  if (done && !busy && !report && ['active', 'ended'].includes(s.phase) && scheduledFinish !== state.sessionId) {
     scheduledFinish = state.sessionId;
     run(finish);
   }
@@ -575,19 +592,22 @@ async function restore() {
     await resolvePending();
     return;
   }
+  const session = state.sessionId && state.gameId ? await api.getSession(state.sessionId) : null;
+  if (session?.status === 'finished') {
+    report = await api.report(state.sessionId);
+    showReport();
+    return;
+  }
   if (state.gameId) game = validatePublicGame(await api.getGame(state.gameId));
-  if (state.sessionId && game) {
-    const s = await api.getSession(state.sessionId);
-    engine.start(game, s, state.recovery || {});
-    if (s.status === 'finished') {
-      report = await api.report(state.sessionId);
-      showReport();
-    } else {
-      ready();
-      go('play');
-    }
-  } else if (game) ready();
-  else if (state.materialId && !state.needsRetry) {
+  if (session && game) {
+    state.gameTitle = game.title;
+    engine.start(game, session, state.recovery || {});
+    ready();
+    go('play');
+  } else if (game) {
+    if (sharedCourt && location.hash === '#play') await start();
+    else ready();
+  } else if (state.materialId && !state.needsRetry) {
     await readKnowledge();
     if (state.planJob) {
       const saved = await api.waitForJob(state.planJob);
@@ -629,6 +649,13 @@ function renderService() {
   if (health.mode === 'demo') $('sample-button').textContent = ui('试用机器学习讲义 →');
 }
 function events() {
+  $('warmup-button').onclick = () => run(async () => {
+    const warmup = await api.request('/court/warmup?language=' + getLocale());
+    const link = new URL(location.pathname, location.origin);
+    link.searchParams.set('court', warmup.game_id);
+    link.hash = 'play';
+    location.assign(link.href);
+  });
   $('sample-button').onclick = () =>
     run(sample, () => (state.pending || state.materialId ? analyze() : sample()));
   $('go-upload').onclick = (e) => {
@@ -683,7 +710,15 @@ function events() {
     if (health && e.dataTransfer.files[0]) run(() => chooseFile(e.dataTransfer.files[0]));
   };
   $('remove-file').onclick = () => reset();
+  if (sharedCourt) {
+    const studio = location.pathname + '#create';
+    for (const node of document.querySelectorAll('#court-exit, .brand, a[data-route="create"], #empty-page a')) node.href = studio;
+  }
   $('new-material').onclick = () => {
+    if (sharedCourt) {
+      location.assign(location.pathname + '#create');
+      return;
+    }
     reset();
     go('create');
   };
@@ -692,47 +727,12 @@ function events() {
   $('plan-difficulty').onchange = changeDraft;
   $('generate-button').onclick = () => run(generate);
   $('start-button').onclick = () => run(() => start());
-  for (const area of [$('left-cards'), $('right-cards')]) {
-    area.onclick = (e) => {
-      const c = e.target.closest('[data-card-id]');
-      if (!c || busy || c.disabled) return;
-      if (c.dataset.side === 'left') {
-        $('hint-content').hidden = true;
-        engine.selectLeft(c.dataset.cardId);
-      } else engine.chooseRight(c.dataset.cardId);
-    };
-    area.onkeydown = (e) => {
-      if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key))
-        return;
-      const card = e.target.closest('[data-card-id]');
-      if (!card) return;
-      e.preventDefault();
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        document
-          .querySelector(
-            (e.key === 'ArrowRight' ? '#right-cards' : '#left-cards') + ' button:not(:disabled)',
-          )
-          ?.focus();
-        return;
-      }
-      const cards = [...area.querySelectorAll('button:not(:disabled)')];
-      const i = cards.indexOf(card);
-      cards[
-        e.key === 'Home'
-          ? 0
-          : e.key === 'End'
-            ? cards.length - 1
-            : (i + (e.key === 'ArrowDown' ? 1 : -1) + cards.length) % cards.length
-      ]?.focus();
-    };
-  }
-  $('hint-button').onclick = () => run(hint);
   $('retry-attempt-button').onclick = () => engine.retry();
   $('sync-session-button').onclick = () => run(synchronize);
   $('restart-button').onclick = () =>
     confirmDialog(
-      ui('重新开始这组卡片？'),
-      ui('本轮成绩将保存，然后开启新的配对会话。'),
+      ui('重新开始这场训练？'),
+      ui('本轮成绩会保存，你可以回到球场再投一轮。'),
       ui('重新开始'),
       () => run(restart),
     );
@@ -808,7 +808,12 @@ async function boot() {
   traces();
   navigate(location.hash.slice(1), false);
   controls();
-  if (state.materialId || state.gameId || state.pending) await restore();
+  if (state.materialId || state.gameId || state.pending) {
+    await restore();
+  } else if (sharedCourt) {
+    state.gameId = sharedCourt;
+    await start();
+  }
 }
 function changeLanguage() {
   renderChrome();
@@ -817,9 +822,6 @@ function changeLanguage() {
   language.textContent = english ? '中文' : 'English';
   language.lang = english ? 'zh-CN' : 'en';
   language.setAttribute('aria-label', english ? 'Switch to Chinese' : '切换至英文');
-  document.querySelector('.hero-figure img').src = english
-    ? '/examples/cell-diagram-en.svg'
-    : '/examples/cell-diagram.svg';
   for (const id of [
     'state-tag',
     'job-status',
@@ -853,7 +855,7 @@ function changeLanguage() {
   if (report) {
     const advice = $('report-advice'),
       retry = $('retry-feedback');
-    renderReport(report, game?.title);
+    renderReport(report, game?.title || state.gameTitle);
     if (advice?.querySelector('.study-content') || (retry && !retry.hidden)) {
       $('report-advice').replaceWith(advice);
       $('retry-feedback').hidden = retry.hidden;
@@ -872,7 +874,7 @@ events();
 engine.subscribe((snapshot) => {
   if (snapshot) {
     state.recovery = engine.recovery();
-    renderPlay(snapshot, busy);
+    court.update(snapshot, busy);
     persist();
   }
 });

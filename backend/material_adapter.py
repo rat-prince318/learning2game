@@ -9,7 +9,6 @@ import json
 import os
 import re
 import time
-import unicodedata
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -17,6 +16,7 @@ from pathlib import Path
 
 from matching_agent.llm import BAILIAN_URL, BAILIAN_FLASH
 from matching_agent.wording import has_unwanted_wording
+from matching_agent.validation import normalized
 
 from .course_metadata import is_course_metadata
 from .material_processing import MaterialError, TextBlock, read_material, validate_office_archive
@@ -36,7 +36,6 @@ _CHINESE = re.compile(r"^([\w（）()\-]{1,20}?)(?:指的是|是指|指|是)\s*(
 _NONTERMS = {"例如", "注意", "说明", "提示", "小结", "备注", "资料来源", "参考文献", "示例",
              "example", "note", "source", "tip", "term", "concept", "概念", "术语"}
 _PRONOUN_SUBJECTS = {"this", "that", "it", "these", "those", "they", "we", "i", "he", "she", "you"}
-_PUNCT = re.compile(r"[\W_]+", re.UNICODE)
 
 
 def _squash(text: str) -> str:
@@ -44,10 +43,12 @@ def _squash(text: str) -> str:
 
 
 def _key(text: str) -> str:
-    return _PUNCT.sub("", unicodedata.normalize("NFKC", text).casefold())
+    return normalized(text)
 
 
 def _display(text: str) -> str:
+    text = re.sub(r"\$\$.*?\$\$|(?<!\\)\$[^$\n]+\$|\\\(.*?\\\)|\\\[.*?\\\]",
+                  lambda m: m[0].replace("\u00b7", "\u22c5"), text, flags=re.S)
     return _squash(text.replace("\u00b7", " "))
 
 
@@ -62,6 +63,7 @@ class Point:
     source_type: str
     relation: str = "concept_definition"
     example: str | None = None
+    literal: bool = False
 
 
 def _rules(block: TextBlock) -> list[Point]:
@@ -100,7 +102,7 @@ def _rules(block: TextBlock) -> list[Point]:
             continue
         pieces = re.split(r"(?:[。；;]\s*)(?:例(?:如)?|Example)\s*[:：]\s*", definition, maxsplit=1, flags=re.I)
         candidates.append(Point(term.strip(), pieces[0], raw.strip(), [block.source_id], block.label,
-                                block.page, "text", example=pieces[1] if len(pieces) > 1 else None))
+                                block.page, "text", example=pieces[1] if len(pieces) > 1 else None, literal=True))
     return candidates
 
 
@@ -157,7 +159,7 @@ class MaterialProvider:
                    "max_tokens": 4096}
         if self.base_url == BAILIAN_URL and not vision:
             payload["enable_thinking"] = False
-        if json_mode:
+        if json_mode or (self.base_url == BAILIAN_URL and not vision):
             payload["response_format"] = {"type": "json_object"}
         for attempt in range(3):
             remaining = self.deadline - time.monotonic()
@@ -238,10 +240,20 @@ def _from_text(provider, blocks) -> list[Point]:
         quote = _quoted(item, "evidence")
         if not block or len(quote) < 4 or quote not in _squash(source.get(block.source_id, "")):
             continue
+        # Preserve the lecturer's term, complete definition and numerical example
+        # when the model selected that same glossary entry from a quoted clause.
+        term = _quoted(item, "term")
+        term_key = _key(term)
+        literal = next((p for p in _rules(block) if term_key and _key(p.term)
+                        and (term_key in _key(p.term) or _key(p.term) in term_key)
+                        and quote in _squash(p.evidence) and _qualifies(p)), None)
+        if literal is not None:
+            candidates.append(literal)
+            continue
         example = _quoted(item, "example")
-        candidates.append(Point(_quoted(item, "term"), _quoted(item, "definition"), quote, [block.source_id],
+        candidates.append(Point(term, _quoted(item, "definition"), quote, [block.source_id],
                                 block.label, block.page, "text",
-                                example=example if example and example in _squash(block.text) else None))
+                                example=example if example and example in _squash(source[block.source_id]) else None))
     return candidates
 
 
@@ -319,9 +331,22 @@ def _qualifies(point: Point) -> bool:
 def _dedupe(candidates: list[Point]) -> tuple[list[Point], int]:
     """B's similarity grouping with conservative handling of contradictory definitions."""
     groups: dict[str, list[Point]] = {}
+    literal_quotes = {}
     for point in candidates:
-        if _qualifies(point):
-            groups.setdefault(_key(point.term), []).append(point)
+        if not _qualifies(point):
+            continue
+        # An extracted glossary line often includes both a definition and an example.
+        # The model may quote just its first clause and give the same fact another name.
+        # Keep the source's own card; still compare independent glossary rows for conflicts.
+        if point.source_type == "text":
+            quote = _key(point.evidence)
+            if not point.literal and any(quote in original for sid in point.sources
+                                         for original in literal_quotes.get(sid, ())):
+                continue
+            if point.literal:
+                for sid in point.sources:
+                    literal_quotes.setdefault(sid, []).append(quote)
+        groups.setdefault(_key(point.term), []).append(point)
     merged = []
     rejected = 0
     for group in groups.values():

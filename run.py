@@ -35,44 +35,64 @@ def prepare_python():
     return python
 
 
-def ready(url):
+def ready(url, launch_id):
     try:
         with urlopen(url + "health", timeout=1) as response:
-            return json.load(response).get("service") == "learning2game"
+            health = json.load(response)
+            return health.get("service") == "learning2game" and health.get("launcher_id") == launch_id
     except (URLError, TimeoutError, ValueError, OSError, AttributeError):
         return False
 
 
+def choose_port(requested, launch_id):
+    # An RPG checkout and a basketball checkout can be running at the same time.
+    candidates = [requested] if requested is not None else range(8000, 8050)
+    first_free = None
+    for port in candidates:
+        with socket.socket() as probe:
+            try:
+                probe.bind(("127.0.0.1", port))
+            except OSError:
+                if ready(f"http://127.0.0.1:{port}/", launch_id):
+                    return port, True
+            else:
+                if first_free is None:
+                    first_free = port
+    if first_free is not None:
+        return first_free, False
+    raise OSError("The requested port is in use." if requested is not None else "Ports 8000 through 8049 are in use.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--port", type=int)
     parser.add_argument("--no-browser", action="store_true")
     args = parser.parse_args()
     if sys.version_info < (3, 11):
         parser.exit(2, "Please run with Python 3.11 or later.\n")
-    if not 1 <= args.port <= 65535:
+    if args.port is not None and not 1 <= args.port <= 65535:
         parser.error("Choose a port from 1 to 65535.")
-    url = f"http://127.0.0.1:{args.port}/"
-    if ready(url):
+    launch_id = hashlib.sha256(str(ROOT).encode("utf-8")).hexdigest()[:24]
+    try:
+        port, reuse = choose_port(args.port, launch_id)
+    except OSError as exc:
+        parser.exit(2, f"{exc} Choose another port with --port.\n")
+    url = f"http://127.0.0.1:{port}/"
+    if reuse:
         print(f"Learning2Game: {url}", flush=True)
         if not args.no_browser:
             webbrowser.open(url)
         return 0
-    with socket.socket() as probe:
-        try:
-            probe.bind(("127.0.0.1", args.port))
-        except OSError:
-            parser.exit(2, f"Port {args.port} is in use. Try: python run.py --port 8001\n")
     python = prepare_python()
     cmd = [str(python), "-m", "uvicorn", "backend.main:app", "--host", "127.0.0.1",
-           "--port", str(args.port)]
+           "--port", str(port)]
     if (ROOT / ".env").is_file():
         cmd += ["--env-file", ".env"]
-    process = subprocess.Popen(cmd, cwd=ROOT)
+    process = subprocess.Popen(cmd, cwd=ROOT, env={**os.environ, "EDUGAME_LAUNCH_ID": launch_id})
 
     def announce():
         while process.poll() is None:
-            if ready(url):
+            if ready(url, launch_id):
                 print(f"Learning2Game: {url}", flush=True)
                 if not args.no_browser:
                     webbrowser.open(url)

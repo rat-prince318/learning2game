@@ -156,14 +156,27 @@ def test_practice_one_weak_concept_and_feedback_from_source_material(tmp_path):
         start = job(client, client.post("/games", json=confirm(initial["plan_id"])))
         game_id = start["result"]["game_id"]
         game = client.get(f"/games/{game_id}").json()
-        ls = {card["text"]: card["id"] for card in game["left_cards"]}
-        rs = {card["text"]: card["id"] for card in game["right_cards"]}
+        def sourced_balls(public):
+            with connection(app) as conn:
+                row = conn.execute("SELECT internal_json,card_map_json FROM games WHERE id=?",
+                                   (public["game_id"],)).fetchone()
+            pairs = {p["pair_id"]: p["knowledge_id"] for p in json.loads(row["internal_json"])["pairs"]}
+            key = json.loads(row["card_map_json"])
+            result = {}
+            for ball in public["left_cards"]:
+                left = ball["id"]
+                pair = key["left"][left]
+                correct = next(r for r in public["court_options"][left] if key["right"].get(r) == pair)
+                result[pairs[pair]] = (left, correct, ball["text"])
+            return result
+        originals = sourced_balls(game)
         session_id = client.post(f"/games/{game_id}/sessions").json()["session_id"]
         prefix = f"/sessions/{session_id}"
         assert client.post(f"{prefix}/practice").status_code == 409
         for item in knowledge[:-1]:
+            left, right, _ = originals[item["knowledge_id"]]
             scored = client.post(f"{prefix}/attempts", json={
-                "event_id": item["knowledge_id"], "left_id": ls[item["term"]], "right_id": rs[item["definition"]],
+                "event_id": item["knowledge_id"], "left_id": left, "right_id": right,
             })
             assert scored.json()["correct"]
         report = client.post(f"{prefix}/finish").json()
@@ -180,7 +193,9 @@ def test_practice_one_weak_concept_and_feedback_from_source_material(tmp_path):
         next_round = job(client, client.post("/games", json=confirm(practice["result"]["plan_id"])))
         assert next_round["status"] == "completed", next_round
         changed = client.get("/games/" + next_round["result"]["game_id"]).json()
-        assert {card["text"] for card in changed["right_cards"]}.isdisjoint(rs)
+        revised = sourced_balls(changed)
+        assert target["knowledge_id"] in revised
+        assert all(prompt != originals[kid][2] for kid, (_, _, prompt) in revised.items())
 
 
 def test_bad_demo_upload_and_missing_resource_handling(tmp_path):

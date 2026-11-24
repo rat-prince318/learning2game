@@ -4,16 +4,17 @@ import asyncio
 import hashlib
 import os
 import re
-from collections import Counter
 
 from matching_agent import MatchingAgent
 from matching_agent import models as a
 from matching_agent.errors import AgentError
-from matching_agent.llm import DeepSeekClient
+from matching_agent.llm import BAILIAN_FLASH, BAILIAN_URL, DeepSeekClient
 from matching_agent.source_client import SourceClient
 from matching_agent.validation import prepare_candidates
 
 from . import models as d
+from .basketball_questions import generate_shots
+from .court_choices import prepare_choices
 from .provider import trace_tool
 from .question_language import accepts, localized_items, LanguageError
 
@@ -27,7 +28,7 @@ def _relation(knowledge, prefs):
     return "term_definition"
 
 
-def _bundle(knowledge, relation, target_language=None):
+def _bundle(knowledge, relation, target_language=None, *, shot_plan=False):
     # The host supplies a scoped roster, rather than exposing the upload directory or its files.
     material_id = "scope_" + a.digest({"rows": [
         (k.knowledge_id, k.term, k.definition, k.source_ref) for k in knowledge
@@ -42,7 +43,14 @@ def _bundle(knowledge, relation, target_language=None):
         evidence = getattr(k, "evidence", None) or k.definition
         sources.append(a.Source(source_id=source_id, material_id=material_id, locator=k.source_ref,
                                 evidence=evidence, modality=modality, origin_ids=getattr(k, "source_ids", [])))
-        items.append(a.KnowledgeItem(knowledge_id=k.knowledge_id, concept=k.term, definition=k.definition,
+        concept, definition = k.term, k.definition
+        if shot_plan and k.exam_question:
+            # An exam can legitimately have several distinct problems on "velocity".
+            # Distinguish evaluated problems in the planner without changing the visible study term.
+            exam = getattr(k.exam_question, target_language or "en")
+            concept = f"{exam.term[:140]} ({len(items) + 1})"
+            definition = exam.prompt
+        items.append(a.KnowledgeItem(knowledge_id=k.knowledge_id, concept=concept, definition=definition,
                                      example=k.example, relation_type=relation, source_refs=[source_id],
                                      evidence=evidence, modality=modality))
     language = "zh" if any(re.search(r"[\u3400-\u9fff]", k.term + k.definition) for k in knowledge) else "en"
@@ -79,7 +87,11 @@ class AgentAdapter:
 
     def _run(self, operation):
         async def invoke():
-            client = DeepSeekClient() if self.live else SourceClient()
+            if self.live and os.getenv("DASHSCOPE_API_KEY"):
+                client = DeepSeekClient(api_key=os.environ["DASHSCOPE_API_KEY"],
+                                        base_url=BAILIAN_URL, model=BAILIAN_FLASH)
+            else:
+                client = DeepSeekClient() if self.live else SourceClient()
             try:
                 agent = MatchingAgent(client, trace_tool=trace_tool)
                 if self.live:
@@ -97,15 +109,24 @@ class AgentAdapter:
         return asyncio.run(invoke())
 
     def plan(self, knowledge: list[d.KnowledgeItem], preferences: d.UserPreferences) -> d.MatchingPlan:
-        if preferences.question_language:
+        # The live planner selects IDs from source evidence. Let the author write
+        # directly in the requested language so translating every candidate never
+        # mutates an equation or stalls an otherwise usable large textbook.
+        if preferences.question_language and not self.live:
             knowledge = self._run(lambda agent: localized_items(knowledge, preferences.question_language,
                                                                agent.client if self.live else None))
-        bundle = _bundle(knowledge, _relation(knowledge, preferences), preferences.question_language)
+        bundle = _bundle(knowledge, _relation(knowledge, preferences), preferences.question_language,
+                         shot_plan=self.live)
         prefs = _preferences(preferences, min(len(knowledge), preferences.pair_count))
         proposed = self._run(lambda agent: agent.prepare_plan(bundle, prefs))
         by_id = {k.knowledge_id: k for k in knowledge}
         first = by_id[proposed.selected_knowledge_ids[0]].term
         title = f"{first[:60]} 等概念配对" if bundle.language == "zh" else f"{first[:60]} and related concepts"
+        if self.live:
+            if accepts(first, bundle.language):
+                title = f"{first[:60]}投篮挑战" if bundle.language == "zh" else f"{first[:60]} shooting challenge"
+            else:
+                title = "课程投篮挑战" if bundle.language == "zh" else "Course shooting challenge"
         if all(by_id[kid].exam_question for kid in proposed.selected_knowledge_ids):
             title = "试题与解答配对" if bundle.language == "zh" else "Match each problem to its solution"
         return d.MatchingPlan(title=title, question_language=preferences.question_language, goal=preferences.goal, learner_level=preferences.learner_level,
@@ -115,6 +136,8 @@ class AgentAdapter:
 
     def generate(self, knowledge: list[d.KnowledgeItem], plan: d.MatchingPlan,
                  previous: d.GameConfigInternal | None = None) -> d.GameConfigInternal:
+        if self.live:
+            return self._run(lambda agent: generate_shots(agent.client, knowledge, plan, previous))
         relation = _relation(knowledge, plan) if plan.relationship_type == "auto" else plan.relationship_type
         if relation not in {"term_definition", "term_scenario", "component_function"}:
             raise ValueError("Choose a supported matching relationship.")
@@ -139,14 +162,6 @@ class AgentAdapter:
         if result.status != "completed" or result.game is None:
             raise AgentError("game_quality", "卡片校验需要更清楚的证据，请调整知识点或改用另一段资料。")
         by_id = {k.knowledge_id: k for k in knowledge}
-        exam_cards = {}
-        for kid in plan.knowledge_ids:
-            item = by_id[kid]
-            if item.exam_question:
-                wording = getattr(item.exam_question, bundle.language)
-                answer = wording.options[item.exam_question.correct_index]
-                exam_cards[kid] = (wording, answer)
-        answer_counts = Counter(answer for _, answer in exam_cards.values())
         pairs = []
         for p in result.game.pairs:
             k = by_id[p.knowledge_id]
@@ -160,18 +175,18 @@ class AgentAdapter:
             hint = (f"回想课程中关于“{k.term}”的描述。"
                     if bundle.language == "zh" else f"Recall how this course describes {k.term}.")
             left, right = p.left, p.right
-            if p.knowledge_id in exam_cards:
-                wording, answer = exam_cards[p.knowledge_id]
-                left, right, hint, explanation = wording.prompt, answer, wording.hint, wording.explanation
-                # Equal numerical answers on separate cards must be distinguishable by reasoning.
-                if answer_counts[answer] > 1:
-                    right = f"{answer}\n{wording.explanation}"
+            distractors = []
+            if k.exam_question:
+                wording = getattr(k.exam_question, bundle.language)
+                index = k.exam_question.correct_index
+                left, right, hint, explanation = wording.prompt, wording.options[index], wording.hint, wording.explanation
+                left, right, distractors = prepare_choices({"left": left, "right": right}, k, bundle.language)
             if plan.question_language and not all(accepts(value, plan.question_language)
                                                    for value in (left, right, hint, explanation)):
                 raise LanguageError("生成的卡片混入了其他语言的说明，请重新生成。")
             pairs.append(d.MatchingPair(
                 pair_id="p_" + hashlib.sha256(k.knowledge_id.encode()).hexdigest()[:24], knowledge_id=k.knowledge_id,
-                left=left, right=right, explanation=explanation, source_ref=k.source_ref, hint=hint,
+                left=left, right=right, distractors=distractors, explanation=explanation, source_ref=k.source_ref, hint=hint,
                 study_term=k.term if plan.question_language else None,
             ))
         return d.GameConfigInternal(title=plan.title, pairs=pairs)

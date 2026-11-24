@@ -82,11 +82,14 @@ def test_exam_language_in_matching_camp_tower_and_grounded_grading(exercises, la
     matching = AgentAdapter()
     mp = matching.plan(exercises, UserPreferences(question_language=lang, pair_count=3))
     pairs = matching.generate(exercises, mp).pairs
-    assert len({p.right for p in pairs}) == 3  # Two problems deliberately share a numerical result.
+    # Independent question banks can share the same numerical key.
+    assert len(pairs) == 3 and len({p.right for p in pairs}) == 2
     for p in pairs:
         wording = table[p.knowledge_id]
         assert (p.left, p.hint, p.explanation) == (wording.prompt, wording.hint, wording.explanation)
-        assert p.right.startswith(wording.options[0])
+        assert p.right == wording.options[0]
+        assert 2 <= len(p.distractors) <= 3
+        assert p.right not in p.distractors
 
     q = questions[0]
     q.correct_option_id = next(o.id for o in q.options if o.id != q.correct_option_id)

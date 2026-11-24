@@ -4,12 +4,16 @@ import json
 from collections import Counter
 from datetime import datetime, timezone
 from sqlite3 import Connection, Row
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .db import connection
+from .court_warmup import warmup_game
+from .court_choices import CourtChoicesUnavailable
+from .games import upgrade_court
 from .models import (
     AttemptInput, ConceptPerformance, GameConfigInternal, GameConfigPublic, HintInput,
     LearningReport, MaterialResult,
@@ -56,7 +60,7 @@ def _now() -> str:
 
 def _session(conn: Connection, session_id: str) -> Row:
     row = conn.execute(
-        """SELECT s.game_id, s.status, g.game_type, g.internal_json, g.card_map_json, g.plan_id
+        """SELECT s.game_id, s.status, g.game_type, g.public_json, g.internal_json, g.card_map_json, g.plan_id
            FROM sessions s JOIN games g ON g.id = s.game_id
            WHERE s.id = ?""",
         (session_id,),
@@ -68,6 +72,11 @@ def _session(conn: Connection, session_id: str) -> Row:
     return row
 
 
+@router.get("/court/warmup", response_model=GameConfigPublic)
+def public_warmup(request: Request, language: Literal["zh", "en"] = "zh"):
+    return public_game(warmup_game(request.app, language), request)
+
+
 @router.get("/games/{game_id}", response_model=GameConfigPublic)
 def public_game(game_id: str, request: Request):
     with connection(request.app) as conn:
@@ -76,17 +85,29 @@ def public_game(game_id: str, request: Request):
         raise HTTPException(404, "Game not found")
     if row["game_type"] != "matching":
         raise HTTPException(409, "请从 RPG 游戏入口打开这个关卡。")
-    return json.loads(row["public_json"])
+    public = json.loads(row["public_json"])
+    if "court_options" in public:
+        return public
+    with connection(request.app, write=True) as conn:
+        return _load_playable(conn, game_id)
+
+
+def _load_playable(conn, game_id):
+    row = conn.execute("SELECT * FROM games WHERE id=?", (game_id,)).fetchone()
+    if row is None:
+        raise HTTPException(404, "Game not found")
+    if row["game_type"] != "matching":
+        raise HTTPException(409, "请从 RPG 游戏入口打开这个关卡。")
+    try:
+        return upgrade_court(conn, row)
+    except (CourtChoicesUnavailable, ValidationError) as exc:
+        raise HTTPException(409, "这局旧题需要补充同类选项。请用原资料重新生成球场，历史学习报告已保留。") from exc
 
 
 @router.post("/games/{game_id}/sessions", response_model=SessionStarted, status_code=201)
 def start_session(game_id: str, request: Request):
     with connection(request.app, write=True) as conn:
-        row = conn.execute("SELECT game_type FROM games WHERE id = ?", (game_id,)).fetchone()
-        if row is None:
-            raise HTTPException(404, "Game not found")
-        if row["game_type"] != "matching":
-            raise HTTPException(409, "请从 RPG 游戏入口开始这一局。")
+        _load_playable(conn, game_id)
         session_id = str(uuid4())
         conn.execute(
             "INSERT INTO sessions (id, game_id, status, created_at) VALUES (?, ?, 'active', ?)",
@@ -137,13 +158,19 @@ def _record_event(conn: Connection, session_id: str, body: AttemptInput | HintIn
 
     if session["status"] != "active":
         raise HTTPException(409, "Session has finished")
+    public = json.loads(session["public_json"])
+    if "court_options" not in public:
+        public = _load_playable(conn, session["game_id"])
+        session = _session(conn, session_id)
     mapping = json.loads(session["card_map_json"])
-    if body.left_id not in mapping["left"] or (is_attempt and right_id not in mapping["right"]):
+    if body.left_id not in mapping["left"]:
         raise HTTPException(422, "Card does not belong to this game or this side")
+    if is_attempt and right_id not in public["court_options"][body.left_id]:
+        raise HTTPException(422, "This hoop is outside the choices for this ball")
     locked = conn.execute(
         """SELECT 1 FROM events WHERE session_id = ? AND correct = 1
-           AND (left_id = ? OR right_id = ?) LIMIT 1""",
-        (session_id, body.left_id, right_id),
+           AND left_id = ? LIMIT 1""",
+        (session_id, body.left_id),
     ).fetchone()
     if locked:
         raise HTTPException(409, "A selected card has already been matched")
@@ -154,15 +181,19 @@ def _record_event(conn: Connection, session_id: str, body: AttemptInput | HintIn
     result = {"event_id": body.event_id, "left_id": body.left_id}
     correct = None
     if is_attempt:
-        correct = pair_id == mapping["right"][right_id]
+        correct = pair_id == mapping["right"].get(right_id)
         result.update(right_id=right_id, correct=correct)
         if correct:
             result.update(explanation=pair.explanation, source_ref=pair.source_ref)
     else:
         # A generated hint may accidentally repeat the full answer. Use a neutral fallback then.
         hint = pair.hint or ""
-        if not hint.strip() or pair.right.strip().casefold() in hint.casefold():
-            hint = "回想左边概念的关键特征，再逐项比较右边的选项。"
+        answer = next(card["text"] for card in public["right_cards"]
+                      if mapping["right"].get(card["id"]) == pair_id)
+        if not hint.strip() or answer.strip().casefold() in hint.casefold():
+            hint = ("Compare each board with the conditions in the question."
+                    if not any("\u4e00" <= c <= "\u9fff" for c in pair.left + pair.explanation)
+                    else "先看球上的已知条件，再逐项比较篮板上的答案。")
         result["hint"] = hint
 
     conn.execute(

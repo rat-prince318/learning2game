@@ -116,9 +116,18 @@ class MatchingPair(StrictModel):
     knowledge_id: Identifier
     left: CardText
     right: CardText
+    distractors: list[CardText] = Field(default_factory=list, max_length=3)
     explanation: CardText
     source_ref: SourceRef
     hint: CardText | None = None
+
+    @model_validator(mode="after")
+    def check_choices(self) -> Self:
+        if self.distractors:
+            if len(self.distractors) < 2:
+                raise ValueError("A basketball question needs at least two distractors")
+            _unique([_display_key(s) for s in [self.right, *self.distractors]], "answers for this question")
+        return self
 
 
 class GameConfigInternal(StrictModel):
@@ -130,7 +139,8 @@ class GameConfigInternal(StrictModel):
         _unique([pair.pair_id for pair in self.pairs], "pair_id")
         _unique([pair.knowledge_id for pair in self.pairs], "knowledge_id")
         _unique([_display_key(pair.left) for pair in self.pairs], "left card text")
-        _unique([_display_key(pair.right) for pair in self.pairs], "right card text")
+        if not any(pair.distractors for pair in self.pairs):
+            _unique([_display_key(pair.right) for pair in self.pairs], "right card text")
         return self
 
 
@@ -143,7 +153,8 @@ class GameConfigPublic(StrictModel):
     game_id: Identifier
     title: Title
     left_cards: list[PublicCard] = Field(min_length=2, max_length=12)
-    right_cards: list[PublicCard] = Field(min_length=2, max_length=12)
+    right_cards: list[PublicCard] = Field(min_length=6, max_length=48)
+    court_options: dict[Identifier, Annotated[list[Identifier], Field(min_length=3, max_length=4)]]
 
 
 class AttemptInput(StrictModel):
