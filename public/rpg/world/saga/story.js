@@ -1,5 +1,7 @@
 import { getLocale, msg } from '../../../js/locale.js';
 import { acts, endings, arrivalEcho, speakers, portraitPosition } from './chapters.js';
+import { notePassage, openCoursebook } from '../../coursebook.js';
+import { studyMarkup } from '../../../js/study.js';
 
 const story = document.querySelector('#story-dialog');
 const t = (pair) => pair[getLocale() === 'en' ? 1 : 0];
@@ -104,14 +106,17 @@ function paint() {
   const act = acts[v.region_index] || acts[0];
   const last = mode === 'ending';
   const result = (last ? endings : act.choices).find(item => item.id === resultId);
-  const lastLine = act.conversation.length - 1;
+  const cards = last ? [] : context.spotNotes || [];
+  const lastLine = cards.length || act.conversation.length - 1;
   const reading = !last && !result;
   const choosing = !result && (last || beat === lastLine);
   const short = shortCampaign(v);
   const section = last ? (short ? msg('短途远征结束', 'Expedition complete') : msg('决战之后', 'After the battle'))
     : msg('第 ' + (v.region_index + 1) + ' 章', 'Chapter ' + (v.region_index + 1));
   const heading = last ? (result ? endingTitle(result, v) : msg('灰冠已落', 'The crown has fallen')) : t(act.title);
-  const spoken = (last ? null : result?.reply) || act.conversation[beat];
+  const spoken = (last ? null : result?.reply) ||
+    (cards.length ? act.conversation[choosing ? act.conversation.length - 1 : 0] : act.conversation[beat]);
+  const note = reading && !choosing ? cards[beat] : null;
   const speakerId = last ? (result?.id === 'shatter_crown' ? 'reed' : 'kestrel') : spoken.speaker;
   const speaker = speakers[speakerId];
   const card = make('section', 'sc-card');
@@ -139,9 +144,10 @@ function paint() {
       ? msg('这一仗赢了。铁冠在这儿，大伙儿等着。你说，接下来往哪儿走？', 'We won. The crown’s here and everyone’s waiting. Where do we go from here?')
       : msg('把脚抬一下，铁冠滚到你靴子底下了。人都到齐了。你打算拿它怎么办？', 'Lift your boot. The crown rolled right under it. Everyone’s here. What shall we do with it?'))
     : t(spoken.text);
-  const echo = reading && beat === 0 && arrivalEcho(v);
+  const echo = !note && reading && beat === 0 && arrivalEcho(v);
   if (echo) text.append(make('p', 'sc-memory', t(echo)));
-  const body = make('p', 'sc-dialogue', words);
+  const body = make(note ? 'div' : 'p', 'sc-dialogue', note ? '' : words);
+  if (note) body.innerHTML = '<h3 class="course-note-name">' + studyMarkup(note.title) + '</h3>' + notePassage(note);
   body.id = 'story-line';
   story.setAttribute('aria-describedby', 'story-speaker story-line');
   body.tabIndex = -1;
@@ -151,12 +157,18 @@ function paint() {
   text.append(voice);
   const footer = make('footer', 'sc-footer');
   const choices = make('div', 'sc-options');
+  if (cards.length) {
+    const book = btn(msg('翻开课程笔记', 'Open course notebook'), () => openCoursebook(v, book, note?.id || cards[0].id, cards), 'sc-quiet', busy);
+    footer.append(book);
+  }
   if (reading && !choosing) {
     const next = btn(msg('下一句', 'Next line'), () => moveTo(beat + 1), 'primary sc-next');
     next.setAttribute('aria-describedby', 'story-speaker story-line');
     next.setAttribute('aria-label', msg('继续，下一句', 'Continue to next line'));
     next.append(make('kbd', '', 'F'));
-    footer.append(make('span', 'sc-count', (beat + 1) + ' / ' + act.conversation.length));
+    footer.append(make('span', 'sc-count', note
+      ? msg('已收进笔记', 'Added to notebook') + '　' + (beat + 1) + ' / ' + cards.length
+      : (beat + 1) + ' / ' + act.conversation.length));
     choices.append(next);
   } else if (result) {
     footer.append(make('span', 'sc-count', msg('已写入手记', 'Saved in your journal')));

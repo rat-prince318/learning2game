@@ -9,6 +9,7 @@ from .backpack import DiscardItem, HeldSupply, SupplyPouch, Unequip, UseItem, su
 from .battle_models import BattleState, BattleView, Equip, ExpeditionAnswer, Hint, PlayerView, Retreat
 from .battle_reports import BattleConcept
 from .companions import CompanionId, CompanionView
+from .course_notes import CollectNotes
 from .expedition_combat import ForgeRank, tower_health
 from .expedition_world import RelicSpec, RouteSpec
 from .hero_catalog import ClassId, KitId
@@ -77,7 +78,7 @@ class TowerEquip(Equip):
 
 
 ExpeditionAction = Annotated[ChooseRoute | ExpeditionAnswer | Hint | Equip | Unequip | UseItem | DiscardItem | ChooseReward | Retreat |
-                             PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark | AdvanceExploration,
+                             PartyCommand | StoryChoice | TowerCommand | TowerAnswer | TowerHint | TowerEquip | InspectLandmark | CollectNotes | AdvanceExploration,
                              Field(discriminator="action")]
 
 
@@ -152,6 +153,7 @@ class TowerView(StrictModel):
 
 
 class ExpeditionState(StrictModel):
+    collected_note_ids: list[Identifier] = Field(default_factory=list)
     supplies: SupplyPouch = Field(default_factory=SupplyPouch)
     used_drills: list[Identifier] = Field(default_factory=list)
     eight_chapters: bool = False
@@ -204,6 +206,7 @@ class RegionMap(StrictModel):
 
 
 class ExpeditionView(StrictModel):
+    course_notes_enabled: bool = False
     supplies: list[HeldSupply] = Field(default_factory=lambda: supply_stacks(SupplyPouch()))
     eight_chapters: bool = False
     cleared_regions: Count = 0

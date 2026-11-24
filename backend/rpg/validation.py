@@ -7,9 +7,12 @@ from math import ceil
 
 from matching_agent.wording import has_unwanted_wording
 
+from ..course_metadata import is_course_metadata
 from ..models import KnowledgeItem
 from ..question_identity import exercise_key
 from ..question_language import accepts
+from .lesson_text import reusable_exam
+from .lesson_provider import lesson_enabled
 from .models import RPGGameInternal, RPGIssue, RPGPlan, RPGPreferences, RPGValidationReport
 
 
@@ -54,7 +57,7 @@ def eligible(knowledge: list[KnowledgeItem]) -> list[KnowledgeItem]:
     ids = Counter(k.knowledge_id for k in knowledge)
     candidates = [k for k in knowledge if k.evidence and key(k.evidence)
             and key(k.source_ref) not in {"unknown", "n/a", "未知", "无"}
-            and key(k.definition) != key(k.term) and not _deictic_subject(k)
+            and key(k.definition) != key(k.term) and not _deictic_subject(k) and not is_course_metadata(k.term)
             and ids[k.knowledge_id] == 1
             and (k.exam_question or terms[key(k.term)] == definitions[key(k.definition)] == 1)
             and not any(has_unwanted_wording(s) for s in (k.term, k.definition, k.source_ref))
@@ -72,7 +75,7 @@ def minimum_challenges(preferences, pool, review=False):
     # A short, explicitly scoped volume can draw distractors from its full source.
     exact_scope = getattr(preferences, "selected_knowledge_ids", None)
     independent_choices = len(pool) >= 3 or all(item.exam_question for item in pool)
-    if review or (independent_choices and exact_scope and len(exact_scope) == preferences.challenge_count):
+    if review or lesson_enabled() or (independent_choices and exact_scope and len(exact_scope) == preferences.challenge_count):
         return 1
     return 3
 
@@ -201,8 +204,8 @@ def check_game(game: RPGGameInternal, plan: RPGPlan, knowledge) -> RPGValidation
             if language and (game.question_language != language or not all(accepts(t, language)
                     for t in [q.prompt, q.hint, q.explanation, *[o.text for o in q.options]])):
                 issue("question_language", "请用所选语言撰写完整题目、选项、线索和解析。", q.challenge_id)
-            if item and item.exam_question:
-                spec = getattr(item.exam_question, language or "en")
+            if item and item.exam_question and (not q.lesson_authored or reusable_exam(item, language or "zh")):
+                spec = getattr(item.exam_question, language or ("zh" if q.lesson_authored else "en"))
                 if (q.prompt != spec.prompt or {o.text for o in q.options} != set(spec.options)
                         or answer != spec.options[item.exam_question.correct_index] or q.explanation != spec.explanation):
                     issue("exam_binding", "试题的已知条件、答案或推导与提取记录有出入。", q.challenge_id)

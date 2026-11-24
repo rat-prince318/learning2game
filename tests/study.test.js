@@ -37,6 +37,15 @@ test('fenced code, prices and escaped delimiters remain literal; tables keep mat
   assert.match(untrusted, /&lt;img/);
 });
 
+test('legacy unmarked functions and numerical fractions render within prose while code stays literal', () => {
+  const html = studyMarkup('函数 f(x)=3x+2 的平均变化率。换成 f(x)=x^2，可用 (9-1)/(3-1)=4 验算。');
+  assert.equal((html.match(/class="katex"/g) || []).length, 3);
+  assert.match(html, /<msup>/);
+  assert.match(html, /<mfrac>/);
+  assert.doesNotMatch(studyMarkup('let f(x)==true; 文件 read(x)=source，单位 km/h，日期 11/24。'), /class="katex"/);
+  assert.doesNotMatch(studyMarkup('`f(x)=x^2`'), /class="katex"/);
+});
+
 test('locale uses only the two supported values', () => {
   setLocale('en');
   assert.equal(msg('中文', 'English'), 'English');

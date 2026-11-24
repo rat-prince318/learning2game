@@ -12,6 +12,7 @@ from backend.main import create_app
 from backend.pipeline import _knowledge
 from backend.question_identity import exercise_key
 from backend.rpg.games import read_rpg_internal
+from backend.rpg.quest_story import CHOICES
 from rpg_play_scenario import job_result
 
 
@@ -47,6 +48,73 @@ def opening(client, game_ids, **kwargs):
 
 def payload(state, action, **fields):
     return {"action": action, "expected_revision": state["revision"], "event_id": uuid4().hex, **fields}
+
+
+def test_course_notes_follow_field_discoveries_into_battle_and_tower(app, tmp_path):
+    with TestClient(app) as c:
+        source = upload(c, "lesson.txt", b"\n".join(COURSE.read_bytes().splitlines()[:3]))
+        volume = c.post("/rpg/expedition-outline", json={
+            "sources": [{"material_id": source["material_id"]}], "scenes_per_volume": 1}).json()["volumes"][0]
+        gid = publish(c, volume["plan_request"])
+        original = opening(c, [gid])
+        old_path = f"{BASE}/{original['session_id']}"
+        assert original["course_notes_enabled"] is False
+        assert c.get(old_path + "/course-notes").json()["notes"] == []
+        # Simulate the private, validated publication written by the teaching model.
+        # No external credential is required for an expedition state-machine test.
+        with connection(app, write=True) as conn:
+            game = read_rpg_internal(conn, gid)
+            for q in game.scenes[0].challenges:
+                q.study_term = "方法：" + q.knowledge_id
+                q.study_definition = r"先按条件分组，再用 $p_i=n_i/N$ 求各组的比例。"
+                q.lesson_authored = True
+            conn.execute("UPDATE games SET internal_json=? WHERE id=?", (game.model_dump_json(), gid))
+        view = opening(c, [gid], eight_chapters=True)
+        path = f"{BASE}/{view['session_id']}"
+        def get(spot):
+            return c.get(path + "/course-notes", params={"spot": spot}).json()
+
+        assert view["course_notes_enabled"]
+        empty = get("keeper")
+        assert empty == {"notes": [], "relevant_note_ids": [], "spot_note_ids": [], "spot_total": 1}
+        event = payload(view, "collect_notes", spot="keeper")
+        here = c.post(path + "/actions", json=event).json()
+        assert here["revision"] == view["revision"] + 1
+        assert c.post(path + "/actions", json=event).json() == here
+        assert c.post(path + "/actions", json=payload(here, "collect_notes", spot="keeper")).json() == here
+        first = get("keeper")
+        note, = first["notes"]
+        assert set(note) == {"id", "title", "body", "source_ref", "region_index"}
+        assert "$p_i=n_i/N$" in note["body"] and note["source_ref"]
+        assert first["spot_note_ids"] == [note["id"]]
+        assert get("site")["spot_note_ids"] == []
+        here = c.post(path + "/actions", json=payload(here, "inspect_landmark")).json()
+        assert len(get("site")["notes"]) == 2
+
+        # A single scene sits at the last of eight regions. Early map discoveries
+        # already teach that material. Every stop must remain replayable on reload.
+        for region in here["map"]:
+            if region["chapters"][0]["kind"] != "exploration":
+                break
+            for act, fields in [("story_choice", {"choice": CHOICES[region["region_id"]][0]}),
+                                ("inspect_landmark", {}), ("advance_exploration", {})]:
+                response = c.post(path + "/actions", json=payload(here, act, **fields))
+                assert response.is_success, response.text
+                here = response.json()
+        here = c.post(path + "/actions", json=payload(here, "story_choice", choice="star_girl")).json()
+        fight = c.post(path + "/actions", json=payload(here, "choose_route", route_id=here["routes"][0]["id"])).json()
+        assert fight["phase"] == "combat"
+        book = c.get(path + "/course-notes").json()
+        assert len(book["notes"]) == 3 and set(book["relevant_note_ids"]) <= {n["id"] for n in book["notes"]}
+        assert len(book["relevant_note_ids"]) == 1
+        assert c.post(path + "/actions", json=payload(fight, "collect_notes", spot="north-post")).status_code == 409
+        tower = c.post(path + "/actions", json=payload(fight, "tower_enter")).json()
+        assert tower["tower"]["floor"] == 1
+        tower_book = c.get(path + "/course-notes?mode=tower").json()
+        assert len(tower_book["relevant_note_ids"]) == 1
+    with TestClient(create_app(data_dir=tmp_path)) as reopened:
+        assert reopened.get(path + "/course-notes").json() == book
+        assert reopened.get(path + "/course-notes?mode=tower").json() == tower_book
 
 
 def test_backpack_commands_survive_retries_and_restart(app, tmp_path):
@@ -235,7 +303,6 @@ def test_victory_unlocks_a_new_archive_with_one_earned_relic(app):
 
 
 def finish_campaign(client, current, books):
-    from backend.rpg.quest_story import CHOICES
     from backend.rpg.expedition_models import ExpeditionState
 
     with connection(client.app) as db:

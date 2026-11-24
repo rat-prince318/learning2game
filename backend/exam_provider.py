@@ -150,13 +150,17 @@ def _span(text, value, minimum=5):
     return isinstance(value, str) and len(value.strip()) >= minimum and value in text
 
 
+def asks_question(text):
+    return bool(_ASK.search(text))
+
+
 def standalone_candidate(problem, part):
     """A text-only question that can be sent to an independent, answer-free solver."""
     if part.solution.text:
         return False
     text = " ".join(filter(None, (problem.setup.text, part.ask.text)))
     task = part.ask.text or problem.setup.text
-    return 24 <= len(text) <= 2000 and bool(_ASK.search(task)) and not _UNAVAILABLE_CONTEXT.search(text)
+    return 24 <= len(text) <= 2000 and asks_question(task) and not _UNAVAILABLE_CONTEXT.search(text)
 
 
 def independently_solved_question(provider, problem, part):

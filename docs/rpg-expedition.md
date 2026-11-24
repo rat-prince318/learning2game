@@ -57,10 +57,15 @@ python -m scripts.prepare_expedition --eight-chapters publish <plan_id_1> <plan_
 | GET | /rpg/expeditions/{session_id} | 读取地图、当前位置、行装和最新行动 |
 | POST | /rpg/expeditions/{session_id}/actions | 提交选路、战斗、补给或撤离动作 |
 | GET | /rpg/expeditions/{session_id}/coverage | 按资料查看收录量、实际排入主线的数量和待核验题项 |
+| GET | /rpg/expeditions/{session_id}/course-notes | 查看本次远征已收集的课程笔记，以及与当前回合相关的笔记编号 |
 | GET | /rpg/expeditions/{session_id}/report | 通关或撤离后读取已保存的分卷战报 |
 | POST | /rpg/expeditions/{session_id}/encore | 成功通关后开启进阶周目，可传 hero_class、kit、inherited_relic_id 和 request_id |
 
 客户端按顶层 `phase` 决定当前操作。选路阶段为 `route`，答题战斗为 `combat`，巩固支线为 `sidequest`，补给待领取为 `reward`，最终结果为 `victory` 或 `retreated`。某卷完成时嵌套的 `battle.phase` 可能先变为 `victory`，还应按远征顶层判断本次旅程是否结束。
+
+课程出版时一并保存模型编写、经校验的知识讲解。远征返回 `course_notes_enabled: true` 时，守站人、地标和沿路三个调查点可以传授课程知识。在地图上发送 `collect_notes`，参数 `spot` 取 `keeper`、`site`、`south-yard`、`north-post` 或 `east-court`。重复领取同一批笔记会返回当前进度。与守站人完成主线对话、调查地标也会收录相应笔记。纯探索章节提前介绍下一场战斗的内容。入场时会补发本场所需的条目，直接登塔的玩家也能查阅当层所需的知识。
+
+读取课程笔记时，`mode=campaign` 查询主线，`mode=tower` 查询塔内当前回合。返回的 `notes` 每条包含编号、知识点标题、正文、出处和对应课程章节的零基序号。`relevant_note_ids` 列出本回合用到的已收集条目。可用 `spot` 查询当前地点，通过 `spot_total` 查看该地可取得的条数，通过 `spot_note_ids` 查看其中已经收录的条目。笔记随服务器存档，翻阅时保留当前题目和战斗进度。旧存档继续使用原来的手记。
 
 `battle.rounds` 在有相应记录时给出 `completed`（已答对的不同回合数）、`total`（本场总数）和 `kind`（当前回合类型）。`source`、`application`、`tactics` 分别对应讲义题、应用题和战术判断。巩固或结算阶段的 `kind` 可为 `null`，旧战斗或其他模式的 `rounds` 可为 `null`。回放上一次作答应读取 `battle.last_event.round_kind`，下一道题可能已经换了类型。
 

@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 from backend.rpg import models
 from backend.rpg.battle_models import BattleAction, BattleView
 from backend.rpg.battle_reports import BattleReport
+from backend.rpg.course_notes import CourseNotebook
 from backend.rpg.hero_catalog import HeroCatalog
 from backend.rpg.expedition import ExpeditionAction, ExpeditionReport, ExpeditionView
 from backend.rpg.expedition_planning import ExpeditionOutline, OutlineRequest
@@ -24,7 +25,7 @@ SCHEMA_TYPES = {
 }
 SCHEMA_TYPES.update({"BattleAction": BattleAction, "BattleView": BattleView, "BattleReport": BattleReport,
                      "HeroCatalog": HeroCatalog})
-SCHEMA_TYPES.update({"ExpeditionAction": ExpeditionAction, "ExpeditionView": ExpeditionView,
+SCHEMA_TYPES.update({"ExpeditionAction": ExpeditionAction, "ExpeditionView": ExpeditionView, "CourseNotebook": CourseNotebook,
                      "ExpeditionReport": ExpeditionReport, "ExpeditionCatalog": ExpeditionCatalog,
                      "ExpeditionStart": ExpeditionStart, "ExpeditionOutline": ExpeditionOutline,
                      "OutlineRequest": OutlineRequest, "EncoreStart": EncoreStart, "CampaignCoverage": CampaignCoverage})

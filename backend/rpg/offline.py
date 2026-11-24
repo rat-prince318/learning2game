@@ -141,7 +141,7 @@ def local_game(pool, plan, previous):
     return GameDraft(scenes=scenes)
 
 
-def assemble_game(draft, plan, pool, previous):
+def assemble_game(draft, plan, pool, previous, *, lessons=None):
     """Bind trusted question roles, citations and all game rules on the host."""
     if len(draft.scenes) != plan.scene_count:
         raise DraftError("场景数量与已确认方案有出入。")
@@ -155,7 +155,10 @@ def assemble_game(draft, plan, pool, previous):
             if q.correct_index >= len(q.options):
                 raise DraftError("正确选项索引超出本题选项范围。")
             item = by_id[q.knowledge_id]
-            if len(item.definition) > 1200:
+            lesson = lessons.get(q.knowledge_id) if lessons else None
+            if lesson:
+                explanation = lesson.questions[0].explanation
+            elif len(item.definition) > 1200:
                 # Preserve an entire supported statement instead of cutting mid-claim.
                 first = re.split(r"(?<=[。！？])|(?<=[.!?])\s+", item.definition)[0]
                 if len(first) > 1200:
@@ -163,7 +166,7 @@ def assemble_game(draft, plan, pool, previous):
                 explanation = first
             else:
                 explanation = item.definition
-            if item.exam_question:
+            if item.exam_question and not lesson:
                 entry = getattr(item.exam_question, plan.question_language or "en")
                 explanation = entry.explanation
             opts = [{"id": f"o{i}_{j}_{n}", "text": t} for n, t in enumerate(q.options)]
@@ -180,8 +183,11 @@ def assemble_game(draft, plan, pool, previous):
                            f"向导陪你按讲义核对这条记录。{book}收下了本页讲解。")
             challenges.append(dict(challenge_id=f"c{i}_{j}", type="single_choice", prompt=q.prompt,
                                    options=opts, correct_option_id=opts[q.correct_index]["id"],
-                                   study_term=item.term if plan.question_language else None,
-                                   study_definition=item.definition if plan.question_language and len(item.definition) <= 1200 else None,
+                                   lesson_authored=lesson is not None,
+                                   practice_exercises=lesson.questions[1:] if lesson else [],
+                                   study_term=lesson.title if lesson else item.term if plan.question_language else None,
+                                   study_definition=lesson.note if lesson else
+                                       item.definition if plan.question_language and len(item.definition) <= 1200 else None,
                                    knowledge_id=item.knowledge_id, hint=q.hint, explanation=explanation,
                                    source_ref=item.source_ref, evidence=item.evidence,
                                    success_text=effects[q.success_effect],

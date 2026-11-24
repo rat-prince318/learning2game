@@ -6,12 +6,12 @@ import { fieldbook } from './fieldbook.js';
 import { rememberMaterial } from '../../js/material-library.js';
 
 const api = new ApiClient();
-const buildKey = (locale) => 'l2g.lantern.build.2.' + locale;
+const buildKey = (locale) => 'l2g.lantern.build.3.' + locale;
 export const savedBuild = (locale = getLocale()) => tabRecords.read(buildKey(locale));
 export function discardBuild(locale = getLocale()) {
   tabRecords.write(buildKey(locale), null);
 }
-export async function commission({ files = [], role, locale, difficulty, onStep }) {
+export async function commission({ files = [], pages = [], role, locale, difficulty, onStep }) {
   const jobKey = buildKey(locale);
   let task = savedBuild(locale);
   if (!task) {
@@ -21,12 +21,13 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
       locale,
       difficulty,
       builtin,
+      pages,
       names: files.map((f) => [f.name, f.size, f.lastModified]),
       sources: [],
       books: [],
       startId: newId(),
     };
-    const cached = builtin && readLocal('l2g.fieldbook.3.' + locale + '.' + difficulty);
+    const cached = builtin && readLocal('l2g.fieldbook.4.' + locale + '.' + difficulty);
     if (cached?.length) task.books = cached.map((game) => ({ game }));
     tabRecords.write(jobKey, task);
   }
@@ -60,7 +61,7 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
             (!f || JSON.stringify([f.name, f.size, f.lastModified]) !== JSON.stringify(task.names[i]))
           )
             throw new Error('RESELECT_FILES');
-          const receipt = item.material ? await api.retryMaterial(item.material) : await api.upload(f);
+          const receipt = item.material ? await api.retryMaterial(item.material) : await api.upload(f, task.pages || []);
           if (!task.builtin && receipt.delete_token) rememberMaterial(receipt, f.name);
           item.material = receipt.material_id;
           item.job = receipt.job_id;
@@ -116,12 +117,12 @@ export async function commission({ files = [], role, locale, difficulty, onStep 
       kit: task.role === 'vanguard' ? 'ward' : 'trail',
       request_id: task.startId,
     });
-    if (task.builtin) saveLocal('l2g.fieldbook.3.' + task.locale + '.' + task.difficulty, ids);
+    if (task.builtin) saveLocal('l2g.fieldbook.4.' + task.locale + '.' + task.difficulty, ids);
     discardBuild(locale);
     return view;
   } catch (error) {
     if (error.status === 404) {
-      if (task.builtin) saveLocal('l2g.fieldbook.3.' + task.locale + '.' + task.difficulty, null);
+      if (task.builtin) saveLocal('l2g.fieldbook.4.' + task.locale + '.' + task.difficulty, null);
       discardBuild(locale);
     }
     throw error;

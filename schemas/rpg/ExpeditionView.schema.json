@@ -1905,6 +1905,11 @@
   },
   "additionalProperties": false,
   "properties": {
+    "course_notes_enabled": {
+      "default": false,
+      "title": "Course Notes Enabled",
+      "type": "boolean"
+    },
     "supplies": {
       "items": {
         "$ref": "#/$defs/HeldSupply"

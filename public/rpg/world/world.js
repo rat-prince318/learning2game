@@ -1,6 +1,6 @@
 import { ApiClient } from '../../js/api.js';
 import { msg, getLocale, setLocale } from '../../js/locale.js';
-import { newId, readLocal, saveLocal } from '../../js/utils.js';
+import { newId, parsePages, readLocal, saveLocal } from '../../js/utils.js';
 import { BattleController } from '../battle/controller.js';
 import { mountBattle } from '../battle/battle.js';
 import { atlas, line, regionOf, fieldQuest, atChapterExit, encounterPrerequisite } from './atlas.js';
@@ -29,6 +29,7 @@ import { reuploadNotice } from './exam-recovery.js';
 import { openPack } from './pack.js';
 import { CONFIRMATION_MS } from '../feedback.js';
 import { tell } from './notice.js';
+import { readCourseNotes, openCoursebook } from '../coursebook.js';
 
 const main = document.querySelector('#journey'),
   top = document.querySelector('#top');
@@ -46,9 +47,11 @@ let page = 'home',
   locked = false;
 let pin = 0,
   pick = '',
+  spotNotes = [],
   role = 'arcanist',
   difficulty = 'medium',
   files = [],
+  pageRange = '',
   report = null,
   notes = [],
   coverage = null,
@@ -130,6 +133,7 @@ function release() {
   mounted = null;
 }
 function closePackOnNavigation() {
+  document.querySelector('dialog.coursebook[open]')?.close();
   const previous = pack;
   pack = null;
   previous?.destroy();
@@ -225,21 +229,34 @@ function draw() {
   if (page === 'home') main.innerHTML = title(Boolean(bookmark()));
   if (page === 'setup') {
     const build = savedBuild();
+    const names = files.length ? files.map(f => f.name) : build?.names?.map(f => f[0]) || [];
     main.innerHTML = setup(
       build?.role || role,
       build?.difficulty || difficulty,
-      files.map((f) => f.name).join(', ') || build?.names?.map((f) => f[0]).join(', '),
+      names.join(', '),
       Boolean(build),
+      names.length === 1 && /\.pdf$/i.test(names[0]),
+      build?.pages?.join(', ') || pageRange,
     );
+    const status = main.querySelector('#lr-authoring-mode');
+    void api.health().then(health => {
+      if (typeof health.rpg_course_authoring !== 'boolean') return;
+      status.textContent = health.rpg_course_authoring
+        ? msg('向守站人学一招，沿路调查收集课程笔记。遇敌时可以翻着笔记答题。',
+          'Learn from the keeper and collect course notes at landmarks. Open them during a fight to work through a question.')
+        : msg('当前使用离线题库。教师可在服务端配置 DeepSeek，开启课程出题和知识笔记。',
+          'The offline question bank is active. Teachers can enable DeepSeek on the server for course questions and study notes.');
+      status.hidden = false;
+    }).catch(() => {});
   }
   if (page === 'scene') {
-    main.innerHTML = scene(view, pick);
+    main.innerHTML = scene(view, pick, spotNotes);
     signalPanel();
     const spot = main.querySelector('.lr-world');
     guide = mountGuide(spot, fieldQuest(view));
     world = mountOverland(spot, view, {
       labels: fieldLabels(view),
-      onStation: choose,
+      onStation: (key) => run(() => choose(key)),
       onContact: (key) => run(() => engage(key)),
       onGuideFrame: guide.frame,
       onLeaveDialogue: resumeField,
@@ -368,7 +385,8 @@ function storyContext() {
   return {
     view,
     world,
-    interact: choose,
+    interact: (key) => run(() => choose(key)),
+    spotNotes,
     resume: resumeField,
     openParty: () => run(() => goto('party')),
     issue: async (choice) => {
@@ -382,18 +400,20 @@ function storyContext() {
 function refreshDialogue() {
   const layer = main.querySelector('.lr-dialog-layer');
   if (layer) {
-    layer.innerHTML = stationDialog(view, pick);
+    layer.innerHTML = stationDialog(view, pick, spotNotes);
     signalPanel();
   }
 }
 function resumeField() {
   pick = '';
+  spotNotes = [];
   refreshDialogue();
   world?.pause(false);
   world?.focus();
 }
-function choose(key) {
+async function choose(key) {
   music.cue('pick');
+  spotNotes = [];
   if (key === 'ship' && atChapterExit(view)) {
     openFieldSupplies(main.querySelector('.lr-world'));
     return;
@@ -407,6 +427,13 @@ function choose(key) {
       resumeField();
     }
     return;
+  }
+  const spot = key === 'ship' ? 'keeper' : key;
+  if (view.course_notes_enabled && ['keeper','site','south-yard','north-post','east-court'].includes(spot)) {
+    await command({ action: 'collect_notes', spot });
+    const book = await readCourseNotes(view, spot);
+    const collected = new Set(book.spot_note_ids);
+    spotNotes = book.notes.filter(note => collected.has(note.id));
   }
   if (view.campaign_story && (key === 'keeper' || key === 'ship')) {
     if (key === 'keeper' && view.eight_chapters && regionOf(view).scoutFirst && fieldQuest(view).target === 'site' &&
@@ -463,6 +490,7 @@ async function act(action, b) {
     case 'discard':
       discardBuild();
       files = [];
+      pageRange = '';
       return goto('setup');
     case 'title-atlas':
       pin = 0;
@@ -487,6 +515,8 @@ async function act(action, b) {
       return goto(action);
     case 'talk-local':
       return choose('keeper');
+    case 'course-notes':
+      return openCoursebook(view, b, b.dataset.noteId, b.dataset.noteId ? spotNotes : []);
     case 'equip':
       await command({ action: 'equip', item_id: b.dataset.key });
       music.cue('pick');
@@ -616,9 +646,15 @@ main.addEventListener('change', (e) => {
   if (e.target.id === 'lr-files') {
     files = [...e.target.files];
     main.querySelector('#lr-count').textContent = files.map((f) => f.name).join(', ');
+    main.querySelector('.lr-pdf-pages').hidden = files.length !== 1 || !/\.pdf$/i.test(files[0].name);
+    pageRange = savedBuild()?.pages?.join(', ') || '';
+    main.querySelector('#lr-pages').value = pageRange;
   }
   if (e.target.name === 'role') role = e.target.value;
   if (e.target.name === 'difficulty') difficulty = e.target.value;
+});
+main.addEventListener('input', e => {
+  if (e.target.id === 'lr-pages') pageRange = e.target.value;
 });
 main.addEventListener('submit', (event) => {
   if (event.target.id !== 'lr-depart') return;
@@ -628,6 +664,15 @@ main.addEventListener('submit', (event) => {
       msg('每趟远征可携带最多八份讲义。', 'Bring up to eight course files per expedition.'),
       0,
     );
+  let pages = [];
+  if (!main.querySelector('.lr-pdf-pages').hidden) {
+    try {
+      pages = parsePages(main.querySelector('#lr-pages').value, 80);
+    } catch (error) {
+      main.querySelector('#lr-pages').focus();
+      return tell(error.message, 0);
+    }
+  }
   run(async () => {
     page = 'loading';
     tell();
@@ -635,6 +680,7 @@ main.addEventListener('submit', (event) => {
     statusPage(msg('正在编制远征', 'Preparing the expedition'));
     const next = await commission({
       files,
+      pages,
       role,
       difficulty,
       locale: getLocale(),
@@ -652,6 +698,7 @@ main.addEventListener('submit', (event) => {
       },
     });
     files = [];
+    pageRange = '';
     await active(next.session_id);
   });
 });

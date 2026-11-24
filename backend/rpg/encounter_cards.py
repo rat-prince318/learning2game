@@ -16,4 +16,12 @@ def drill_card(question: RPGChallengeInternal, tag: str, prompt: str, options: l
     choices.sort(key=lambda option: token(identifier, option.id))
     return RPGChallengeInternal(**{**question.model_dump(), "challenge_id": identifier,
         "prompt": prompt, "options": choices, "correct_option_id": answer,
-        "hint": hint, "explanation": explanation})
+        "hint": hint, "explanation": explanation, "practice_exercises": []})
+
+
+def practice_card(question, index):
+    exercise = question.practice_exercises[index]
+    choices = list(exercise.options)
+    correct = choices.pop(exercise.correct_index)
+    return drill_card(question, f"lesson_{index}", exercise.prompt, [correct, *choices],
+                      exercise.hint, exercise.explanation)

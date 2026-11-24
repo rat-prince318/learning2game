@@ -7,6 +7,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from ..models import KnowledgeItem
 from ..question_language import accepts
+from .encounter_cards import practice_card
 from .battle_models import BattleOption, BattlePrompt, BattleState, StudyLesson
 from .models import RPGChallengeInternal, RPGGameInternal, StudyFeedback
 from .validation import key
@@ -54,6 +55,14 @@ def _displayable(item: KnowledgeItem) -> bool:
 
 
 def _review(state, token, question, game, knowledge):
+    if question.lesson_authored:
+        index = (state.defeats + state.review_index) % max(1, len(question.practice_exercises))
+        card = practice_card(question, index) if question.practice_exercises else question
+        options = [BattleOption(id=o.id, text=o.text) for o in card.options]
+        lesson = StudyLesson(term=question.study_term, definition=question.study_definition, source_ref=question.source_ref)
+        return Exam(BattlePrompt(prompt_id=token, text=card.prompt, options=options,
+                                 hint=card.hint if state.hinted else None),
+                    card.correct_option_id, card.hint, card, lesson)
     # Some older material stores contain duplicate definitions. A term and its
     # definition must both distinguish a foil from the target and the other foils.
     target = next((k for k in knowledge if k.knowledge_id == question.knowledge_id
@@ -157,14 +166,17 @@ def _tower_exam(state, token, question, scene, knowledge):
             peers = sorted((q for q in scene.challenges if q.knowledge_id != question.knowledge_id),
                            key=lambda q: _token(*seed, q.challenge_id))
         fields += peers[:1 if mode == "paired" else 2]
+    if floor > 1:
+        fields = [practice_card(q, (floor - 2) % len(q.practice_exercises))
+                  if q.lesson_authored and q.practice_exercises else q for q in fields]
     hints = "\n".join(q.hint for q in fields)
     right = [next(o.text for o in q.options if o.id == q.correct_option_id) for q in fields]
     wrong = [sorted([o.text for o in q.options if o.id != q.correct_option_id],
                     key=lambda value: _token(*seed, str(i), value)) for i, q in enumerate(fields)]
-    text = question.prompt
+    text = fields[0].prompt
     # Reverse retrieval with independently distinguishable terms and definitions.
     # Only concepts already published for this floor can appear as new options.
-    if mode == "recall" and question.knowledge_id in records and not records[question.knowledge_id].exam_question:
+    if mode == "recall" and not question.lesson_authored and question.knowledge_id in records and not records[question.knowledge_id].exam_question:
         target = records[question.knowledge_id]
         terms, meanings, distractors = {key(target.term)}, {key(target.definition)}, []
         for q in scene.challenges:
@@ -197,7 +209,7 @@ def _tower_exam(state, token, question, scene, knowledge):
     answer = entries[0].id
     entries.sort(key=lambda o: _token(*seed, o.id))
     return Exam(BattlePrompt(prompt_id=token, text=text, options=entries, hint=hints if state.hinted else None),
-                answer, hints, question, supporting=tuple(fields), missed_by_choice=missed)
+                answer, hints, fields[0].model_copy(update={"challenge_id": question.challenge_id}), supporting=tuple(fields), missed_by_choice=missed)
 
 
 def active_exam(state: BattleState, game: RPGGameInternal, knowledge: list[KnowledgeItem]) -> Exam | None:

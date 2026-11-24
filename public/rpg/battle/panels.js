@@ -229,9 +229,10 @@ export function encounter(view, skill, option, picked=[], lens=-1, cargo=null, p
   return left + `<section class="bf-paper bf-quiz">${immersive ? '<div class="bf-reading">' : ''}<div class="bf-papertop">
     <div class="bf-speaker"><i class="bf-scout-face" aria-hidden="true" style="--speaker:${speakerIndex}"></i>
       <div><strong>${line(speaker.keeper)}</strong><span class="bf-section-label">${icon(side?'book-open':'sparkles')} ${purpose || roundLabel || task} ${marker}</span></div></div>
-    ${immersive ? '<div class="bf-notes-actions">'+receiptButton(receipt) : ''}
-    <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查阅营地笔记','Read the camp notes') : msg('翻阅手记会放弃本回合的连击暴击。','Opening the field notes forgoes a combo critical this turn.')}"
-      ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已展开','Open') : msg('翻阅手记','Field notes')}</button>${immersive ? '</div>' : ''}</div>
+    <div class="bf-notes-actions">${immersive ? receiptButton(receipt) : ''}
+    ${view.course_notes_enabled ? '<button type="button" class="bf-hint" data-act="coursebook" data-testid="battle-coursebook" title="' + msg('随时查阅，保留连击', 'Read freely and keep your combo') + '">' + icon('book-open') + ' ' + msg('课程笔记', 'Course notebook') + '</button>' : ''}
+    <button type="button" class="bf-hint" data-act="hint" data-testid="battle-hint" title="${side ? msg('查看本题提示','Get a hint for this question') : msg('使用提示会消耗本回合的连击暴击。','A hint spends the combo critical for this turn.')}"
+      ${prompt.hint ? 'disabled' : ''}>${icon('lightbulb')} ${prompt.hint ? msg('已提示','Hint shown') : msg('战术提示','Tactical hint')}</button></div></div>
     ${recovery}<div class="bf-line" tabindex="-1" data-prompt-title role="heading" aria-level="2">${evidence ? evidenceNav(evidence.clues.length,lens)+evidenceReadout(evidence.clues,lens) : study(prompt.text)}</div>
     ${cargoMarkup(cargo)}
     ${prompt.hint ? '<div class="bf-clue">'+study(prompt.hint)+'</div>' : ''}

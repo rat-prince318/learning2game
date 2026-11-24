@@ -31,7 +31,7 @@ export function newId() {
     n.toString(16).padStart(2, '0'),
   ).join('');
 }
-export function parsePages(text) {
+export function parsePages(text, limit = 10) {
   if (!text.trim()) return [];
   const pages = new Set();
   for (const chunk of text.replace(/，/g, ',').split(',')) {
@@ -39,10 +39,10 @@ export function parsePages(text) {
     if (!match) throw new Error(ui('请按 1,3-5 的格式填写页码。'));
     const start = Number(match[1]),
       end = Number(match[2] || match[1]);
-    if (start < 1 || end < start || end > 10000 || end - start > 9)
-      throw new Error(ui('页码从 1 开始，每次最多选择 10 页。'));
+    if (start < 1 || end < start || end > 10000 || end - start >= limit)
+      throw new Error(msg('页码从 1 开始，每次最多选择 ' + limit + ' 页。', 'Use page numbers from 1 and choose up to ' + limit + ' pages.'));
     for (let page = start; page <= end; page++) pages.add(page);
-    if (pages.size > 10) throw new Error(ui('每次最多选择 10 页。'));
+    if (pages.size > limit) throw new Error(msg('每次最多选择 ' + limit + ' 页。', 'Choose up to ' + limit + ' pages.'));
   }
   return [...pages].sort((a, b) => a - b);
 }

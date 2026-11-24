@@ -2,11 +2,15 @@
 
 import asyncio
 import os
+from functools import partial
 
 from matching_agent.llm import DeepSeekClient
 
+from . import lesson_author, offline
 from .agent import RPGAgent
-from .validation import RPGContentError
+from .lesson_provider import lesson_client
+from .validation import RPGContentError, select
+from ..provider import trace_tool
 
 
 class RPGService:
@@ -16,10 +20,17 @@ class RPGService:
 
     def _invoke(self, method, *args):
         async def run():
-            client = self.client_factory() if self.live else None
+            # Flash writes directly in the learner's language from the original evidence.
+            # Planning does not need a translation pass or a second model provider.
+            flash = lesson_client() if self.live and method in {"plan", "generate"} else None
+            client = flash or (self.client_factory() if self.live else None)
             try:
-                agent = RPGAgent(client)
-                operation = getattr(agent, method)
+                if flash and method == "plan":
+                    knowledge, preferences, previous_report = args
+                    with trace_tool("plan_course_lessons"):
+                        selected, warnings = select(knowledge, preferences, previous_report)
+                        return offline.assemble_plan(preferences, selected, offline.local_plan(preferences, selected), warnings)
+                operation = partial(lesson_author.generate, flash) if flash else getattr(RPGAgent(client), method)
                 if client is None:
                     return await operation(*args)
                 deadline = max(.01, float(os.getenv("EDUGAME_SERVICE_TIMEOUT", "400")) - .25)

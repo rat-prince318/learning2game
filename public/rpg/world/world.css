@@ -522,6 +522,13 @@ body.lantern {
 .lr-file input {
   max-width: 100%;
 }
+.lr-pdf-pages:not([hidden]) {
+  display:grid; justify-items:start; gap:5px; margin-top:12px;
+}
+.lr-pdf-pages input {
+  font:inherit; max-width:100%; padding:7px 9px; border:1px solid #9d977b;
+  border-radius:3px; color:var(--ivory); background:#243a3c;
+}
 .lr-file input::file-selector-button,
 .lr-sheet select {
   background: #243a3c;

@@ -7,7 +7,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from ..question_language import accepts
 from .battle_models import EncounterDrill
-from .encounter_cards import drill_card
+from .encounter_cards import drill_card, practice_card
 from .expedition_world import encounter_for
 from .fieldbook_drills import fieldbook_drills
 from .models import ReferenceText
@@ -117,11 +117,15 @@ def build_drills(scene, knowledge, language, encounter_id, occupied=()):
     goal = max(0, minimum - len(seen))
     if not goal:
         return []
+    base_keys = seen.copy()
     seen.update(occupied)
     records = {k.knowledge_id: k for k in knowledge}
     lang = language or ("en" if accepts(scene.challenges[0].prompt, "en") else "zh")
     groups = []
     for q in scene.challenges:
+        if q.lesson_authored:
+            groups.append([practice_card(q, i) for i in range(len(q.practice_exercises))])
+            continue
         item = records.get(q.knowledge_id)
         if item is None:
             continue
@@ -136,6 +140,17 @@ def build_drills(scene, knowledge, language, encounter_id, occupied=()):
                 deck.append(EncounterDrill(kind="application", card=card))
                 if len(deck) == goal:
                     return deck
+    if all(q.lesson_authored for q in scene.challenges):
+        # Exhaust unseen applications before revisiting one from an earlier encounter.
+        used_here = base_keys | {drill_key(d.card) for d in deck}
+        for row in zip_longest(*groups):
+            for card in row:
+                if card and drill_key(card) not in used_here:
+                    used_here.add(drill_key(card))
+                    deck.append(EncounterDrill(kind="application", card=card))
+                    if len(deck) == goal:
+                        return deck
+        return deck
     edition = 0
     while len(deck) < goal:
         for card in _tactics(scene.challenges[0], lang, edition):

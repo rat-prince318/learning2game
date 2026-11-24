@@ -18,6 +18,7 @@ from starlette.formparsers import MultiPartException, MultiPartParser
 
 from .db import connection
 from .cleanup import drain_file_deletions, queue_material_deletion
+from .material_processing import MAX_PAGE_COUNT
 from .models import StrictModel
 from .pipeline import insert_job, run_extraction
 
@@ -32,7 +33,6 @@ MEDIA = {".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg",
          ".jpeg": "image/jpeg", ".png": "image/png", ".md": "text/markdown",
          ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
          ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
-MAX_PAGES = 80
 MAX_PIXELS = 16_000_000
 
 
@@ -57,8 +57,8 @@ def validate_file(file, suffix: str):
             if reader.is_encrypted:
                 raise HTTPException(422, "Please supply a PDF without password protection.")
             count = len(reader.pages)
-            if not 1 <= count <= MAX_PAGES:
-                raise HTTPException(422, f"PDF must contain between 1 and {MAX_PAGES} pages.")
+            if count < 1:
+                raise HTTPException(422, "请上传包含正文的 PDF。")
             return count
         elif suffix in {".docx", ".pptx"}:
             from .material_adapter import MaterialError, validate_office_archive
@@ -94,11 +94,13 @@ def _store(app, upload: UploadFile, pages: str, images: str):
     page_count = validate_file(upload.file, suffix)
     selected = None
     if pages:
-        if suffix != ".pdf" or not re.fullmatch(r"\d{1,2}(,\d{1,2}){0,9}", pages):
-            raise HTTPException(422, "请为 PDF 选择最多 10 页，以逗号分隔页码。")
+        if suffix != ".pdf" or not re.fullmatch(rf"\d{{1,5}}(,\d{{1,5}}){{0,{MAX_PAGE_COUNT - 1}}}", pages):
+            raise HTTPException(422, "请为 PDF 选择最多 80 页，以逗号分隔页码。")
         selected = sorted(set(map(int, pages.split(","))))
         if min(selected) < 1 or max(selected) > page_count:
             raise HTTPException(422, f"这份资料共有 {page_count} 页，请重新选择页码。")
+    elif page_count and page_count > MAX_PAGE_COUNT:
+        raise HTTPException(422, f"这本教材共有 {page_count} 页，请选择本次要学习的章节，每次最多 80 页。")
     if images not in {"true", "false"}:
         raise HTTPException(422, "include_images accepts true or false.")
     options = {"pages": selected, "include_images": images == "true"}

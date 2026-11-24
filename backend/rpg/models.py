@@ -161,7 +161,24 @@ class RPGChallengePublic(StrictModel):
         return self
 
 
+class LessonExercise(StrictModel):
+    prompt: QuestionText
+    options: list[OptionText] = Field(min_length=3, max_length=4)
+    correct_index: int = Field(strict=True, ge=0, le=3, description="Zero-based answer index")
+    hint: HintText
+    explanation: Explanation
+
+    @model_validator(mode="after")
+    def valid_choices(self) -> Self:
+        _distinct([unicodedata.normalize("NFKC", s).strip().casefold() for s in self.options], "Choices")
+        if self.correct_index >= len(self.options):
+            raise ValueError("Answer index must point to a choice.")
+        return self
+
+
 class RPGChallengeInternal(RPGChallengePublic):
+    lesson_authored: bool = False
+    practice_exercises: list[LessonExercise] = Field(default_factory=list, max_length=4)
     study_term: TermText | None = None
     study_definition: Explanation | None = None
     knowledge_id: Identifier
@@ -175,6 +192,8 @@ class RPGChallengeInternal(RPGChallengePublic):
 
     @model_validator(mode="after")
     def valid_answer(self) -> Self:
+        if self.lesson_authored and not (self.study_term and self.study_definition):
+            raise ValueError("A course lesson needs a title and teaching note.")
         if self.correct_option_id not in {o.id for o in self.options}:
             raise ValueError("The answer must point to an option of this challenge.")
         return self

@@ -5,7 +5,8 @@ from typing import NamedTuple
 
 from ..models import KnowledgeItem
 from ..legacy_exam import has_legacy_exam_cover
-from . import battle_rules, companions, expedition_combat, quest_story, tower
+from . import battle_rules, companions, course_notes, expedition_combat, quest_story, tower
+from .course_notes import CollectNotes
 from .backpack import DiscardItem, Unequip, UseItem, manage_pack, supply_stacks
 from .battle_models import BattleState, Equip, Retreat
 from .battle_reports import concept_rows
@@ -312,10 +313,15 @@ def advance(state: ExpeditionState, action: ExpeditionAction, courses: Courses) 
         result = state.model_copy(deep=True)
         if isinstance(action, StoryChoice):
             quest_story.decide(result, action.choice)
+            if state.phase == "route":
+                course_notes.acquire(result, course_notes.cards_for_spot(result, itinerary(result, courses), courses, "keeper"))
         elif isinstance(action, PartyCommand):
             companions.set_companion(result, action)
         else:
             tower.advance(result, action, courses)
+            if action.action == "tower_enter":
+                game, _ = tower.current_course(result.tower, courses)
+                course_notes.acquire(result, course_notes.briefing(result.tower.battle, game))
         result.revision += 1
         return result
     if state.phase in {"retreated", "victory"}:
@@ -328,10 +334,17 @@ def advance(state: ExpeditionState, action: ExpeditionAction, courses: Courses) 
     elif isinstance(action, Equip) and state.phase in {"route", "reward"}:
         battle_rules.equip_item(result.battle, action.item_id, relic_ids=result.relic_ids,
                                 edge_ranks=result.edge_ranks, plating_ranks=result.plating_ranks)
+    elif isinstance(action, CollectNotes):
+        if state.phase not in {"route", "reward"}:
+            raise BattleError(409, "回到地图后可以收集新的课程笔记。")
+        ids = course_notes.cards_for_spot(result, itinerary(result, courses), courses, action.spot)
+        if not course_notes.acquire(result, ids):
+            return result
     elif isinstance(action, InspectLandmark):
         if state.phase != "route":
             raise BattleError(409, "回到地图路口后可以调查地标。")
         landmark = region_at(state.region_index).id
+        course_notes.acquire(result, course_notes.cards_for_spot(result, itinerary(result, courses), courses, "site"))
         if landmark not in result.field_signals:
             result.field_signals.append(landmark)
             result.supplies.field_bandage += 1
@@ -350,6 +363,7 @@ def advance(state: ExpeditionState, action: ExpeditionAction, courses: Courses) 
         if result.phase != "route":
             raise BattleError(409, "到达下一个路口后可以选路。")
         _enter(result, courses, action.route_id)
+        course_notes.acquire(result, course_notes.briefing(result.battle, courses[result.battle.game_id][0]))
     elif isinstance(action, ChooseReward):
         if result.phase != "reward":
             raise BattleError(409, "赢得本章战斗后可以领取补给。")
@@ -469,7 +483,8 @@ def view(state: ExpeditionState, courses: Courses) -> ExpeditionView:
         narrative = _current_route(state, courses).description
     elif state.phase == "sidequest":
         narrative = "打开讲义摘记，完成本章复习后重返刚才的战场。"
-    return ExpeditionView(eight_chapters=state.eight_chapters, supplies=supply_stacks(state.supplies),
+    return ExpeditionView(course_notes_enabled=course_notes.available(courses),
+                          eight_chapters=state.eight_chapters, supplies=supply_stacks(state.supplies),
                           cleared_regions=sum(all(c.status == "cleared" for c in r.chapters) for r in atlas),
                           knowledge_count=sum(r.knowledge_count for r in atlas), covered_knowledge_count=studied,
                           legacy_exam_cover=has_legacy_exam_cover(courses[game_id][1]),

@@ -1,6 +1,7 @@
 @import url("/study/study.css");
 @import url("./stage.css");
 @import url("./field-notes.css");
+@import url("../coursebook.css");
 
 .battle-page {
   margin: 0;

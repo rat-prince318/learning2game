@@ -13,7 +13,7 @@ from .models import MAX_MATERIAL_POINTS, KnowledgeItem, MaterialResult
 from .question_identity import exercise_key
 
 _PROBLEM = re.compile(
-    r"^(?:(?:question|problem|exercise)\s+(\d{1,3})\s*[.、:)]?|(\d{1,3})[.、)](?=\s|[^\x00-\x7f])\s*|第\s*(\d{1,3})\s*题\s*[.、:：]?)\s*(.*)$",
+    r"^(?:(?:question|problem|exercise)\s+(\d{1,3})\s*[.、:)]?|(\d{1,3})(?:[.．](?!\d)|[、)）])\s*|第\s*(\d{1,3})\s*题\s*[.、:：]?)\s*(.*)$",
     re.I,
 )
 _PART = re.compile(r"^[（(]([a-hA-H])[)）]\s*(.+)$")
@@ -136,6 +136,21 @@ def parse_exam(material: Material, filename: str) -> list[Problem] | None:
         and not any(_EXAM.search(s) for s in [*headings, filename.replace("_", " ")])
     ):
         return None
+    if not problems:
+        # A photo of one exercise or a short quiz often omits question numbers.
+        # Only promote self-contained question lines; never prepend the exam cover.
+        from .exam_provider import asks_question
+        for block in material.blocks:
+            for raw in block.text.splitlines():
+                line = _SCORE.sub("", raw).strip()
+                if len(line) >= 20 and asks_question(line) and not _ADMINISTRATIVE.match(line) and not _SOLUTION.match(line):
+                    problem = Problem(len(problems) + 1)
+                    problem.setup.add(line, block)
+                    problems.append(problem)
+                elif problems and (answer := _SOLUTION.match(line)):
+                    part = Part("")
+                    part.solution.add(line[answer.end():], block)
+                    problems[-1].parts.append(part)
     return problems
 
 

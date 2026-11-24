@@ -13,6 +13,8 @@ import { createFeedbackTimer, CONFIRMATION_MS, GUIDANCE_MS } from '../feedback.j
 const prefKey = 'l2g.battle.preferences.v1';
 const campNoteKey = 'l2g.battle.open-camp-note.v1';
 
+import { openCoursebook } from '../coursebook.js';
+
 export function mountBattle(container, { sessionId, controller: suppliedController, standalone = false, immersive = false, savedEntry = false, packShortcut = false,
   onExit, onViewChange } = {}) {
   if (!container || (!standalone && !sessionId && !suppliedController)) throw new Error(msg('请选择一个远征存档和战场容器。','Choose an expedition and a battle container.'));
@@ -40,6 +42,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   const lifetime = new AbortController();
   let controller = suppliedController || (sessionId ? new BattleController(sessionId) : null);
   let view = null, choice = '', skill = 'strike', busy = false, destroyed = false;
+  let coursebook;
   let retryAction = '', exiting = false, picked = [], lens = -1;
   let statusText = null, cargo = null;
   const expireStatusAfter = createFeedbackTimer(() => tell());
@@ -333,6 +336,10 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
       return;
     }
     if (busy || exiting) return;
+    if (act === 'coursebook' && view?.course_notes_enabled) {
+      if (!coursebook?.open) coursebook = openCoursebook(view, button);
+      return;
+    }
     if (act === 'receipt-close') { notes?.close(); return; }
     if (act === 'receipt' && notes && receipt) {
       notes.innerHTML = receiptBody(receipt, view);
@@ -389,6 +396,7 @@ export function mountBattle(container, { sessionId, controller: suppliedControll
   return {ready, getView:() => view, destroy() {
     if (destroyed) return;
     destroyed = true;
+    coursebook?.close();
     expireStatusAfter();
     dockSize?.disconnect();
     lifetime.abort();

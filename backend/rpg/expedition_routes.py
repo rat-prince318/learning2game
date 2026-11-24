@@ -9,7 +9,7 @@ from pydantic import Field, field_validator, model_validator
 
 from ..db import connection
 from ..models import Count, Identifier, MaterialResult, SourceRef, StrictModel
-from . import expedition
+from . import course_notes, expedition, tower
 from .battle_rules import BattleError
 from .battle_reports import BattleConcept, concept_rows
 from .expedition import ExpeditionAction, ExpeditionReport, ExpeditionState, ExpeditionView
@@ -164,6 +164,16 @@ def learning_report(session_id: str, request: Request):
         if result is None:
             raise HTTPException(409, "通关或撤离后即可查看本次远征战报。")
         return ExpeditionReport.model_validate_json(result)
+
+
+@router.get("/expeditions/{session_id}/course-notes", response_model=course_notes.CourseNotebook)
+def read_course_notes(session_id: str, request: Request, mode: course_notes.NoteMode = "campaign",
+                      spot: course_notes.NoteSpot | None = None):
+    with connection(request.app) as conn:
+        state = ExpeditionState.model_validate_json(_run(conn, session_id)["state_json"])
+        courses = expedition.playable_courses(_courses(conn, session_id), state.excluded_cards)
+        floor = tower.current_course(state.tower, courses) if mode == "tower" and state.tower.battle else None
+        return course_notes.notebook(state, expedition.itinerary(state, courses), courses, mode, spot, floor)
 
 
 class JournalPage(StrictModel):

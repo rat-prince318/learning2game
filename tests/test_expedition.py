@@ -6,6 +6,7 @@ import pytest
 from pydantic import TypeAdapter
 
 from backend.material_adapter import extract_material
+from backend.rpg import course_notes
 from backend.rpg import expedition as ex
 from backend.rpg.battle_content import active_exam
 from backend.rpg.battle_rules import BattleError
@@ -53,6 +54,32 @@ def win_current(state, courses):
             return state
         state = answer(state, courses)
     pytest.fail("Encounter failed to reach settlement with correct strategic answers")
+
+
+def test_same_knowledge_identifier_in_two_books_keeps_its_own_lesson():
+    books = bookshelf(books=2, chapters=1)
+    for gid, (original, items) in books.items():
+        game = original.model_copy(deep=True)
+        for question in game.scenes[0].challenges:
+            question.lesson_authored = True
+            question.study_term = question.knowledge_id
+            question.study_definition = f"{gid}: {question.knowledge_id}"
+        books[gid] = (game, items)
+    state = ex.new_expedition("separate-books", books)
+    route = ex.itinerary(state, books)
+    state = command(state, books, "collect_notes", spot="keeper")
+    first = course_notes.notebook(state, route, books, "campaign", "keeper").notes[0]
+    state = command(state, books, "choose_route", route_id="boss_steady")
+    state = win_current(state, books)
+    # The chapter exit remains walkable while its reward cart is waiting.
+    assert command(state, books, "collect_notes", spot="site").revision == state.revision
+    state = command(state, books, "choose_reward", reward_id="purse")
+    state = command(state, books, "collect_notes", spot="keeper")
+    current = course_notes.notebook(state, route, books, "campaign", "keeper")
+    second, = [n for n in current.notes if n.id in current.spot_note_ids]
+    assert first.id != second.id and first.title == second.title
+    assert first.body.startswith("volume-0") and second.body.startswith("volume-1")
+    assert first in current.notes and second.region_index == 1
 
 
 def test_switch_earned_gear_at_a_post_and_carry_it_into_the_next_fight():

@@ -30,17 +30,38 @@ function formula(tex, display) {
   return wrapped;
 }
 
+// Some published lessons predate TeX delimiters. Only recognise a complete
+// single-variable function equation or a parenthesised numerical quotient.
+const quantity = String.raw`\d+(?:\.\d+)?`;
+const term = `(?:${quantity}[a-zA-Z]?|[a-zA-Z])(?:\\^[+-]?${quantity})?`;
+const polynomial = `[+-]?${term}(?:[ \\t]*[+*/−-][ \\t]*${term})*`;
+const arithmetic = `[+-]?${quantity}(?:[ \\t]*[+*/−-][ \\t]*${quantity})*`;
+const bareEquation = new RegExp(
+  `(?<![\\w.\\\\])(?:[A-Za-z]\\([A-Za-z]\\)[ \\t]*=[ \\t]*${polynomial}|` +
+  `\\((${arithmetic})\\)[ \\t]*/[ \\t]*\\((${arithmetic})\\)(?:[ \\t]*=[ \\t]*[+-]?${quantity})?)` +
+  `(?![\\w^(]|[ \\t]*[=+*/^−-])`, 'gu',
+);
+
 function prose(text) {
   const safe = displayText(
     text,
     msg('请参阅原资料对应段落。', 'See the corresponding passage in your material.'),
   );
   // Keep spacing at math and code boundaries, including whitespace-only segments.
-  if (safe === text.trim()) return escapeHtml(text);
-  return escapeHtml(text.replace(text.trim(), safe));
+  const copy = safe === text.trim() ? text : text.replace(text.trim(), safe);
+  let html = '', start = 0;
+  for (const match of copy.matchAll(bareEquation)) {
+    const [expression, numerator, denominator] = match;
+    const result = expression.includes('=') ? expression.slice(expression.indexOf('=')) : '';
+    const tex = numerator ? '\\frac{' + numerator + '}{' + denominator + '}' + result : expression;
+    html += escapeHtml(copy.slice(start, match.index)) +
+      formula(tex.replaceAll('−','-').replaceAll('*', '\\times ').replace(/\^([+-]?\d+(?:\.\d+)?)/g, '^{$1}'), false);
+    start = match.index + expression.length;
+  }
+  return html + escapeHtml(copy.slice(start));
 }
 
-// Only explicit academic markup is interpreted. HTML, JS and URLs remain text.
+// Handle explicitly delimited markup before attempting ordinary prose.
 const inlineToken =
   /\\\$|\x60([^\x60\n]+)\x60|\\\(([\s\S]*?)\\\)|\\\[([\s\S]*?)\\\]|\$\$([\s\S]*?)\$\$|(?<!\\)\$(?!\s)((?:\\.|[^$\n])+?)(?<![\s\\])\$(?!\d)|<(sub|sup)>([^<>\n]{1,64})<\/\6>/gi;
 const rawFormula =

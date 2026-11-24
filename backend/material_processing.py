@@ -130,8 +130,8 @@ def validate_office_archive(file: BinaryIO, suffix: str):
 
 
 def _selected_pages(total: int, pages: list[int] | None) -> list[int]:
-    if not 1 <= total <= MAX_PAGE_COUNT:
-        raise MaterialError(f"每份课件支持 1 至 {MAX_PAGE_COUNT} 页，请按章节拆分。")
+    if total < 1 or (len(pages) if pages else total) > MAX_PAGE_COUNT:
+        raise MaterialError(f"每次可读取 {MAX_PAGE_COUNT} 页，请选择本次要学习的章节页码。")
     if not pages:
         return list(range(1, total + 1))
     if any(type(n) is not int or not 1 <= n <= total for n in pages):

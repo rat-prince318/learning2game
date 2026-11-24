@@ -119,6 +119,47 @@
       "title": "ChooseRoute",
       "type": "object"
     },
+    "CollectNotes": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "collect_notes",
+          "title": "Action",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "spot": {
+          "enum": [
+            "keeper",
+            "site",
+            "south-yard",
+            "north-post",
+            "east-court"
+          ],
+          "title": "Spot",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "event_id",
+        "expected_revision",
+        "spot"
+      ],
+      "title": "CollectNotes",
+      "type": "object"
+    },
     "DiscardItem": {
       "additionalProperties": false,
       "properties": {
@@ -669,6 +710,7 @@
       "assign_companion": "#/$defs/PartyCommand",
       "choose_reward": "#/$defs/ChooseReward",
       "choose_route": "#/$defs/ChooseRoute",
+      "collect_notes": "#/$defs/CollectNotes",
       "discard_item": "#/$defs/DiscardItem",
       "equip": "#/$defs/Equip",
       "hint": "#/$defs/Hint",
@@ -733,6 +775,9 @@
     },
     {
       "$ref": "#/$defs/InspectLandmark"
+    },
+    {
+      "$ref": "#/$defs/CollectNotes"
     },
     {
       "$ref": "#/$defs/AdvanceExploration"

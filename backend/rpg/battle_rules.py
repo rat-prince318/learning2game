@@ -272,8 +272,10 @@ def _defeat(state, feedback, current_concept):
 
 def _record_card(state, scene, question, correct):
     ident = question.challenge_id
-    current = challenge_key(question)
     questions = {q.challenge_id: q for q in scene.challenges}
+    # Tower floors can display an authored application of the published card.
+    # Queue and retry bookkeeping always identify the original deck slot.
+    current = challenge_key(questions[ident])
     resolved = _legacy_solved(state, scene)
     retries = _retries(state, scene)
     state.retry_ids = [card for card in retries if card != ident]

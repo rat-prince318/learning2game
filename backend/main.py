@@ -22,6 +22,7 @@ from .games import store_game
 from .models import GameConfigPublic, StrictModel, UserPreferences
 from .rpg import battle_routes, router as rpg_workflow, session_routes as rpg_sessions
 from .rpg import expedition_planning, expedition_routes
+from .rpg.lesson_provider import lesson_enabled
 from .services import DEMO_MATERIAL_TEXT, DemoServices, Services
 
 log = logging.getLogger("uvicorn.error")
@@ -96,7 +97,7 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
         services = _load_services(spec)
         mode = "integrated"
     else:
-        mode = configured or "offline"
+        mode = configured or ("live" if os.getenv("DASHSCOPE_API_KEY") else "offline")
         if mode not in {"offline", "live", "unconfigured"}:
             raise ValueError("EDUGAME_MODE must be offline, live or demo.")
         if mode != "unconfigured":
@@ -157,7 +158,7 @@ def create_app(*, data_dir: Path | str | None = None, demo: bool | None = None,
             conn.execute("SELECT 1")
         available = rpg_workflow.supported_games(services)
         return {"service": "learning2game", "status": "ok", "mode": mode, "external_models": mode in {"live", "integrated"},
-                "supported_game_types": available,
+                "supported_game_types": available, "rpg_course_authoring": mode == "live" and lesson_enabled(),
                 "rpg_play_modes": ["quest", "battle", "expedition"] if "rpg_quest" in available else [],
                 "max_upload_bytes": max_upload_bytes, "supported_extensions": list(materials.MEDIA)}
 

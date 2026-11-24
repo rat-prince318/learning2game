@@ -9,6 +9,7 @@ from pydantic import Field, model_validator
 from ..db import connection
 from ..models import Count, Difficulty, Identifier, LearnerLevel, LearningGoal, StrictModel, Title
 from ..pipeline import _knowledge
+from .lesson_provider import lesson_enabled
 from .models import RPGPreferences, Theme
 from .router import PlanRequest
 from .validation import coverage_key, eligible
@@ -66,7 +67,9 @@ def outline(body: OutlineRequest, request: Request):
                 if len(set(selected)) != len(selected) or any(k not in by_id for k in selected):
                     raise HTTPException(422, "请为这份资料选择互异且有出处的知识点。")
                 concepts = [by_id[k] for k in selected]
-            if len(concepts) < 3 and not (body.eight_chapters and source_can_publish):
+            if not concepts:
+                raise HTTPException(422, "请选择含学科内容的正文、例题或讲义页。")
+            if len(concepts) < 3 and not lesson_enabled() and not (body.eight_chapters and source_can_publish):
                 raise HTTPException(422, "每份资料至少需要三个可区分且有出处的知识点。")
             unique = []
             for item in concepts:

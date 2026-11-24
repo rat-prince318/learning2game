@@ -5,6 +5,7 @@ import { acts, speakers, portraitPosition } from './saga/chapters.js';
 import { landmarksFor } from './overland-districts.js';
 import { gearName, heroNames } from '../battle/words.js';
 import { studyMarkup } from '../../js/study.js';
+import { notePassage } from '../coursebook.js';
 
 const glyphs = {
   trap: '⚠',
@@ -51,7 +52,7 @@ export function title(hasSave) {
  <div class="lr-actions">${hasSave ? button('resume', msg('继续旅程', 'Continue journey') + '　→', 'lr-gold') : ''}${button('setup', msg('启程', 'New journey') + '　→', hasSave ? 'lr-glass' : 'lr-gold')}${button('title-atlas', msg('翻开地图', 'Open the atlas'), 'lr-glass')}</div></div>
  <a class="lr-studio" href="/">← ${msg('课程工坊', 'Learning studio')}</a></section>`;
 }
-export function setup(role, difficulty, count, pending) {
+export function setup(role, difficulty, count, pending, singlePdf = false, pageRange = '') {
   const roles = [
     ['arcanist', '高爆发，蓄两格引下陨星。', 'Build two charges to call a meteor.'],
     ['vanguard', '厚护甲，擅长格挡反击。', 'Heavy armor for guards and counters.'],
@@ -59,8 +60,12 @@ export function setup(role, difficulty, count, pending) {
   ];
   return `<section class="lr-sheet lr-prep"><div class="lr-kicker">${msg('烟柳渡驿站', 'Willow Ferry post')}</div><h1>${msg('准备出发', 'Prepare for the road')}</h1>
  <form id="lr-depart"><fieldset><legend>${msg('选择职业', 'Choose a class')}</legend><div class="lr-roles">${roles.map(([id, zh, en], i) => `<label><input type="radio" name="role" value="${id}" ${role === id ? 'checked' : ''} ${pending ? 'disabled' : ''}><span class="lr-roleface" style="--face:${i}"></span><span><strong>${heroNames(id)[0]}</strong><small>${msg(zh, en)}</small></span></label>`).join('')}</div></fieldset>
- <fieldset><legend>${msg('随身讲义', 'Your fieldbook')}</legend><p>${msg('主线共八章，从烟柳渡出发。上传讲义后，沿途的敌人会用讲义里的知识点出题。短讲义会留出几章给你打探消息、修复驿站。空手出发则使用驿站手册。', 'The eight chapters start at Willow Ferry. Bring your notes to face enemies with questions from your course. Short courses leave some chapters for scouting and repairs. Set out empty-handed to play with the courier fieldbook.')}</p>
- <label class="lr-file">${msg('选取课程文件', 'Choose course files')} <input id="lr-files" type="file" multiple accept=".txt,.md,.pdf,.pptx,.docx,.png,.jpg,.jpeg"> </label><small id="lr-count">${count ? h(count) : msg('当前使用驿站通识手册', 'Using the courier fieldbook')}</small></fieldset>
+ <fieldset><legend>${msg('随身讲义', 'Your fieldbook')}</legend><p>${msg('驿路共八章，从烟柳渡出发。选好你想学的资料和出题语言。空手出发会带上驿站手册。', 'The eight chapters start at Willow Ferry. Pick your course files and question language, or set out with the courier fieldbook.')}</p>
+ <p id="lr-authoring-mode" role="status" hidden></p>
+ <label class="lr-file">${msg('选取课程文件', 'Choose course files')} <input id="lr-files" type="file" multiple accept=".txt,.md,.pdf,.pptx,.docx,.png,.jpg,.jpeg"> </label><small id="lr-count">${count ? h(count) : msg('当前使用驿站通识手册', 'Using the courier fieldbook')}</small>
+ <div class="lr-pdf-pages" ${singlePdf ? '' : 'hidden'}><label for="lr-pages">${msg('本次学习的 PDF 页码（可选）', 'PDF pages to study (optional)')}</label>
+ <input id="lr-pages" type="text" dir="ltr" placeholder="122-128, 132" aria-describedby="lr-page-help" value="${h(pageRange)}" ${pending ? 'readonly' : ''}>
+ <small id="lr-page-help">${msg('按 PDF 阅读器的页码填写，每次最多 80 页。', 'Use the page numbers in your PDF reader. Choose up to 80 pages.')}</small></div></fieldset>
  <div class="lr-level">${msg('出题语言', 'Question language')} ${button('language', msg('简体中文　⇄', 'English　⇄'), 'lr-glass', 'aria-label="' + msg('切换到英文出题', 'Switch to Chinese questions') + '"')}</div>
  <label class="lr-level">${msg('题目难度', 'Question difficulty')} <select name="difficulty" ${pending ? 'disabled' : ''}>${[
    ['easy', '入门', 'Easy'],
@@ -113,7 +118,7 @@ const traps = [
   ['钟槌绊线', 'Bellwire'],
   ['星环光栅', 'Solar tripwire'],
 ];
-export function stationDialog(view, selection) {
+export function stationDialog(view, selection, spotNotes = []) {
   if (!selection && atChapterExit(view)) return '';
   const reg = regionOf(view),
     done = view.field_signals?.includes(reg.id),
@@ -192,7 +197,12 @@ export function stationDialog(view, selection) {
   const actor = talking && speakers[acts[i]?.conversation[0].speaker];
   if (actor) speaker = line(actor.name);
   const portrait = actor ? `<span aria-hidden="true" class="lr-spoken-bust" style="background-position:${portraitPosition(actor.frame)}"></span>` : plate(i);
-  return `<div class="lr-dialog${talking ? ' lr-spoken' : ''}" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${portrait}<div><div class="lr-kicker">${h(speaker)}</div><p>${h(copy)}</p></div><div class="lr-dialog-act">${action}</div>${phase === 'route' || atChapterExit(view) ? button('walk', chosen?.risk === 'elite' ? msg('绕开陷阱', 'Leave the trap') : msg('继续赶路', 'Back to the trail'), 'lr-glass lr-dismiss') : ''}</div>`;
+  const note = (stop || ['keeper','await-signal','site'].includes(selection)) && spotNotes[0];
+  const passage = note ? `<div class="course-field-passage"><h3 class="course-note-name">${studyMarkup(note.title)}</h3>${notePassage(note)}
+    ${button('course-notes', msg('翻开课程笔记', 'Open course notebook') + ' (' + spotNotes.length + ')', 'lr-glass', 'data-note-id="' + h(note.id) + '"')}
+    ${selection === 'site' && !done ? '<details><summary>' + msg('查看机关线索', 'Read the mechanism clue') + '</summary><p>' + h(copy) + '</p></details>' : ''}
+    ${selection === 'await-signal' ? '<p>' + h(copy) + '</p>' : ''}</div>` : '<p>' + h(copy) + '</p>';
+  return `<div class="lr-dialog${talking ? ' lr-spoken' : ''}" role="region" aria-label="${msg('现场交互', 'Field interaction')}">${portrait}<div><div class="lr-kicker">${h(speaker)}</div>${passage}</div><div class="lr-dialog-act">${action}</div>${phase === 'route' || atChapterExit(view) ? button('walk', chosen?.risk === 'elite' ? msg('绕开陷阱', 'Leave the trap') : msg('继续赶路', 'Back to the trail'), 'lr-glass lr-dismiss') : ''}</div>`;
 }
 export function fieldLabels(view) {
   const reg = regionOf(view);
@@ -212,7 +222,7 @@ export function fieldLabels(view) {
 export function isExploration(v) {
   return v.eight_chapters && v.map[v.region_index]?.chapters[v.scene_index]?.kind === 'exploration';
 }
-export function scene(view, selection) {
+export function scene(view, selection, spotNotes = []) {
   const region = regionOf(view),
     labels = fieldLabels(view);
   const quest = fieldQuest(view);
@@ -245,7 +255,7 @@ export function scene(view, selection) {
          .join('')}</div></details>`
      : '<details class="lr-travel-list" hidden></details>'
  }
- <div class="lr-dialog-layer">${stationDialog(view, selection)}</div></div></section>`;
+ <div class="lr-dialog-layer">${stationDialog(view, selection, spotNotes)}</div></div></section>`;
 }
 export function atlasPage(view, idx) {
   const reg = view ? regionOf({ ...view, region_index: idx }) : atlas[idx],
@@ -366,6 +376,7 @@ export function journal(v, pages = [], coverage = null) {
     })
     .join('');
   return `<section class="lr-sheet"><div class="lr-kicker">${msg('个人行装', 'Courier log')}　/　Lv. ${v.player.level}</div><h1>${msg('远征手记', 'Field journal')}</h1><p>${progressText(v)}　　XP ${v.player.xp}　　${ico('coin')} ${v.coins}</p>
+ ${v.course_notes_enabled ? button('course-notes', msg('翻开课程笔记', 'Open course notebook'), 'lr-gold') : ''}
  <div class="lr-grid"><article><h2>${msg('行装', 'Equipment')}</h2>${gear}<p>ATK ${v.player.attack}　 DEF ${v.player.stats?.defense ?? 0}</p></article>
  <article><h2>${msg('旅途遗物', 'Relics')}</h2>${v.relics.map((x) => `<p>${relicName(x.relic)} ×${x.stacks}</p>`).join('') || '<p>' + msg('可在战后营地换取。', 'Trade at a wayside camp after battle.') + '</p>'}</article></div>
  <div class="lr-route-list">${v.map.map((vol, i) => `<article>${plate(i)}<div><strong>${line(atlas[i].name)}</strong><small>${vol.chapters.filter((c) => c.status === 'cleared').length} / ${vol.chapters.length} ${msg('关', 'stages')}${v.field_signals?.includes(atlas[i].id) ? '　' + ico('signal') + ' ' + line(atlas[i].signal) : ''}</small></div></article>`).join('')}</div>
